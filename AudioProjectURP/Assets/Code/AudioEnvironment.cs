@@ -60,7 +60,23 @@ public class AudioEnvironment : MonoBehaviour
         
         return uniqueHits;
     }
+    public NativeArray<RaycastCommand> GetRaycastsAroundPosition(Vector3 posToCheck)
+    {
+        NativeArray<RaycastCommand> sourceRaycastCommands =
+            new NativeArray<RaycastCommand>(_surroundingPoints.Length, Allocator.TempJob);
 
+        FillRaycastCommandsParallel sourceFillJob = new FillRaycastCommandsParallel()
+        {
+            RaycastCommands = sourceRaycastCommands,
+            Origin = (float3)posToCheck,
+            SurroundingPoints = _surroundingPoints
+        };
+
+        JobHandle fillHandle = sourceFillJob.Schedule(_surroundingPoints.Length, 8);
+        fillHandle.Complete();
+        
+        return sourceRaycastCommands;
+    }
     public NativeArray<RaycastHit> RemoveDoubles(NativeArray<RaycastHit> rawHits)
     {
         var uniqueHits = new NativeList<RaycastHit>(rawHits.Length, Allocator.TempJob);
