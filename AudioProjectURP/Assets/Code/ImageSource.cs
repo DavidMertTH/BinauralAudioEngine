@@ -24,11 +24,9 @@ public class ImageSource : MonoBehaviour
     private List<AudioRay> _secundaryReflectionsList;
 
 
-
     private void Update()
     {
         binauralAudioProcessor.SecundaryReflections = _secundaryReflectionsList;
-
     }
 
     private void OnDestroy()
@@ -89,7 +87,6 @@ public class ImageSource : MonoBehaviour
 
             seen.Add(id);
             rays.Add(ray);
-            
         }
         //Debug.Log("Got " + rays.Count + "secundary ray(s)");
 
@@ -210,6 +207,9 @@ public class ImageSource : MonoBehaviour
         checkHandel.Complete();
 
 
+        List<AudioRay> reflections = SaveSecundaryReflections(secRays);
+        DrawSecundaryRays(secRays, secundaryHits);
+
         sourceHits.Dispose();
         targetHits.Dispose();
         imageHits.Dispose();
@@ -217,9 +217,9 @@ public class ImageSource : MonoBehaviour
         toSource.Dispose();
         toTarget.Dispose();
         imageToImage.Dispose();
-
-        List<AudioRay> reflections = SaveSecundaryReflections(secRays);
-        DrawSecundaryRays(secRays, secundaryHits);
+        
+        secundaryHits.Dispose();
+        secRays.Dispose();
 
         return reflections;
     }
@@ -238,7 +238,7 @@ public class ImageSource : MonoBehaviour
         }
     }
 
-    public List<AudioRay> GetPrimaryReflections( NativeArray<RaycastHit> surroundingHits)
+    public List<AudioRay> GetPrimaryReflections(NativeArray<RaycastHit> surroundingHits)
     {
         if (_primaryReflections.IsCreated) _primaryReflections.Dispose();
         _primaryReflections = new NativeArray<AudioRay>(surroundingHits.Length, Allocator.Persistent);
@@ -280,7 +280,6 @@ public class ImageSource : MonoBehaviour
         return reflections;
     }
 
-    
 
     [BurstCompile]
     private struct CheckSecundaryRays : IJobParallelFor
@@ -306,9 +305,8 @@ public class ImageSource : MonoBehaviour
             if (ToTargetHit[index].point != SecHits[index].TargetPlanePosition) return;
             if (ImageToImageHit[index].normal != SecHits[index].TargetPlaneNormal) return;
             if (ImageToImageHit[index].point != SecHits[index].TargetPlanePosition) return;
-            
-           
-            
+
+
             AudioRay ray = new AudioRay
             {
                 DistanceToImage = ToSourceHit[index].distance + ImageToImageHit[index].distance,
@@ -334,7 +332,7 @@ public class ImageSource : MonoBehaviour
             if (PrimaryHit[index].distance < 0.01f) return;
             //if (PrimaryHit[index].triangleIndex != InitHit[index].triangleIndex) return;
             if (PrimaryHit[index].normal != InitHit[index].normal) return;
-            
+
 
             AudioRay ray = new AudioRay
             {
@@ -413,7 +411,7 @@ public class ImageSource : MonoBehaviour
         public NativeArray<RaycastCommand> ToSource;
         public NativeArray<RaycastCommand> ToTarget;
         public NativeArray<RaycastCommand> ImageToImage;
-        
+
 
         [ReadOnly] public Vector3 Source;
         [ReadOnly] public Vector3 Target;

@@ -31,8 +31,8 @@ namespace Code
         {
             binauralAudioProcessor.DirectHit = GetDirectRay(source.transform.position, _target.transform.position);
 
-            _surroundingHitsSource = AudioEnvironment.instance.GetSurfacesAroundPosition(source.transform.position);
-            _surroundingHitsTarget = AudioEnvironment.instance.GetSurfacesAroundPosition(source.transform.position);
+            _surroundingHitsSource = AudioEnvironment.Instance.GetSurfacesAroundPosition(source.transform.position);
+            _surroundingHitsTarget = AudioEnvironment.Instance.GetSurfacesAroundPosition(source.transform.position);
 
             binauralAudioProcessor.DirectHit = GetDirectRay(source.transform.position, _target.transform.position);
             if (imageSource != null)
@@ -44,9 +44,8 @@ namespace Code
 
             if (raycastAudio != null)
             {
-                binauralAudioProcessor.HigherOrderReflections = raycastAudio.GetHighOrderRays(2,
-                    _target.transform.position, bounces,
-                    AudioEnvironment.instance.GetRaycastsAroundPosition(source.transform.position));
+                binauralAudioProcessor.HigherOrderReflections = raycastAudio.GetHighOrderRays(_target.transform.position, bounces,
+                    AudioEnvironment.Instance.GetRaycastsAroundPosition(source.transform.position));
             }
 
             _surroundingHitsSource.Dispose();
