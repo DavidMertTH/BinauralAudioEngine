@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Code
 {
@@ -11,13 +12,16 @@ namespace Code
 
         public float earOffset = 0.1f; // Abstand der Ohren zur Mitte in Metern
         public bool bypass = false;
-        public bool UseDirect = false;
-        public bool UsePrimaryReflections = false;
+        public bool useDirect = false;
+        public bool usePrimaryReflections = false;
+        public bool useSecondaryReflections = false;
+
         public float Gain;
 
         public AudioRay DirectHit;
         public List<AudioRay> PrimaryReflections;
         public List<AudioRay> SecundaryReflections;
+        public List<AudioRay> HigherOrderReflections;
 
         public float delaySmoothFactor = 0;
 
@@ -53,13 +57,17 @@ namespace Code
             if (bypass || channels < 2) return;
 
             List<AudioRay> rays = new List<AudioRay> { };
-            if (UseDirect)
+            if (useDirect && DirectHit.IsValid)
                 rays.Add(DirectHit);
-            if (UsePrimaryReflections)
+            if (usePrimaryReflections && PrimaryReflections != null && PrimaryReflections.Count > 0)
                 rays.AddRange(PrimaryReflections);
+            if (useSecondaryReflections && SecundaryReflections != null && SecundaryReflections.Count > 0)
+                rays.AddRange(SecundaryReflections);
+            if(HigherOrderReflections != null && HigherOrderReflections.Count > 0)
+                rays.AddRange(HigherOrderReflections);
             
-            rays.AddRange(SecundaryReflections);
-
+            if(rays.Count == 0) return;
+            
             for (int i = 0; i < data.Length; i += 2)
             {
                 float dry = (data[i] + data[i + 1]) * 0.5f;
