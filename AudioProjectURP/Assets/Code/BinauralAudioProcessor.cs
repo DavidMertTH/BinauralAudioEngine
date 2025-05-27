@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
@@ -15,6 +16,7 @@ namespace Code
         public bool useDirect = false;
         public bool usePrimaryReflections = false;
         public bool useSecondaryReflections = false;
+        public bool useHigherOrderReflections = false;
 
         public float Gain;
 
@@ -36,6 +38,12 @@ namespace Code
 
         private float prevLeftDelaySamples = 0f;
         private float prevRightDelaySamples = 0f;
+        private bool _isSetup;
+
+        private void Awake()
+        {
+            _isSetup = false;
+        }
 
         private void Start()
         {
@@ -43,6 +51,7 @@ namespace Code
             _bufferLength = _sampleRate * 2; // 2 Sekunden Puffer
             _delayBufferLeft = new float[_bufferLength];
             _delayBufferRight = new float[_bufferLength];
+            _isSetup = true;
         }
 
         private void Update()
@@ -54,20 +63,10 @@ namespace Code
 
         void OnAudioFilterRead(float[] data, int channels)
         {
-            if (bypass || channels < 2) return;
+            if (bypass || channels < 2 || !_isSetup) return;
 
-            List<AudioRay> rays = new List<AudioRay> { };
-            if (useDirect && DirectHit.IsValid)
-                rays.Add(DirectHit);
-            if (usePrimaryReflections && PrimaryReflections != null && PrimaryReflections.Count > 0)
-                rays.AddRange(PrimaryReflections);
-            if (useSecondaryReflections && SecundaryReflections != null && SecundaryReflections.Count > 0)
-                rays.AddRange(SecundaryReflections);
-            if(HigherOrderReflections != null && HigherOrderReflections.Count > 0)
-                rays.AddRange(HigherOrderReflections);
-            
-            if(rays.Count == 0) return;
-            
+            List<AudioRay> rays = GetAllSelectedRays();
+
             for (int i = 0; i < data.Length; i += 2)
             {
                 float dry = (data[i] + data[i + 1]) * 0.5f;
@@ -120,6 +119,20 @@ namespace Code
 
                 _writeIndex = (_writeIndex + 1) % _bufferLength;
             }
+        }
+
+        private List<AudioRay> GetAllSelectedRays()
+        {
+            List<AudioRay> rays = new List<AudioRay> { };
+            if (useDirect && DirectHit.IsValid)
+                rays.Add(DirectHit);
+            if (usePrimaryReflections && PrimaryReflections != null && PrimaryReflections.Count > 0)
+                rays.AddRange(PrimaryReflections);
+            if (useSecondaryReflections && SecundaryReflections != null && SecundaryReflections.Count > 0)
+                rays.AddRange(SecundaryReflections);
+            if (useHigherOrderReflections && HigherOrderReflections != null && HigherOrderReflections.Count > 0)
+                rays.AddRange(HigherOrderReflections);
+            return rays;
         }
     }
 }

@@ -11,7 +11,7 @@ using UnityEngine.Serialization;
 
 public class AudioEnvironment : MonoBehaviour
 {
-    public static AudioEnvironment instance;
+    public static AudioEnvironment Instance;
     public int resolution;
 
     private NativeArray<float3> _surroundingPoints;
@@ -19,16 +19,18 @@ public class AudioEnvironment : MonoBehaviour
 
     private void Start()
     {
-        if (instance != null) Destroy(this);
-        else instance = this;
-        _surroundingPoints = Helper.GetFibonacciPoints(resolution);
         Application.targetFrameRate = 60;
+
+        if (Instance != null) Destroy(this);
+        else Instance = this;
+        _surroundingPoints = Helper.GetFibonacciPoints(resolution);
+    }
+    
+    private void OnDestroy()
+    {
+        if(_surroundingPoints.IsCreated)_surroundingPoints.Dispose();
     }
 
-
-    /**
-     * ALWAYS DISPOSE RETURN NATIVE ARRAY AFTER USE
-     */
     public NativeArray<RaycastHit> GetSurfacesAroundPosition(Vector3 posToCheck)
     {
         NativeArray<RaycastCommand> sourceRaycastCommands =
