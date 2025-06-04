@@ -257,7 +257,7 @@ public class ImageSource : MonoBehaviour
         JobHandle jobHandle = filljob.Schedule(surroundingHits.Length, 8);
         NativeArray<RaycastHit> primaryHit =
             new NativeArray<RaycastHit>(filljob.RaycastCommands.Length, Allocator.TempJob);
-
+        
         jobHandle.Complete();
         jobHandle = RaycastCommand.ScheduleBatch(filljob.RaycastCommands, primaryHit, 1);
         jobHandle.Complete();
@@ -273,7 +273,8 @@ public class ImageSource : MonoBehaviour
         jobHandle = checkJob.Schedule(surroundingHits.Length, 8);
         jobHandle.Complete();
         List<AudioRay> reflections = SavePrimaryReflections(_primaryReflections);
-
+        
+        reflections.ForEach(ray => ray.Absorbtion = 0.8f);
         _primaryReflections.Dispose();
         commands.Dispose();
         primaryHit.Dispose();
@@ -309,11 +310,12 @@ public class ImageSource : MonoBehaviour
 
             AudioRay ray = new AudioRay
             {
+                Absorbtion = (0.8f*0.8f),
                 DistanceToImage = ToSourceHit[index].distance + ImageToImageHit[index].distance,
                 ImagePosition = ToTargetHit[index].point + ToTargetHit[index].normal * 0.001f,
                 IsValid = true,
             };
-
+            
             AudioRays[index] = ray;
         }
     }
@@ -336,6 +338,7 @@ public class ImageSource : MonoBehaviour
 
             AudioRay ray = new AudioRay
             {
+                Absorbtion = 0.8f,
                 DistanceToImage = PrimaryHit[index].distance,
                 ImagePosition = PrimaryHit[index].point + PrimaryHit[index].normal * 0.001f,
                 IsValid = true,

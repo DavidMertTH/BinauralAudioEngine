@@ -17,7 +17,7 @@ namespace Code
         public bool usePrimaryReflections = false;
         public bool useSecondaryReflections = false;
         public bool useHigherOrderReflections = false;
-
+        public ImpulseGraphUI ui;
         public float Gain;
 
         public AudioRay DirectHit;
@@ -26,6 +26,9 @@ namespace Code
         public List<AudioRay> HigherOrderReflections;
 
         public float delaySmoothFactor = 0;
+
+        private float[] _impulseResponseLeft;
+        private float[] _impulseResponseRight;
 
         private float[] _delayBufferLeft;
         private float[] _delayBufferRight;
@@ -58,8 +61,57 @@ namespace Code
         {
             _leftEar = targetObject.transform.position - targetObject.transform.right * earOffset;
             _rightEar = targetObject.transform.position + targetObject.transform.right * earOffset;
+
+            CreatePrimitiveImpulseresponse();
         }
 
+        private void CreatePrimitiveImpulseresponse()
+        {
+            // TOTO DAVID MARTIN KARG __ Diese Funktion sollte mit der HRTF Funktion ersetzt werden
+            if (bypass || !_isSetup) return;
+            _impulseResponseLeft = new float[2001];
+            _impulseResponseRight = new float[2001];
+
+            List<AudioRay> rays = GetAllSelectedRays();
+
+            foreach (var ray in rays)
+            {
+                if (!ray.IsValid) continue;
+
+                float leftDistance = ray.DistanceToImage + Vector3.Distance(ray.ImagePosition, _leftEar);
+                float rightDistance = ray.DistanceToImage + Vector3.Distance(ray.ImagePosition, _rightEar);
+
+                float leftDelaySec = leftDistance / 343f;
+                float rightDelaySec = rightDistance / 343f;
+
+                float targetLeftDelaySamples = _sampleRate * leftDelaySec;
+                float targetRightDelaySamples = _sampleRate * rightDelaySec;
+
+                float maxEarDist = Vector3.Distance(_rightEar, _leftEar);
+                float binauralFactor = Mathf.Clamp((leftDistance - rightDistance) / (4 * maxEarDist), -1f, 1f);
+                float averageDistance = (leftDistance + rightDistance) / 2;
+                float DistanceAmplitude = 2 / averageDistance;
+
+                if ((int)targetLeftDelaySamples > 1999 || (int)targetRightDelaySamples > 1999) continue;
+                float leftAmplitude = DistanceAmplitude * (1 - binauralFactor) * ray.Absorbtion;
+                float rightAmplitude = DistanceAmplitude * (1 + binauralFactor) * ray.Absorbtion;
+
+                _impulseResponseLeft[(int)targetLeftDelaySamples] += leftAmplitude;
+                _impulseResponseRight[(int)targetRightDelaySamples] += rightAmplitude;
+                
+                _impulseResponseLeft[(int)targetLeftDelaySamples +1] += leftAmplitude/3;
+                _impulseResponseRight[(int)targetRightDelaySamples+1] += rightAmplitude/3;
+                
+                _impulseResponseLeft[(int)targetLeftDelaySamples -1] += leftAmplitude/3;
+                _impulseResponseRight[(int)targetRightDelaySamples-1] += rightAmplitude/3;
+            }
+            float[] impulseResponseSum = new float[_impulseResponseLeft.Length];
+            for (int i = 0; i < _impulseResponseLeft.Length; i++)
+            {
+                impulseResponseSum[i] = _impulseResponseLeft[i]+_impulseResponseRight[i];
+            }
+            ui.impulseResponse = impulseResponseSum;
+        }
 
         void OnAudioFilterRead(float[] data, int channels)
         {
@@ -93,7 +145,7 @@ namespace Code
                     int rightDelaySamples = Mathf.Clamp(Mathf.RoundToInt(prevRightDelaySamples), 0, _bufferLength - 1);
 
                     float maxEarDist = Vector3.Distance(_rightEar, _leftEar);
-                    float binauralFactor = Mathf.Clamp((leftDistance - rightDistance) / (2 * maxEarDist), -1f, 1f);
+                    float binauralFactor = Mathf.Clamp((leftDistance - rightDistance) / (4 * maxEarDist), -1f, 1f);
 
                     int writeL = (_writeIndex + leftDelaySamples) % _bufferLength;
                     int writeR = (_writeIndex + rightDelaySamples) % _bufferLength;
@@ -103,8 +155,9 @@ namespace Code
 
                     float DistanceAmplitude = 2 / averageDistance;
 
-                    _delayBufferLeft[writeL] += Gain * DistanceAmplitude * dry * (1 - binauralFactor);
-                    _delayBufferRight[writeR] += Gain * DistanceAmplitude * dry * (1 + binauralFactor);
+                    _delayBufferLeft[writeL] += Gain * DistanceAmplitude * dry * (1 - binauralFactor) * ray.Absorbtion;
+                    _delayBufferRight[writeR] += Gain * DistanceAmplitude * dry * (1 + binauralFactor) * ray.Absorbtion;
+                    
                 }
 
                 // Lese Puffer & gib binaurales Signal aus

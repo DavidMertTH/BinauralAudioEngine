@@ -29,8 +29,6 @@ namespace Code
 
         private void UpdateAudioProcessor()
         {
-            binauralAudioProcessor.DirectHit = GetDirectRay(source.transform.position, _target.transform.position);
-
             _surroundingHitsSource = AudioEnvironment.Instance.GetSurfacesAroundPosition(source.transform.position);
             _surroundingHitsTarget = AudioEnvironment.Instance.GetSurfacesAroundPosition(source.transform.position);
 
@@ -57,6 +55,7 @@ namespace Code
             RaycastHit hit;
             Vector3 direction = localTarget - localSource;
             AudioRay directHit = new AudioRay();
+            directHit.Absorbtion = 1;
             if (Physics.Raycast(localSource, direction, out hit, direction.magnitude))
             {
                 directHit.IsValid = false;
