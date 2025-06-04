@@ -26,6 +26,7 @@ namespace Code
                 initialCommands.Dispose();
                 return null;
             }
+
             _audioRays = new NativeArray<AudioRay>[bounceAmount];
             _previousCommands = new NativeArray<RaycastCommand>[bounceAmount];
 
@@ -162,6 +163,14 @@ namespace Code
                 if (PreviousHit[index].distance < 0.001f) return;
                 var ray = AudioRays[index];
 
+                if (AudioRays[index].Absorbtion <= 0.00001f)
+                {
+                    ray.Absorbtion = 0.3f;
+                }
+                else
+                {
+                    ray.Absorbtion = AudioRays[index].Absorbtion * 0.8f;
+                }
                 ray.DistanceToImage += PreviousHit[index].distance;
                 ray.ImagePosition = PreviousHit[index].point + PreviousHit[index].normal * 0.001f;
 
