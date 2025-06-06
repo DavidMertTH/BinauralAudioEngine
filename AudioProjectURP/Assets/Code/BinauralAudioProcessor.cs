@@ -10,14 +10,13 @@ namespace Code
     {
         public Transform sourceObject;
         public Transform targetObject;
-
+         
         public float earOffset = 0.1f; // Abstand der Ohren zur Mitte in Metern
         public bool bypass = false;
         public bool useDirect = false;
         public bool usePrimaryReflections = false;
         public bool useSecondaryReflections = false;
         public bool useHigherOrderReflections = false;
-        public ImpulseGraphUI ui;
         public float Gain;
 
         public AudioRay DirectHit;
@@ -110,7 +109,6 @@ namespace Code
             {
                 impulseResponseSum[i] = _impulseResponseLeft[i]+_impulseResponseRight[i];
             }
-            ui.impulseResponse = impulseResponseSum;
         }
 
         void OnAudioFilterRead(float[] data, int channels)
