@@ -1,0 +1,20 @@
+END USER LICENSE AGREEMENT
+version 1.0
+date: November 13th, 2015
+
+OVERVIEW:
+This agreement is an End User License Agreement (EULA).  It is a contract between you and Wire Grind. Impulses contained in this library are property of Wire Grind, and they are subject to copyright laws. To download and maintain a copy of this product, you must also agree to the provisions contained in this EULA.
+
+GRANT OF LICENSE:
+You may download and retain copies of this product for free. You may use this product to generate effects for both commercial audio and non-commercial audio.
+
+LIMITATIONS ON USAGE:
+You may not sell, distribute, rent, lease, sub-license, or make available for download any impulses contained in this library. Impulses that have been modified or converted shall also be subject to both the terms of this EULA and copyright restrictions.
+
+Without obtaining prior written consent from Wire Grind, impulses contained in this library may not be included within any product or data set be it commercial or non-commercial.
+
+APPLICABILITY:
+The provisions in this agreement are legally binding.  If any provision within this agreement is determined to be non-binding in the applicable political jurisdictions, then the remaining provisions shall remain in effect.
+
+QUESTIONS AND COMMENTS:
+Contact Wire Grind with questions or comments.
