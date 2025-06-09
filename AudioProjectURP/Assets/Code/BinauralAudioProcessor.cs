@@ -110,7 +110,7 @@ namespace Code
             {
                 impulseResponseSum[i] = _impulseResponseLeft[i]+_impulseResponseRight[i];
             }
-            ui.impulseResponse = impulseResponseSum;
+            //ui.impulseResponse = impulseResponseSum;
         }
 
         void OnAudioFilterRead(float[] data, int channels)
