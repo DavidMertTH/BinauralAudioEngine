@@ -1,0 +1,1694 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>MathNet.Numerics.Providers.MKL</name>
+    </assembly>
+    <members>
+        <member name="T:MathNet.Numerics.Providers.MKL.ArrayExtensions">
+            <summary>
+            Useful extension methods for Arrays.
+            </summary>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.ArrayExtensions.Copy(System.Double[],System.Double[])">
+            <summary>
+            Copies the values from on array to another.
+            </summary>
+            <param name="source">The source array.</param>
+            <param name="dest">The destination array.</param>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.ArrayExtensions.Copy(System.Single[],System.Single[])">
+            <summary>
+            Copies the values from on array to another.
+            </summary>
+            <param name="source">The source array.</param>
+            <param name="dest">The destination array.</param>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.ArrayExtensions.Copy(System.Numerics.Complex[],System.Numerics.Complex[])">
+            <summary>
+            Copies the values from on array to another.
+            </summary>
+            <param name="source">The source array.</param>
+            <param name="dest">The destination array.</param>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.ArrayExtensions.Copy(MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[])">
+            <summary>
+            Copies the values from on array to another.
+            </summary>
+            <param name="source">The source array.</param>
+            <param name="dest">The destination array.</param>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.FourierTransform.MklFourierTransformProvider.#ctor(System.String)">
+            <param name="hintPath">Hint path where to look for the native binaries</param>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.FourierTransform.MklFourierTransformProvider.IsAvailable">
+            <summary>
+            Try to find out whether the provider is available, at least in principle.
+            Verification may still fail if available, but it will certainly fail if unavailable.
+            </summary>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.FourierTransform.MklFourierTransformProvider.InitializeVerify">
+            <summary>
+            Initialize and verify that the provided is indeed available. If not, fall back to alternatives like the managed provider
+            </summary>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.FourierTransform.MklFourierTransformProvider.FreeResources">
+            <summary>
+            Frees memory buffers, caches and handles allocated in or to the provider.
+            Does not unload the provider itself, it is still usable afterwards.
+            </summary>
+        </member>
+        <member name="T:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider">
+            <summary>
+            Intel's Math Kernel Library (MKL) linear algebra provider.
+            </summary>
+            <summary>
+            Intel's Math Kernel Library (MKL) linear algebra provider.
+            </summary>
+            <summary>
+            Intel's Math Kernel Library (MKL) linear algebra provider.
+            </summary>
+            <summary>
+            Intel's Math Kernel Library (MKL) linear algebra provider.
+            </summary>
+            <summary>
+            Intel's Math Kernel Library (MKL) linear algebra provider.
+            </summary>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.MatrixNorm(MathNet.Numerics.Providers.LinearAlgebra.Norm,System.Int32,System.Int32,System.Numerics.Complex[])">
+            <summary>
+            Computes the requested <see cref="T:MathNet.Numerics.Providers.LinearAlgebra.Norm"/> of the matrix.
+            </summary>
+            <param name="norm">The type of norm to compute.</param>
+            <param name="rows">The number of rows in the matrix.</param>
+            <param name="columns">The number of columns in the matrix.</param>
+            <param name="matrix">The matrix to compute the norm from.</param>
+            <returns>
+            The requested <see cref="T:MathNet.Numerics.Providers.LinearAlgebra.Norm"/> of the matrix.
+            </returns>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.DotProduct(System.Numerics.Complex[],System.Numerics.Complex[])">
+            <summary>
+            Computes the dot product of x and y.
+            </summary>
+            <param name="x">The vector x.</param>
+            <param name="y">The vector y.</param>
+            <returns>The dot product of x and y.</returns>
+            <remarks>This is equivalent to the DOT BLAS routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.AddVectorToScaledVector(System.Numerics.Complex[],System.Numerics.Complex,System.Numerics.Complex[],System.Numerics.Complex[])">
+            <summary>
+            Adds a scaled vector to another: <c>result = y + alpha*x</c>.
+            </summary>
+            <param name="y">The vector to update.</param>
+            <param name="alpha">The value to scale <paramref name="x"/> by.</param>
+            <param name="x">The vector to add to <paramref name="y"/>.</param>
+            <param name="result">The result of the addition.</param>
+            <remarks>This is similar to the AXPY BLAS routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.ScaleArray(System.Numerics.Complex,System.Numerics.Complex[],System.Numerics.Complex[])">
+            <summary>
+            Scales an array. Can be used to scale a vector and a matrix.
+            </summary>
+            <param name="alpha">The scalar.</param>
+            <param name="x">The values to scale.</param>
+            <param name="result">This result of the scaling.</param>
+            <remarks>This is similar to the SCAL BLAS routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.ConjugateArray(System.Numerics.Complex[],System.Numerics.Complex[])">
+            <summary>
+            Conjugates an array. Can be used to conjugate a vector and a matrix.
+            </summary>
+            <param name="x">The values to conjugate.</param>
+            <param name="result">This result of the conjugation.</param>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.MatrixMultiply(System.Numerics.Complex[],System.Int32,System.Int32,System.Numerics.Complex[],System.Int32,System.Int32,System.Numerics.Complex[])">
+            <summary>
+            Multiples two matrices. <c>result = x * y</c>
+            </summary>
+            <param name="x">The x matrix.</param>
+            <param name="rowsX">The number of rows in the x matrix.</param>
+            <param name="columnsX">The number of columns in the x matrix.</param>
+            <param name="y">The y matrix.</param>
+            <param name="rowsY">The number of rows in the y matrix.</param>
+            <param name="columnsY">The number of columns in the y matrix.</param>
+            <param name="result">Where to store the result of the multiplication.</param>
+            <remarks>This is a simplified version of the BLAS GEMM routine with alpha
+            set to Complex.One and beta set to Complex.Zero, and x and y are not transposed.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.MatrixMultiplyWithUpdate(MathNet.Numerics.Providers.LinearAlgebra.Transpose,MathNet.Numerics.Providers.LinearAlgebra.Transpose,System.Numerics.Complex,System.Numerics.Complex[],System.Int32,System.Int32,System.Numerics.Complex[],System.Int32,System.Int32,System.Numerics.Complex,System.Numerics.Complex[])">
+            <summary>
+            Multiplies two matrices and updates another with the result. <c>c = alpha*op(a)*op(b) + beta*c</c>
+            </summary>
+            <param name="transposeA">How to transpose the <paramref name="a"/> matrix.</param>
+            <param name="transposeB">How to transpose the <paramref name="b"/> matrix.</param>
+            <param name="alpha">The value to scale <paramref name="a"/> matrix.</param>
+            <param name="a">The a matrix.</param>
+            <param name="rowsA">The number of rows in the <paramref name="a"/> matrix.</param>
+            <param name="columnsA">The number of columns in the <paramref name="a"/> matrix.</param>
+            <param name="b">The b matrix</param>
+            <param name="rowsB">The number of rows in the <paramref name="b"/> matrix.</param>
+            <param name="columnsB">The number of columns in the <paramref name="b"/> matrix.</param>
+            <param name="beta">The value to scale the <paramref name="c"/> matrix.</param>
+            <param name="c">The c matrix.</param>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.LUFactor(System.Numerics.Complex[],System.Int32,System.Int32[])">
+            <summary>
+            Computes the LUP factorization of A. P*A = L*U.
+            </summary>
+            <param name="data">An <paramref name="order"/> by <paramref name="order"/> matrix. The matrix is overwritten with the
+            the LU factorization on exit. The lower triangular factor L is stored in under the diagonal of <paramref name="data"/> (the diagonal is always Complex.One
+            for the L factor). The upper triangular factor U is stored on and above the diagonal of <paramref name="data"/>.</param>
+            <param name="order">The order of the square matrix <paramref name="data"/>.</param>
+            <param name="ipiv">On exit, it contains the pivot indices. The size of the array must be <paramref name="order"/>.</param>
+            <remarks>This is equivalent to the GETRF LAPACK routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.LUInverse(System.Numerics.Complex[],System.Int32)">
+            <summary>
+            Computes the inverse of matrix using LU factorization.
+            </summary>
+            <param name="a">The N by N matrix to invert. Contains the inverse On exit.</param>
+            <param name="order">The order of the square matrix <paramref name="a"/>.</param>
+            <remarks>This is equivalent to the GETRF and GETRI LAPACK routines.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.LUInverseFactored(System.Numerics.Complex[],System.Int32,System.Int32[])">
+            <summary>
+            Computes the inverse of a previously factored matrix.
+            </summary>
+            <param name="a">The LU factored N by N matrix.  Contains the inverse On exit.</param>
+            <param name="order">The order of the square matrix <paramref name="a"/>.</param>
+            <param name="ipiv">The pivot indices of <paramref name="a"/>.</param>
+            <remarks>This is equivalent to the GETRI LAPACK routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.LUSolve(System.Int32,System.Numerics.Complex[],System.Int32,System.Numerics.Complex[])">
+            <summary>
+            Solves A*X=B for X using LU factorization.
+            </summary>
+            <param name="columnsOfB">The number of columns of B.</param>
+            <param name="a">The square matrix A.</param>
+            <param name="order">The order of the square matrix <paramref name="a"/>.</param>
+            <param name="b">On entry the B matrix; on exit the X matrix.</param>
+            <remarks>This is equivalent to the GETRF and GETRS LAPACK routines.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.LUSolveFactored(System.Int32,System.Numerics.Complex[],System.Int32,System.Int32[],System.Numerics.Complex[])">
+            <summary>
+            Solves A*X=B for X using a previously factored A matrix.
+            </summary>
+            <param name="columnsOfB">The number of columns of B.</param>
+            <param name="a">The factored A matrix.</param>
+            <param name="order">The order of the square matrix <paramref name="a"/>.</param>
+            <param name="ipiv">The pivot indices of <paramref name="a"/>.</param>
+            <param name="b">On entry the B matrix; on exit the X matrix.</param>
+            <remarks>This is equivalent to the GETRS LAPACK routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.CholeskyFactor(System.Numerics.Complex[],System.Int32)">
+            <summary>
+            Computes the Cholesky factorization of A.
+            </summary>
+            <param name="a">On entry, a square, positive definite matrix. On exit, the matrix is overwritten with the
+            the Cholesky factorization.</param>
+            <param name="order">The number of rows or columns in the matrix.</param>
+            <remarks>This is equivalent to the POTRF LAPACK routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.CholeskySolve(System.Numerics.Complex[],System.Int32,System.Numerics.Complex[],System.Int32)">
+            <summary>
+            Solves A*X=B for X using Cholesky factorization.
+            </summary>
+            <param name="a">The square, positive definite matrix A.</param>
+            <param name="orderA">The number of rows and columns in A.</param>
+            <param name="b">On entry the B matrix; on exit the X matrix.</param>
+            <param name="columnsB">The number of columns in the B matrix.</param>
+            <remarks>This is equivalent to the POTRF add POTRS LAPACK routines.
+            </remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.CholeskySolveFactored(System.Numerics.Complex[],System.Int32,System.Numerics.Complex[],System.Int32)">
+            <summary>
+            Solves A*X=B for X using a previously factored A matrix.
+            </summary>
+            <param name="a">The square, positive definite matrix A.</param>
+            <param name="orderA">The number of rows and columns in A.</param>
+            <param name="b">On entry the B matrix; on exit the X matrix.</param>
+            <param name="columnsB">The number of columns in the B matrix.</param>
+            <remarks>This is equivalent to the POTRS LAPACK routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.QRFactor(System.Numerics.Complex[],System.Int32,System.Int32,System.Numerics.Complex[],System.Numerics.Complex[])">
+            <summary>
+            Computes the QR factorization of A.
+            </summary>
+            <param name="r">On entry, it is the M by N A matrix to factor. On exit,
+            it is overwritten with the R matrix of the QR factorization. </param>
+            <param name="rowsR">The number of rows in the A matrix.</param>
+            <param name="columnsR">The number of columns in the A matrix.</param>
+            <param name="q">On exit, A M by M matrix that holds the Q matrix of the
+            QR factorization.</param>
+            <param name="tau">A min(m,n) vector. On exit, contains additional information
+            to be used by the QR solve routine.</param>
+            <remarks>This is similar to the GEQRF and ORGQR LAPACK routines.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.ThinQRFactor(System.Numerics.Complex[],System.Int32,System.Int32,System.Numerics.Complex[],System.Numerics.Complex[])">
+            <summary>
+            Computes the thin QR factorization of A where M &gt; N.
+            </summary>
+            <param name="q">On entry, it is the M by N A matrix to factor. On exit,
+            it is overwritten with the Q matrix of the QR factorization.</param>
+            <param name="rowsA">The number of rows in the A matrix.</param>
+            <param name="columnsA">The number of columns in the A matrix.</param>
+            <param name="r">On exit, A N by N matrix that holds the R matrix of the
+            QR factorization.</param>
+            <param name="tau">A min(m,n) vector. On exit, contains additional information
+            to be used by the QR solve routine.</param>
+            <remarks>This is similar to the GEQRF and ORGQR LAPACK routines.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.QRSolve(System.Numerics.Complex[],System.Int32,System.Int32,System.Numerics.Complex[],System.Int32,System.Numerics.Complex[],MathNet.Numerics.LinearAlgebra.Factorization.QRMethod)">
+            <summary>
+            Solves A*X=B for X using QR factorization of A.
+            </summary>
+            <param name="a">The A matrix.</param>
+            <param name="rows">The number of rows in the A matrix.</param>
+            <param name="columns">The number of columns in the A matrix.</param>
+            <param name="b">The B matrix.</param>
+            <param name="columnsB">The number of columns of B.</param>
+            <param name="x">On exit, the solution matrix.</param>
+            <param name="method">The type of QR factorization to perform. <seealso cref="T:MathNet.Numerics.LinearAlgebra.Factorization.QRMethod"/></param>
+            <remarks>Rows must be greater or equal to columns.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.QRSolveFactored(System.Numerics.Complex[],System.Numerics.Complex[],System.Int32,System.Int32,System.Numerics.Complex[],System.Numerics.Complex[],System.Int32,System.Numerics.Complex[],MathNet.Numerics.LinearAlgebra.Factorization.QRMethod)">
+            <summary>
+            Solves A*X=B for X using a previously QR factored matrix.
+            </summary>
+            <param name="q">The Q matrix obtained by calling <see cref="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.QRFactor(System.Numerics.Complex[],System.Int32,System.Int32,System.Numerics.Complex[],System.Numerics.Complex[])"/>.</param>
+            <param name="r">The R matrix obtained by calling <see cref="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.QRFactor(System.Numerics.Complex[],System.Int32,System.Int32,System.Numerics.Complex[],System.Numerics.Complex[])"/>. </param>
+            <param name="rowsA">The number of rows in the A matrix.</param>
+            <param name="columnsA">The number of columns in the A matrix.</param>
+            <param name="tau">Contains additional information on Q. Only used for the native solver
+            and can be <c>null</c> for the managed provider.</param>
+            <param name="b">The B matrix.</param>
+            <param name="columnsB">The number of columns of B.</param>
+            <param name="x">On exit, the solution matrix.</param>
+            <param name="method">The type of QR factorization to perform. <seealso cref="T:MathNet.Numerics.LinearAlgebra.Factorization.QRMethod"/></param>
+            <remarks>Rows must be greater or equal to columns.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.SvdSolve(System.Numerics.Complex[],System.Int32,System.Int32,System.Numerics.Complex[],System.Int32,System.Numerics.Complex[])">
+            <summary>
+            Solves A*X=B for X using the singular value decomposition of A.
+            </summary>
+            <param name="a">On entry, the M by N matrix to decompose.</param>
+            <param name="rowsA">The number of rows in the A matrix.</param>
+            <param name="columnsA">The number of columns in the A matrix.</param>
+            <param name="b">The B matrix.</param>
+            <param name="columnsB">The number of columns of B.</param>
+            <param name="x">On exit, the solution matrix.</param>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.SvdSolveFactored(System.Int32,System.Int32,System.Numerics.Complex[],System.Numerics.Complex[],System.Numerics.Complex[],System.Numerics.Complex[],System.Int32,System.Numerics.Complex[])">
+            <summary>
+            Solves A*X=B for X using a previously SVD decomposed matrix.
+            </summary>
+            <param name="rowsA">The number of rows in the A matrix.</param>
+            <param name="columnsA">The number of columns in the A matrix.</param>
+            <param name="s">The s values returned by <see cref="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.SingularValueDecomposition(System.Boolean,System.Numerics.Complex[],System.Int32,System.Int32,System.Numerics.Complex[],System.Numerics.Complex[],System.Numerics.Complex[])"/>.</param>
+            <param name="u">The left singular vectors returned by  <see cref="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.SingularValueDecomposition(System.Boolean,System.Numerics.Complex[],System.Int32,System.Int32,System.Numerics.Complex[],System.Numerics.Complex[],System.Numerics.Complex[])"/>.</param>
+            <param name="vt">The right singular  vectors returned by  <see cref="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.SingularValueDecomposition(System.Boolean,System.Numerics.Complex[],System.Int32,System.Int32,System.Numerics.Complex[],System.Numerics.Complex[],System.Numerics.Complex[])"/>.</param>
+            <param name="b">The B matrix.</param>
+            <param name="columnsB">The number of columns of B.</param>
+            <param name="x">On exit, the solution matrix.</param>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.SingularValueDecomposition(System.Boolean,System.Numerics.Complex[],System.Int32,System.Int32,System.Numerics.Complex[],System.Numerics.Complex[],System.Numerics.Complex[])">
+            <summary>
+            Computes the singular value decomposition of A.
+            </summary>
+            <param name="computeVectors">Compute the singular U and VT vectors or not.</param>
+            <param name="a">On entry, the M by N matrix to decompose. On exit, A may be overwritten.</param>
+            <param name="rowsA">The number of rows in the A matrix.</param>
+            <param name="columnsA">The number of columns in the A matrix.</param>
+            <param name="s">The singular values of A in ascending value.</param>
+            <param name="u">If <paramref name="computeVectors"/> is <c>true</c>, on exit U contains the left
+            singular vectors.</param>
+            <param name="vt">If <paramref name="computeVectors"/> is <c>true</c>, on exit VT contains the transposed
+            right singular vectors.</param>
+            <remarks>This is equivalent to the GESVD LAPACK routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.AddArrays(System.Numerics.Complex[],System.Numerics.Complex[],System.Numerics.Complex[])">
+            <summary>
+            Does a point wise add of two arrays <c>z = x + y</c>. This can be used
+            to add vectors or matrices.
+            </summary>
+            <param name="x">The array x.</param>
+            <param name="y">The array y.</param>
+            <param name="result">The result of the addition.</param>
+            <remarks>There is no equivalent BLAS routine, but many libraries
+            provide optimized (parallel and/or vectorized) versions of this
+            routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.SubtractArrays(System.Numerics.Complex[],System.Numerics.Complex[],System.Numerics.Complex[])">
+            <summary>
+            Does a point wise subtraction of two arrays <c>z = x - y</c>. This can be used
+            to subtract vectors or matrices.
+            </summary>
+            <param name="x">The array x.</param>
+            <param name="y">The array y.</param>
+            <param name="result">The result of the subtraction.</param>
+            <remarks>There is no equivalent BLAS routine, but many libraries
+            provide optimized (parallel and/or vectorized) versions of this
+            routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.PointWiseMultiplyArrays(System.Numerics.Complex[],System.Numerics.Complex[],System.Numerics.Complex[])">
+            <summary>
+            Does a point wise multiplication of two arrays <c>z = x * y</c>. This can be used
+            to multiple elements of vectors or matrices.
+            </summary>
+            <param name="x">The array x.</param>
+            <param name="y">The array y.</param>
+            <param name="result">The result of the point wise multiplication.</param>
+            <remarks>There is no equivalent BLAS routine, but many libraries
+            provide optimized (parallel and/or vectorized) versions of this
+            routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.PointWisePowerArrays(System.Numerics.Complex[],System.Numerics.Complex[],System.Numerics.Complex[])">
+            <summary>
+            Does a point wise power of two arrays <c>z = x ^ y</c>. This can be used
+            to raise elements of vectors or matrices to the powers of another vector or matrix.
+            </summary>
+            <param name="x">The array x.</param>
+            <param name="y">The array y.</param>
+            <param name="result">The result of the point wise power.</param>
+            <remarks>There is no equivalent BLAS routine, but many libraries
+            provide optimized (parallel and/or vectorized) versions of this
+            routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.PointWiseDivideArrays(System.Numerics.Complex[],System.Numerics.Complex[],System.Numerics.Complex[])">
+            <summary>
+            Does a point wise division of two arrays <c>z = x / y</c>. This can be used
+            to divide elements of vectors or matrices.
+            </summary>
+            <param name="x">The array x.</param>
+            <param name="y">The array y.</param>
+            <param name="result">The result of the point wise division.</param>
+            <remarks>There is no equivalent BLAS routine, but many libraries
+            provide optimized (parallel and/or vectorized) versions of this
+            routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.EigenDecomp(System.Boolean,System.Int32,System.Numerics.Complex[],System.Numerics.Complex[],System.Numerics.Complex[],System.Numerics.Complex[])">
+            <summary>
+            Computes the eigenvalues and eigenvectors of a matrix.
+            </summary>
+            <param name="isSymmetric">Whether the matrix is symmetric or not.</param>
+            <param name="order">The order of the matrix.</param>
+            <param name="matrix">The matrix to decompose. The length of the array must be order * order.</param>
+            <param name="matrixEv">On output, the matrix contains the eigen vectors. The length of the array must be order * order.</param>
+            <param name="vectorEv">On output, the eigen values (λ) of matrix in ascending value. The length of the array must <paramref name="order"/>.</param>
+            <param name="matrixD">On output, the block diagonal eigenvalue matrix. The length of the array must be order * order.</param>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.MatrixNorm(MathNet.Numerics.Providers.LinearAlgebra.Norm,System.Int32,System.Int32,MathNet.Numerics.Complex32[])">
+            <summary>
+            Computes the requested <see cref="T:MathNet.Numerics.Providers.LinearAlgebra.Norm"/> of the matrix.
+            </summary>
+            <param name="norm">The type of norm to compute.</param>
+            <param name="rows">The number of rows in the matrix.</param>
+            <param name="columns">The number of columns in the matrix.</param>
+            <param name="matrix">The matrix to compute the norm from.</param>
+            <returns>
+            The requested <see cref="T:MathNet.Numerics.Providers.LinearAlgebra.Norm"/> of the matrix.
+            </returns>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.DotProduct(MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[])">
+            <summary>
+            Computes the dot product of x and y.
+            </summary>
+            <param name="x">The vector x.</param>
+            <param name="y">The vector y.</param>
+            <returns>The dot product of x and y.</returns>
+            <remarks>This is equivalent to the DOT BLAS routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.AddVectorToScaledVector(MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32,MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[])">
+            <summary>
+            Adds a scaled vector to another: <c>result = y + alpha*x</c>.
+            </summary>
+            <param name="y">The vector to update.</param>
+            <param name="alpha">The value to scale <paramref name="x"/> by.</param>
+            <param name="x">The vector to add to <paramref name="y"/>.</param>
+            <param name="result">The result of the addition.</param>
+            <remarks>This is similar to the AXPY BLAS routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.ScaleArray(MathNet.Numerics.Complex32,MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[])">
+            <summary>
+            Scales an array. Can be used to scale a vector and a matrix.
+            </summary>
+            <param name="alpha">The scalar.</param>
+            <param name="x">The values to scale.</param>
+            <param name="result">This result of the scaling.</param>
+            <remarks>This is similar to the SCAL BLAS routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.ConjugateArray(MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[])">
+            <summary>
+            Conjugates an array. Can be used to conjugate a vector and a matrix.
+            </summary>
+            <param name="x">The values to conjugate.</param>
+            <param name="result">This result of the conjugation.</param>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.MatrixMultiply(MathNet.Numerics.Complex32[],System.Int32,System.Int32,MathNet.Numerics.Complex32[],System.Int32,System.Int32,MathNet.Numerics.Complex32[])">
+            <summary>
+            Multiples two matrices. <c>result = x * y</c>
+            </summary>
+            <param name="x">The x matrix.</param>
+            <param name="rowsX">The number of rows in the x matrix.</param>
+            <param name="columnsX">The number of columns in the x matrix.</param>
+            <param name="y">The y matrix.</param>
+            <param name="rowsY">The number of rows in the y matrix.</param>
+            <param name="columnsY">The number of columns in the y matrix.</param>
+            <param name="result">Where to store the result of the multiplication.</param>
+            <remarks>This is a simplified version of the BLAS GEMM routine with alpha
+            set to Complex32.One and beta set to Complex32.Zero, and x and y are not transposed.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.MatrixMultiplyWithUpdate(MathNet.Numerics.Providers.LinearAlgebra.Transpose,MathNet.Numerics.Providers.LinearAlgebra.Transpose,MathNet.Numerics.Complex32,MathNet.Numerics.Complex32[],System.Int32,System.Int32,MathNet.Numerics.Complex32[],System.Int32,System.Int32,MathNet.Numerics.Complex32,MathNet.Numerics.Complex32[])">
+            <summary>
+            Multiplies two matrices and updates another with the result. <c>c = alpha*op(a)*op(b) + beta*c</c>
+            </summary>
+            <param name="transposeA">How to transpose the <paramref name="a"/> matrix.</param>
+            <param name="transposeB">How to transpose the <paramref name="b"/> matrix.</param>
+            <param name="alpha">The value to scale <paramref name="a"/> matrix.</param>
+            <param name="a">The a matrix.</param>
+            <param name="rowsA">The number of rows in the <paramref name="a"/> matrix.</param>
+            <param name="columnsA">The number of columns in the <paramref name="a"/> matrix.</param>
+            <param name="b">The b matrix</param>
+            <param name="rowsB">The number of rows in the <paramref name="b"/> matrix.</param>
+            <param name="columnsB">The number of columns in the <paramref name="b"/> matrix.</param>
+            <param name="beta">The value to scale the <paramref name="c"/> matrix.</param>
+            <param name="c">The c matrix.</param>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.LUFactor(MathNet.Numerics.Complex32[],System.Int32,System.Int32[])">
+            <summary>
+            Computes the LUP factorization of A. P*A = L*U.
+            </summary>
+            <param name="data">An <paramref name="order"/> by <paramref name="order"/> matrix. The matrix is overwritten with the
+            the LU factorization on exit. The lower triangular factor L is stored in under the diagonal of <paramref name="data"/> (the diagonal is always Complex32.One
+            for the L factor). The upper triangular factor U is stored on and above the diagonal of <paramref name="data"/>.</param>
+            <param name="order">The order of the square matrix <paramref name="data"/>.</param>
+            <param name="ipiv">On exit, it contains the pivot indices. The size of the array must be <paramref name="order"/>.</param>
+            <remarks>This is equivalent to the GETRF LAPACK routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.LUInverse(MathNet.Numerics.Complex32[],System.Int32)">
+            <summary>
+            Computes the inverse of matrix using LU factorization.
+            </summary>
+            <param name="a">The N by N matrix to invert. Contains the inverse On exit.</param>
+            <param name="order">The order of the square matrix <paramref name="a"/>.</param>
+            <remarks>This is equivalent to the GETRF and GETRI LAPACK routines.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.LUInverseFactored(MathNet.Numerics.Complex32[],System.Int32,System.Int32[])">
+            <summary>
+            Computes the inverse of a previously factored matrix.
+            </summary>
+            <param name="a">The LU factored N by N matrix.  Contains the inverse On exit.</param>
+            <param name="order">The order of the square matrix <paramref name="a"/>.</param>
+            <param name="ipiv">The pivot indices of <paramref name="a"/>.</param>
+            <remarks>This is equivalent to the GETRI LAPACK routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.LUSolve(System.Int32,MathNet.Numerics.Complex32[],System.Int32,MathNet.Numerics.Complex32[])">
+            <summary>
+            Solves A*X=B for X using LU factorization.
+            </summary>
+            <param name="columnsOfB">The number of columns of B.</param>
+            <param name="a">The square matrix A.</param>
+            <param name="order">The order of the square matrix <paramref name="a"/>.</param>
+            <param name="b">On entry the B matrix; on exit the X matrix.</param>
+            <remarks>This is equivalent to the GETRF and GETRS LAPACK routines.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.LUSolveFactored(System.Int32,MathNet.Numerics.Complex32[],System.Int32,System.Int32[],MathNet.Numerics.Complex32[])">
+            <summary>
+            Solves A*X=B for X using a previously factored A matrix.
+            </summary>
+            <param name="columnsOfB">The number of columns of B.</param>
+            <param name="a">The factored A matrix.</param>
+            <param name="order">The order of the square matrix <paramref name="a"/>.</param>
+            <param name="ipiv">The pivot indices of <paramref name="a"/>.</param>
+            <param name="b">On entry the B matrix; on exit the X matrix.</param>
+            <remarks>This is equivalent to the GETRS LAPACK routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.CholeskyFactor(MathNet.Numerics.Complex32[],System.Int32)">
+            <summary>
+            Computes the Cholesky factorization of A.
+            </summary>
+            <param name="a">On entry, a square, positive definite matrix. On exit, the matrix is overwritten with the
+            the Cholesky factorization.</param>
+            <param name="order">The number of rows or columns in the matrix.</param>
+            <remarks>This is equivalent to the POTRF LAPACK routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.CholeskySolve(MathNet.Numerics.Complex32[],System.Int32,MathNet.Numerics.Complex32[],System.Int32)">
+            <summary>
+            Solves A*X=B for X using Cholesky factorization.
+            </summary>
+            <param name="a">The square, positive definite matrix A.</param>
+            <param name="orderA">The number of rows and columns in A.</param>
+            <param name="b">On entry the B matrix; on exit the X matrix.</param>
+            <param name="columnsB">The number of columns in the B matrix.</param>
+            <remarks>This is equivalent to the POTRF add POTRS LAPACK routines.
+            </remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.CholeskySolveFactored(MathNet.Numerics.Complex32[],System.Int32,MathNet.Numerics.Complex32[],System.Int32)">
+            <summary>
+            Solves A*X=B for X using a previously factored A matrix.
+            </summary>
+            <param name="a">The square, positive definite matrix A.</param>
+            <param name="orderA">The number of rows and columns in A.</param>
+            <param name="b">On entry the B matrix; on exit the X matrix.</param>
+            <param name="columnsB">The number of columns in the B matrix.</param>
+            <remarks>This is equivalent to the POTRS LAPACK routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.QRFactor(MathNet.Numerics.Complex32[],System.Int32,System.Int32,MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[])">
+            <summary>
+            Computes the QR factorization of A.
+            </summary>
+            <param name="r">On entry, it is the M by N A matrix to factor. On exit,
+            it is overwritten with the R matrix of the QR factorization. </param>
+            <param name="rowsR">The number of rows in the A matrix.</param>
+            <param name="columnsR">The number of columns in the A matrix.</param>
+            <param name="q">On exit, A M by M matrix that holds the Q matrix of the
+            QR factorization.</param>
+            <param name="tau">A min(m,n) vector. On exit, contains additional information
+            to be used by the QR solve routine.</param>
+            <remarks>This is similar to the GEQRF and ORGQR LAPACK routines.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.ThinQRFactor(MathNet.Numerics.Complex32[],System.Int32,System.Int32,MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[])">
+            <summary>
+            Computes the thin QR factorization of A where M &gt; N.
+            </summary>
+            <param name="q">On entry, it is the M by N A matrix to factor. On exit,
+            it is overwritten with the Q matrix of the QR factorization.</param>
+            <param name="rowsA">The number of rows in the A matrix.</param>
+            <param name="columnsA">The number of columns in the A matrix.</param>
+            <param name="r">On exit, A N by N matrix that holds the R matrix of the
+            QR factorization.</param>
+            <param name="tau">A min(m,n) vector. On exit, contains additional information
+            to be used by the QR solve routine.</param>
+            <remarks>This is similar to the GEQRF and ORGQR LAPACK routines.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.QRSolve(MathNet.Numerics.Complex32[],System.Int32,System.Int32,MathNet.Numerics.Complex32[],System.Int32,MathNet.Numerics.Complex32[],MathNet.Numerics.LinearAlgebra.Factorization.QRMethod)">
+            <summary>
+            Solves A*X=B for X using QR factorization of A.
+            </summary>
+            <param name="a">The A matrix.</param>
+            <param name="rows">The number of rows in the A matrix.</param>
+            <param name="columns">The number of columns in the A matrix.</param>
+            <param name="b">The B matrix.</param>
+            <param name="columnsB">The number of columns of B.</param>
+            <param name="x">On exit, the solution matrix.</param>
+            <param name="method">The type of QR factorization to perform. <seealso cref="T:MathNet.Numerics.LinearAlgebra.Factorization.QRMethod"/></param>
+            <remarks>Rows must be greater or equal to columns.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.QRSolveFactored(MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[],System.Int32,System.Int32,MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[],System.Int32,MathNet.Numerics.Complex32[],MathNet.Numerics.LinearAlgebra.Factorization.QRMethod)">
+            <summary>
+            Solves A*X=B for X using a previously QR factored matrix.
+            </summary>
+            <param name="q">The Q matrix obtained by calling <see cref="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.QRFactor(MathNet.Numerics.Complex32[],System.Int32,System.Int32,MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[])"/>.</param>
+            <param name="r">The R matrix obtained by calling <see cref="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.QRFactor(MathNet.Numerics.Complex32[],System.Int32,System.Int32,MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[])"/>. </param>
+            <param name="rowsA">The number of rows in the A matrix.</param>
+            <param name="columnsA">The number of columns in the A matrix.</param>
+            <param name="tau">Contains additional information on Q. Only used for the native solver
+            and can be <c>null</c> for the managed provider.</param>
+            <param name="b">The B matrix.</param>
+            <param name="columnsB">The number of columns of B.</param>
+            <param name="x">On exit, the solution matrix.</param>
+            <param name="method">The type of QR factorization to perform. <seealso cref="T:MathNet.Numerics.LinearAlgebra.Factorization.QRMethod"/></param>
+            <remarks>Rows must be greater or equal to columns.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.SvdSolve(MathNet.Numerics.Complex32[],System.Int32,System.Int32,MathNet.Numerics.Complex32[],System.Int32,MathNet.Numerics.Complex32[])">
+            <summary>
+            Solves A*X=B for X using the singular value decomposition of A.
+            </summary>
+            <param name="a">On entry, the M by N matrix to decompose.</param>
+            <param name="rowsA">The number of rows in the A matrix.</param>
+            <param name="columnsA">The number of columns in the A matrix.</param>
+            <param name="b">The B matrix.</param>
+            <param name="columnsB">The number of columns of B.</param>
+            <param name="x">On exit, the solution matrix.</param>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.SvdSolveFactored(System.Int32,System.Int32,MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[],System.Int32,MathNet.Numerics.Complex32[])">
+            <summary>
+            Solves A*X=B for X using a previously SVD decomposed matrix.
+            </summary>
+            <param name="rowsA">The number of rows in the A matrix.</param>
+            <param name="columnsA">The number of columns in the A matrix.</param>
+            <param name="s">The s values returned by <see cref="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.SingularValueDecomposition(System.Boolean,MathNet.Numerics.Complex32[],System.Int32,System.Int32,MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[])"/>.</param>
+            <param name="u">The left singular vectors returned by  <see cref="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.SingularValueDecomposition(System.Boolean,MathNet.Numerics.Complex32[],System.Int32,System.Int32,MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[])"/>.</param>
+            <param name="vt">The right singular  vectors returned by  <see cref="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.SingularValueDecomposition(System.Boolean,MathNet.Numerics.Complex32[],System.Int32,System.Int32,MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[])"/>.</param>
+            <param name="b">The B matrix.</param>
+            <param name="columnsB">The number of columns of B.</param>
+            <param name="x">On exit, the solution matrix.</param>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.SingularValueDecomposition(System.Boolean,MathNet.Numerics.Complex32[],System.Int32,System.Int32,MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[])">
+            <summary>
+            Computes the singular value decomposition of A.
+            </summary>
+            <param name="computeVectors">Compute the singular U and VT vectors or not.</param>
+            <param name="a">On entry, the M by N matrix to decompose. On exit, A may be overwritten.</param>
+            <param name="rowsA">The number of rows in the A matrix.</param>
+            <param name="columnsA">The number of columns in the A matrix.</param>
+            <param name="s">The singular values of A in ascending value.</param>
+            <param name="u">If <paramref name="computeVectors"/> is <c>true</c>, on exit U contains the left
+            singular vectors.</param>
+            <param name="vt">If <paramref name="computeVectors"/> is <c>true</c>, on exit VT contains the transposed
+            right singular vectors.</param>
+            <remarks>This is equivalent to the GESVD LAPACK routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.AddArrays(MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[])">
+            <summary>
+            Does a point wise add of two arrays <c>z = x + y</c>. This can be used
+            to add vectors or matrices.
+            </summary>
+            <param name="x">The array x.</param>
+            <param name="y">The array y.</param>
+            <param name="result">The result of the addition.</param>
+            <remarks>There is no equivalent BLAS routine, but many libraries
+            provide optimized (parallel and/or vectorized) versions of this
+            routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.SubtractArrays(MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[])">
+            <summary>
+            Does a point wise subtraction of two arrays <c>z = x - y</c>. This can be used
+            to subtract vectors or matrices.
+            </summary>
+            <param name="x">The array x.</param>
+            <param name="y">The array y.</param>
+            <param name="result">The result of the subtraction.</param>
+            <remarks>There is no equivalent BLAS routine, but many libraries
+            provide optimized (parallel and/or vectorized) versions of this
+            routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.PointWiseMultiplyArrays(MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[])">
+            <summary>
+            Does a point wise multiplication of two arrays <c>z = x * y</c>. This can be used
+            to multiple elements of vectors or matrices.
+            </summary>
+            <param name="x">The array x.</param>
+            <param name="y">The array y.</param>
+            <param name="result">The result of the point wise multiplication.</param>
+            <remarks>There is no equivalent BLAS routine, but many libraries
+            provide optimized (parallel and/or vectorized) versions of this
+            routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.PointWiseDivideArrays(MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[])">
+            <summary>
+            Does a point wise division of two arrays <c>z = x / y</c>. This can be used
+            to divide elements of vectors or matrices.
+            </summary>
+            <param name="x">The array x.</param>
+            <param name="y">The array y.</param>
+            <param name="result">The result of the point wise division.</param>
+            <remarks>There is no equivalent BLAS routine, but many libraries
+            provide optimized (parallel and/or vectorized) versions of this
+            routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.PointWisePowerArrays(MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[])">
+            <summary>
+            Does a point wise power of two arrays <c>z = x ^ y</c>. This can be used
+            to raise elements of vectors or matrices to the powers of another vector or matrix.
+            </summary>
+            <param name="x">The array x.</param>
+            <param name="y">The array y.</param>
+            <param name="result">The result of the point wise power.</param>
+            <remarks>There is no equivalent BLAS routine, but many libraries
+            provide optimized (parallel and/or vectorized) versions of this
+            routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.EigenDecomp(System.Boolean,System.Int32,MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[],System.Numerics.Complex[],MathNet.Numerics.Complex32[])">
+            <summary>
+            Computes the eigenvalues and eigenvectors of a matrix.
+            </summary>
+            <param name="isSymmetric">Whether the matrix is symmetric or not.</param>
+            <param name="order">The order of the matrix.</param>
+            <param name="matrix">The matrix to decompose. The length of the array must be order * order.</param>
+            <param name="matrixEv">On output, the matrix contains the eigen vectors. The length of the array must be order * order.</param>
+            <param name="vectorEv">On output, the eigen values (λ) of matrix in ascending value. The length of the array must <paramref name="order"/>.</param>
+            <param name="matrixD">On output, the block diagonal eigenvalue matrix. The length of the array must be order * order.</param>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.#ctor(System.String,MathNet.Numerics.Providers.MKL.MklConsistency,MathNet.Numerics.Providers.MKL.MklPrecision,MathNet.Numerics.Providers.MKL.MklAccuracy)">
+            <param name="hintPath">Hint path where to look for the native binaries</param>
+            <param name="consistency">
+            Sets the desired bit consistency on repeated identical computations on varying CPU architectures,
+            as a trade-off with performance.
+            </param>
+            <param name="precision">VML optimal precision and rounding.</param>
+            <param name="accuracy">VML accuracy mode.</param>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.IsAvailable">
+            <summary>
+            Try to find out whether the provider is available, at least in principle.
+            Verification may still fail if available, but it will certainly fail if unavailable.
+            </summary>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.InitializeVerify">
+            <summary>
+            Initialize and verify that the provided is indeed available.
+            If calling this method fails, consider to fall back to alternatives like the managed provider.
+            </summary>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.FreeResources">
+            <summary>
+            Frees memory buffers, caches and handles allocated in or to the provider.
+            Does not unload the provider itself, it is still usable afterwards.
+            </summary>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.MatrixNorm(MathNet.Numerics.Providers.LinearAlgebra.Norm,System.Int32,System.Int32,System.Double[])">
+            <summary>
+            Computes the requested <see cref="T:MathNet.Numerics.Providers.LinearAlgebra.Norm"/> of the matrix.
+            </summary>
+            <param name="norm">The type of norm to compute.</param>
+            <param name="rows">The number of rows in the matrix.</param>
+            <param name="columns">The number of columns in the matrix.</param>
+            <param name="matrix">The matrix to compute the norm from.</param>
+            <returns>
+            The requested <see cref="T:MathNet.Numerics.Providers.LinearAlgebra.Norm"/> of the matrix.
+            </returns>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.DotProduct(System.Double[],System.Double[])">
+            <summary>
+            Computes the dot product of x and y.
+            </summary>
+            <param name="x">The vector x.</param>
+            <param name="y">The vector y.</param>
+            <returns>The dot product of x and y.</returns>
+            <remarks>This is equivalent to the DOT BLAS routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.AddVectorToScaledVector(System.Double[],System.Double,System.Double[],System.Double[])">
+            <summary>
+            Adds a scaled vector to another: <c>result = y + alpha*x</c>.
+            </summary>
+            <param name="y">The vector to update.</param>
+            <param name="alpha">The value to scale <paramref name="x"/> by.</param>
+            <param name="x">The vector to add to <paramref name="y"/>.</param>
+            <param name="result">The result of the addition.</param>
+            <remarks>This is similar to the AXPY BLAS routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.ScaleArray(System.Double,System.Double[],System.Double[])">
+            <summary>
+            Scales an array. Can be used to scale a vector and a matrix.
+            </summary>
+            <param name="alpha">The scalar.</param>
+            <param name="x">The values to scale.</param>
+            <param name="result">This result of the scaling.</param>
+            <remarks>This is similar to the SCAL BLAS routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.ConjugateArray(System.Double[],System.Double[])">
+            <summary>
+            Conjugates an array. Can be used to conjugate a vector and a matrix.
+            </summary>
+            <param name="x">The values to conjugate.</param>
+            <param name="result">This result of the conjugation.</param>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.MatrixMultiply(System.Double[],System.Int32,System.Int32,System.Double[],System.Int32,System.Int32,System.Double[])">
+            <summary>
+            Multiples two matrices. <c>result = x * y</c>
+            </summary>
+            <param name="x">The x matrix.</param>
+            <param name="rowsX">The number of rows in the x matrix.</param>
+            <param name="columnsX">The number of columns in the x matrix.</param>
+            <param name="y">The y matrix.</param>
+            <param name="rowsY">The number of rows in the y matrix.</param>
+            <param name="columnsY">The number of columns in the y matrix.</param>
+            <param name="result">Where to store the result of the multiplication.</param>
+            <remarks>This is a simplified version of the BLAS GEMM routine with alpha
+            set to 1.0 and beta set to 0.0, and x and y are not transposed.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.MatrixMultiplyWithUpdate(MathNet.Numerics.Providers.LinearAlgebra.Transpose,MathNet.Numerics.Providers.LinearAlgebra.Transpose,System.Double,System.Double[],System.Int32,System.Int32,System.Double[],System.Int32,System.Int32,System.Double,System.Double[])">
+            <summary>
+            Multiplies two matrices and updates another with the result. <c>c = alpha*op(a)*op(b) + beta*c</c>
+            </summary>
+            <param name="transposeA">How to transpose the <paramref name="a"/> matrix.</param>
+            <param name="transposeB">How to transpose the <paramref name="b"/> matrix.</param>
+            <param name="alpha">The value to scale <paramref name="a"/> matrix.</param>
+            <param name="a">The a matrix.</param>
+            <param name="rowsA">The number of rows in the <paramref name="a"/> matrix.</param>
+            <param name="columnsA">The number of columns in the <paramref name="a"/> matrix.</param>
+            <param name="b">The b matrix</param>
+            <param name="rowsB">The number of rows in the <paramref name="b"/> matrix.</param>
+            <param name="columnsB">The number of columns in the <paramref name="b"/> matrix.</param>
+            <param name="beta">The value to scale the <paramref name="c"/> matrix.</param>
+            <param name="c">The c matrix.</param>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.LUFactor(System.Double[],System.Int32,System.Int32[])">
+            <summary>
+            Computes the LUP factorization of A. P*A = L*U.
+            </summary>
+            <param name="data">An <paramref name="order"/> by <paramref name="order"/> matrix. The matrix is overwritten with the
+            the LU factorization on exit. The lower triangular factor L is stored in under the diagonal of <paramref name="data"/> (the diagonal is always 1.0
+            for the L factor). The upper triangular factor U is stored on and above the diagonal of <paramref name="data"/>.</param>
+            <param name="order">The order of the square matrix <paramref name="data"/>.</param>
+            <param name="ipiv">On exit, it contains the pivot indices. The size of the array must be <paramref name="order"/>.</param>
+            <remarks>This is equivalent to the GETRF LAPACK routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.LUInverse(System.Double[],System.Int32)">
+            <summary>
+            Computes the inverse of matrix using LU factorization.
+            </summary>
+            <param name="a">The N by N matrix to invert. Contains the inverse On exit.</param>
+            <param name="order">The order of the square matrix <paramref name="a"/>.</param>
+            <remarks>This is equivalent to the GETRF and GETRI LAPACK routines.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.LUInverseFactored(System.Double[],System.Int32,System.Int32[])">
+            <summary>
+            Computes the inverse of a previously factored matrix.
+            </summary>
+            <param name="a">The LU factored N by N matrix.  Contains the inverse On exit.</param>
+            <param name="order">The order of the square matrix <paramref name="a"/>.</param>
+            <param name="ipiv">The pivot indices of <paramref name="a"/>.</param>
+            <remarks>This is equivalent to the GETRI LAPACK routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.LUSolve(System.Int32,System.Double[],System.Int32,System.Double[])">
+            <summary>
+            Solves A*X=B for X using LU factorization.
+            </summary>
+            <param name="columnsOfB">The number of columns of B.</param>
+            <param name="a">The square matrix A.</param>
+            <param name="order">The order of the square matrix <paramref name="a"/>.</param>
+            <param name="b">On entry the B matrix; on exit the X matrix.</param>
+            <remarks>This is equivalent to the GETRF and GETRS LAPACK routines.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.LUSolveFactored(System.Int32,System.Double[],System.Int32,System.Int32[],System.Double[])">
+            <summary>
+            Solves A*X=B for X using a previously factored A matrix.
+            </summary>
+            <param name="columnsOfB">The number of columns of B.</param>
+            <param name="a">The factored A matrix.</param>
+            <param name="order">The order of the square matrix <paramref name="a"/>.</param>
+            <param name="ipiv">The pivot indices of <paramref name="a"/>.</param>
+            <param name="b">On entry the B matrix; on exit the X matrix.</param>
+            <remarks>This is equivalent to the GETRS LAPACK routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.CholeskyFactor(System.Double[],System.Int32)">
+            <summary>
+            Computes the Cholesky factorization of A.
+            </summary>
+            <param name="a">On entry, a square, positive definite matrix. On exit, the matrix is overwritten with the
+            the Cholesky factorization.</param>
+            <param name="order">The number of rows or columns in the matrix.</param>
+            <remarks>This is equivalent to the POTRF LAPACK routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.CholeskySolve(System.Double[],System.Int32,System.Double[],System.Int32)">
+            <summary>
+            Solves A*X=B for X using Cholesky factorization.
+            </summary>
+            <param name="a">The square, positive definite matrix A.</param>
+            <param name="orderA">The number of rows and columns in A.</param>
+            <param name="b">On entry the B matrix; on exit the X matrix.</param>
+            <param name="columnsB">The number of columns in the B matrix.</param>
+            <remarks>This is equivalent to the POTRF add POTRS LAPACK routines.
+            </remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.CholeskySolveFactored(System.Double[],System.Int32,System.Double[],System.Int32)">
+            <summary>
+            Solves A*X=B for X using a previously factored A matrix.
+            </summary>
+            <param name="a">The square, positive definite matrix A.</param>
+            <param name="orderA">The number of rows and columns in A.</param>
+            <param name="b">On entry the B matrix; on exit the X matrix.</param>
+            <param name="columnsB">The number of columns in the B matrix.</param>
+            <remarks>This is equivalent to the POTRS LAPACK routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.QRFactor(System.Double[],System.Int32,System.Int32,System.Double[],System.Double[])">
+            <summary>
+            Computes the QR factorization of A.
+            </summary>
+            <param name="r">On entry, it is the M by N A matrix to factor. On exit,
+            it is overwritten with the R matrix of the QR factorization. </param>
+            <param name="rowsR">The number of rows in the A matrix.</param>
+            <param name="columnsR">The number of columns in the A matrix.</param>
+            <param name="q">On exit, A M by M matrix that holds the Q matrix of the
+            QR factorization.</param>
+            <param name="tau">A min(m,n) vector. On exit, contains additional information
+            to be used by the QR solve routine.</param>
+            <remarks>This is similar to the GEQRF and ORGQR LAPACK routines.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.ThinQRFactor(System.Double[],System.Int32,System.Int32,System.Double[],System.Double[])">
+            <summary>
+            Computes the thin QR factorization of A where M &gt; N.
+            </summary>
+            <param name="q">On entry, it is the M by N A matrix to factor. On exit,
+            it is overwritten with the Q matrix of the QR factorization.</param>
+            <param name="rowsA">The number of rows in the A matrix.</param>
+            <param name="columnsA">The number of columns in the A matrix.</param>
+            <param name="r">On exit, A N by N matrix that holds the R matrix of the
+            QR factorization.</param>
+            <param name="tau">A min(m,n) vector. On exit, contains additional information
+            to be used by the QR solve routine.</param>
+            <remarks>This is similar to the GEQRF and ORGQR LAPACK routines.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.QRSolve(System.Double[],System.Int32,System.Int32,System.Double[],System.Int32,System.Double[],MathNet.Numerics.LinearAlgebra.Factorization.QRMethod)">
+            <summary>
+            Solves A*X=B for X using QR factorization of A.
+            </summary>
+            <param name="a">The A matrix.</param>
+            <param name="rows">The number of rows in the A matrix.</param>
+            <param name="columns">The number of columns in the A matrix.</param>
+            <param name="b">The B matrix.</param>
+            <param name="columnsB">The number of columns of B.</param>
+            <param name="x">On exit, the solution matrix.</param>
+            <param name="method">The type of QR factorization to perform. <seealso cref="T:MathNet.Numerics.LinearAlgebra.Factorization.QRMethod"/></param>
+            <remarks>Rows must be greater or equal to columns.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.QRSolveFactored(System.Double[],System.Double[],System.Int32,System.Int32,System.Double[],System.Double[],System.Int32,System.Double[],MathNet.Numerics.LinearAlgebra.Factorization.QRMethod)">
+            <summary>
+            Solves A*X=B for X using a previously QR factored matrix.
+            </summary>
+            <param name="q">The Q matrix obtained by calling <see cref="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.QRFactor(System.Double[],System.Int32,System.Int32,System.Double[],System.Double[])"/>.</param>
+            <param name="r">The R matrix obtained by calling <see cref="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.QRFactor(System.Double[],System.Int32,System.Int32,System.Double[],System.Double[])"/>. </param>
+            <param name="rowsA">The number of rows in the A matrix.</param>
+            <param name="columnsA">The number of columns in the A matrix.</param>
+            <param name="tau">Contains additional information on Q. Only used for the native solver
+            and can be <c>null</c> for the managed provider.</param>
+            <param name="b">The B matrix.</param>
+            <param name="columnsB">The number of columns of B.</param>
+            <param name="x">On exit, the solution matrix.</param>
+            <param name="method">The type of QR factorization to perform. <seealso cref="T:MathNet.Numerics.LinearAlgebra.Factorization.QRMethod"/></param>
+            <remarks>Rows must be greater or equal to columns.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.SvdSolve(System.Double[],System.Int32,System.Int32,System.Double[],System.Int32,System.Double[])">
+            <summary>
+            Solves A*X=B for X using the singular value decomposition of A.
+            </summary>
+            <param name="a">On entry, the M by N matrix to decompose.</param>
+            <param name="rowsA">The number of rows in the A matrix.</param>
+            <param name="columnsA">The number of columns in the A matrix.</param>
+            <param name="b">The B matrix.</param>
+            <param name="columnsB">The number of columns of B.</param>
+            <param name="x">On exit, the solution matrix.</param>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.SvdSolveFactored(System.Int32,System.Int32,System.Double[],System.Double[],System.Double[],System.Double[],System.Int32,System.Double[])">
+            <summary>
+            Solves A*X=B for X using a previously SVD decomposed matrix.
+            </summary>
+            <param name="rowsA">The number of rows in the A matrix.</param>
+            <param name="columnsA">The number of columns in the A matrix.</param>
+            <param name="s">The s values returned by <see cref="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.SingularValueDecomposition(System.Boolean,System.Double[],System.Int32,System.Int32,System.Double[],System.Double[],System.Double[])"/>.</param>
+            <param name="u">The left singular vectors returned by  <see cref="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.SingularValueDecomposition(System.Boolean,System.Double[],System.Int32,System.Int32,System.Double[],System.Double[],System.Double[])"/>.</param>
+            <param name="vt">The right singular  vectors returned by  <see cref="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.SingularValueDecomposition(System.Boolean,System.Double[],System.Int32,System.Int32,System.Double[],System.Double[],System.Double[])"/>.</param>
+            <param name="b">The B matrix.</param>
+            <param name="columnsB">The number of columns of B.</param>
+            <param name="x">On exit, the solution matrix.</param>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.SingularValueDecomposition(System.Boolean,System.Double[],System.Int32,System.Int32,System.Double[],System.Double[],System.Double[])">
+            <summary>
+            Computes the singular value decomposition of A.
+            </summary>
+            <param name="computeVectors">Compute the singular U and VT vectors or not.</param>
+            <param name="a">On entry, the M by N matrix to decompose. On exit, A may be overwritten.</param>
+            <param name="rowsA">The number of rows in the A matrix.</param>
+            <param name="columnsA">The number of columns in the A matrix.</param>
+            <param name="s">The singular values of A in ascending value.</param>
+            <param name="u">If <paramref name="computeVectors"/> is <c>true</c>, on exit U contains the left
+            singular vectors.</param>
+            <param name="vt">If <paramref name="computeVectors"/> is <c>true</c>, on exit VT contains the transposed
+            right singular vectors.</param>
+            <remarks>This is equivalent to the GESVD LAPACK routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.AddArrays(System.Double[],System.Double[],System.Double[])">
+            <summary>
+            Does a point wise add of two arrays <c>z = x + y</c>. This can be used
+            to add vectors or matrices.
+            </summary>
+            <param name="x">The array x.</param>
+            <param name="y">The array y.</param>
+            <param name="result">The result of the addition.</param>
+            <remarks>There is no equivalent BLAS routine, but many libraries
+            provide optimized (parallel and/or vectorized) versions of this
+            routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.SubtractArrays(System.Double[],System.Double[],System.Double[])">
+            <summary>
+            Does a point wise subtraction of two arrays <c>z = x - y</c>. This can be used
+            to subtract vectors or matrices.
+            </summary>
+            <param name="x">The array x.</param>
+            <param name="y">The array y.</param>
+            <param name="result">The result of the subtraction.</param>
+            <remarks>There is no equivalent BLAS routine, but many libraries
+            provide optimized (parallel and/or vectorized) versions of this
+            routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.PointWiseMultiplyArrays(System.Double[],System.Double[],System.Double[])">
+            <summary>
+            Does a point wise multiplication of two arrays <c>z = x * y</c>. This can be used
+            to multiple elements of vectors or matrices.
+            </summary>
+            <param name="x">The array x.</param>
+            <param name="y">The array y.</param>
+            <param name="result">The result of the point wise multiplication.</param>
+            <remarks>There is no equivalent BLAS routine, but many libraries
+            provide optimized (parallel and/or vectorized) versions of this
+            routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.PointWiseDivideArrays(System.Double[],System.Double[],System.Double[])">
+            <summary>
+            Does a point wise division of two arrays <c>z = x / y</c>. This can be used
+            to divide elements of vectors or matrices.
+            </summary>
+            <param name="x">The array x.</param>
+            <param name="y">The array y.</param>
+            <param name="result">The result of the point wise division.</param>
+            <remarks>There is no equivalent BLAS routine, but many libraries
+            provide optimized (parallel and/or vectorized) versions of this
+            routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.PointWisePowerArrays(System.Double[],System.Double[],System.Double[])">
+            <summary>
+            Does a point wise power of two arrays <c>z = x ^ y</c>. This can be used
+            to raise elements of vectors or matrices to the powers of another vector or matrix.
+            </summary>
+            <param name="x">The array x.</param>
+            <param name="y">The array y.</param>
+            <param name="result">The result of the point wise power.</param>
+            <remarks>There is no equivalent BLAS routine, but many libraries
+            provide optimized (parallel and/or vectorized) versions of this
+            routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.EigenDecomp(System.Boolean,System.Int32,System.Double[],System.Double[],System.Numerics.Complex[],System.Double[])">
+            <summary>
+            Computes the eigenvalues and eigenvectors of a matrix.
+            </summary>
+            <param name="isSymmetric">Whether the matrix is symmetric or not.</param>
+            <param name="order">The order of the matrix.</param>
+            <param name="matrix">The matrix to decompose. The length of the array must be order * order.</param>
+            <param name="matrixEv">On output, the matrix contains the eigen vectors. The length of the array must be order * order.</param>
+            <param name="vectorEv">On output, the eigen values (λ) of matrix in ascending value. The length of the array must <paramref name="order"/>.</param>
+            <param name="matrixD">On output, the block diagonal eigenvalue matrix. The length of the array must be order * order.</param>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.MatrixNorm(MathNet.Numerics.Providers.LinearAlgebra.Norm,System.Int32,System.Int32,System.Single[])">
+            <summary>
+            Computes the requested <see cref="T:MathNet.Numerics.Providers.LinearAlgebra.Norm"/> of the matrix.
+            </summary>
+            <param name="norm">The type of norm to compute.</param>
+            <param name="rows">The number of rows in the matrix.</param>
+            <param name="columns">The number of columns in the matrix.</param>
+            <param name="matrix">The matrix to compute the norm from.</param>
+            <returns>
+            The requested <see cref="T:MathNet.Numerics.Providers.LinearAlgebra.Norm"/> of the matrix.
+            </returns>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.DotProduct(System.Single[],System.Single[])">
+            <summary>
+            Computes the dot product of x and y.
+            </summary>
+            <param name="x">The vector x.</param>
+            <param name="y">The vector y.</param>
+            <returns>The dot product of x and y.</returns>
+            <remarks>This is equivalent to the DOT BLAS routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.AddVectorToScaledVector(System.Single[],System.Single,System.Single[],System.Single[])">
+            <summary>
+            Adds a scaled vector to another: <c>result = y + alpha*x</c>.
+            </summary>
+            <param name="y">The vector to update.</param>
+            <param name="alpha">The value to scale <paramref name="x"/> by.</param>
+            <param name="x">The vector to add to <paramref name="y"/>.</param>
+            <param name="result">The result of the addition.</param>
+            <remarks>This is similar to the AXPY BLAS routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.ScaleArray(System.Single,System.Single[],System.Single[])">
+            <summary>
+            Scales an array. Can be used to scale a vector and a matrix.
+            </summary>
+            <param name="alpha">The scalar.</param>
+            <param name="x">The values to scale.</param>
+            <param name="result">This result of the scaling.</param>
+            <remarks>This is similar to the SCAL BLAS routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.ConjugateArray(System.Single[],System.Single[])">
+            <summary>
+            Conjugates an array. Can be used to conjugate a vector and a matrix.
+            </summary>
+            <param name="x">The values to conjugate.</param>
+            <param name="result">This result of the conjugation.</param>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.MatrixMultiply(System.Single[],System.Int32,System.Int32,System.Single[],System.Int32,System.Int32,System.Single[])">
+            <summary>
+            Multiples two matrices. <c>result = x * y</c>
+            </summary>
+            <param name="x">The x matrix.</param>
+            <param name="rowsX">The number of rows in the x matrix.</param>
+            <param name="columnsX">The number of columns in the x matrix.</param>
+            <param name="y">The y matrix.</param>
+            <param name="rowsY">The number of rows in the y matrix.</param>
+            <param name="columnsY">The number of columns in the y matrix.</param>
+            <param name="result">Where to store the result of the multiplication.</param>
+            <remarks>This is a simplified version of the BLAS GEMM routine with alpha
+            set to 1.0f and beta set to 0.0f, and x and y are not transposed.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.MatrixMultiplyWithUpdate(MathNet.Numerics.Providers.LinearAlgebra.Transpose,MathNet.Numerics.Providers.LinearAlgebra.Transpose,System.Single,System.Single[],System.Int32,System.Int32,System.Single[],System.Int32,System.Int32,System.Single,System.Single[])">
+            <summary>
+            Multiplies two matrices and updates another with the result. <c>c = alpha*op(a)*op(b) + beta*c</c>
+            </summary>
+            <param name="transposeA">How to transpose the <paramref name="a"/> matrix.</param>
+            <param name="transposeB">How to transpose the <paramref name="b"/> matrix.</param>
+            <param name="alpha">The value to scale <paramref name="a"/> matrix.</param>
+            <param name="a">The a matrix.</param>
+            <param name="rowsA">The number of rows in the <paramref name="a"/> matrix.</param>
+            <param name="columnsA">The number of columns in the <paramref name="a"/> matrix.</param>
+            <param name="b">The b matrix</param>
+            <param name="rowsB">The number of rows in the <paramref name="b"/> matrix.</param>
+            <param name="columnsB">The number of columns in the <paramref name="b"/> matrix.</param>
+            <param name="beta">The value to scale the <paramref name="c"/> matrix.</param>
+            <param name="c">The c matrix.</param>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.LUFactor(System.Single[],System.Int32,System.Int32[])">
+            <summary>
+            Computes the LUP factorization of A. P*A = L*U.
+            </summary>
+            <param name="data">An <paramref name="order"/> by <paramref name="order"/> matrix. The matrix is overwritten with the
+            the LU factorization on exit. The lower triangular factor L is stored in under the diagonal of <paramref name="data"/> (the diagonal is always 1.0f
+            for the L factor). The upper triangular factor U is stored on and above the diagonal of <paramref name="data"/>.</param>
+            <param name="order">The order of the square matrix <paramref name="data"/>.</param>
+            <param name="ipiv">On exit, it contains the pivot indices. The size of the array must be <paramref name="order"/>.</param>
+            <remarks>This is equivalent to the GETRF LAPACK routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.LUInverse(System.Single[],System.Int32)">
+            <summary>
+            Computes the inverse of matrix using LU factorization.
+            </summary>
+            <param name="a">The N by N matrix to invert. Contains the inverse On exit.</param>
+            <param name="order">The order of the square matrix <paramref name="a"/>.</param>
+            <remarks>This is equivalent to the GETRF and GETRI LAPACK routines.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.LUInverseFactored(System.Single[],System.Int32,System.Int32[])">
+            <summary>
+            Computes the inverse of a previously factored matrix.
+            </summary>
+            <param name="a">The LU factored N by N matrix.  Contains the inverse On exit.</param>
+            <param name="order">The order of the square matrix <paramref name="a"/>.</param>
+            <param name="ipiv">The pivot indices of <paramref name="a"/>.</param>
+            <remarks>This is equivalent to the GETRI LAPACK routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.LUSolve(System.Int32,System.Single[],System.Int32,System.Single[])">
+            <summary>
+            Solves A*X=B for X using LU factorization.
+            </summary>
+            <param name="columnsOfB">The number of columns of B.</param>
+            <param name="a">The square matrix A.</param>
+            <param name="order">The order of the square matrix <paramref name="a"/>.</param>
+            <param name="b">On entry the B matrix; on exit the X matrix.</param>
+            <remarks>This is equivalent to the GETRF and GETRS LAPACK routines.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.LUSolveFactored(System.Int32,System.Single[],System.Int32,System.Int32[],System.Single[])">
+            <summary>
+            Solves A*X=B for X using a previously factored A matrix.
+            </summary>
+            <param name="columnsOfB">The number of columns of B.</param>
+            <param name="a">The factored A matrix.</param>
+            <param name="order">The order of the square matrix <paramref name="a"/>.</param>
+            <param name="ipiv">The pivot indices of <paramref name="a"/>.</param>
+            <param name="b">On entry the B matrix; on exit the X matrix.</param>
+            <remarks>This is equivalent to the GETRS LAPACK routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.CholeskyFactor(System.Single[],System.Int32)">
+            <summary>
+            Computes the Cholesky factorization of A.
+            </summary>
+            <param name="a">On entry, a square, positive definite matrix. On exit, the matrix is overwritten with the
+            the Cholesky factorization.</param>
+            <param name="order">The number of rows or columns in the matrix.</param>
+            <remarks>This is equivalent to the POTRF LAPACK routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.CholeskySolve(System.Single[],System.Int32,System.Single[],System.Int32)">
+            <summary>
+            Solves A*X=B for X using Cholesky factorization.
+            </summary>
+            <param name="a">The square, positive definite matrix A.</param>
+            <param name="orderA">The number of rows and columns in A.</param>
+            <param name="b">On entry the B matrix; on exit the X matrix.</param>
+            <param name="columnsB">The number of columns in the B matrix.</param>
+            <remarks>This is equivalent to the POTRF add POTRS LAPACK routines.
+            </remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.CholeskySolveFactored(System.Single[],System.Int32,System.Single[],System.Int32)">
+            <summary>
+            Solves A*X=B for X using a previously factored A matrix.
+            </summary>
+            <param name="a">The square, positive definite matrix A.</param>
+            <param name="orderA">The number of rows and columns in A.</param>
+            <param name="b">On entry the B matrix; on exit the X matrix.</param>
+            <param name="columnsB">The number of columns in the B matrix.</param>
+            <remarks>This is equivalent to the POTRS LAPACK routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.QRFactor(System.Single[],System.Int32,System.Int32,System.Single[],System.Single[])">
+            <summary>
+            Computes the QR factorization of A.
+            </summary>
+            <param name="r">On entry, it is the M by N A matrix to factor. On exit,
+            it is overwritten with the R matrix of the QR factorization. </param>
+            <param name="rowsR">The number of rows in the A matrix.</param>
+            <param name="columnsR">The number of columns in the A matrix.</param>
+            <param name="q">On exit, A M by M matrix that holds the Q matrix of the
+            QR factorization.</param>
+            <param name="tau">A min(m,n) vector. On exit, contains additional information
+            to be used by the QR solve routine.</param>
+            <remarks>This is similar to the GEQRF and ORGQR LAPACK routines.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.ThinQRFactor(System.Single[],System.Int32,System.Int32,System.Single[],System.Single[])">
+            <summary>
+            Computes the thin QR factorization of A where M &gt; N.
+            </summary>
+            <param name="q">On entry, it is the M by N A matrix to factor. On exit,
+            it is overwritten with the Q matrix of the QR factorization.</param>
+            <param name="rowsA">The number of rows in the A matrix.</param>
+            <param name="columnsA">The number of columns in the A matrix.</param>
+            <param name="r">On exit, A N by N matrix that holds the R matrix of the
+            QR factorization.</param>
+            <param name="tau">A min(m,n) vector. On exit, contains additional information
+            to be used by the QR solve routine.</param>
+            <remarks>This is similar to the GEQRF and ORGQR LAPACK routines.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.QRSolve(System.Single[],System.Int32,System.Int32,System.Single[],System.Int32,System.Single[],MathNet.Numerics.LinearAlgebra.Factorization.QRMethod)">
+            <summary>
+            Solves A*X=B for X using QR factorization of A.
+            </summary>
+            <param name="a">The A matrix.</param>
+            <param name="rows">The number of rows in the A matrix.</param>
+            <param name="columns">The number of columns in the A matrix.</param>
+            <param name="b">The B matrix.</param>
+            <param name="columnsB">The number of columns of B.</param>
+            <param name="x">On exit, the solution matrix.</param>
+            <param name="method">The type of QR factorization to perform. <seealso cref="T:MathNet.Numerics.LinearAlgebra.Factorization.QRMethod"/></param>
+            <remarks>Rows must be greater or equal to columns.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.QRSolveFactored(System.Single[],System.Single[],System.Int32,System.Int32,System.Single[],System.Single[],System.Int32,System.Single[],MathNet.Numerics.LinearAlgebra.Factorization.QRMethod)">
+            <summary>
+            Solves A*X=B for X using a previously QR factored matrix.
+            </summary>
+            <param name="q">The Q matrix obtained by calling <see cref="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.QRFactor(System.Single[],System.Int32,System.Int32,System.Single[],System.Single[])"/>.</param>
+            <param name="r">The R matrix obtained by calling <see cref="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.QRFactor(System.Single[],System.Int32,System.Int32,System.Single[],System.Single[])"/>. </param>
+            <param name="rowsA">The number of rows in the A matrix.</param>
+            <param name="columnsA">The number of columns in the A matrix.</param>
+            <param name="tau">Contains additional information on Q. Only used for the native solver
+            and can be <c>null</c> for the managed provider.</param>
+            <param name="b">The B matrix.</param>
+            <param name="columnsB">The number of columns of B.</param>
+            <param name="x">On exit, the solution matrix.</param>
+            <param name="method">The type of QR factorization to perform. <seealso cref="T:MathNet.Numerics.LinearAlgebra.Factorization.QRMethod"/></param>
+            <remarks>Rows must be greater or equal to columns.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.SvdSolve(System.Single[],System.Int32,System.Int32,System.Single[],System.Int32,System.Single[])">
+            <summary>
+            Solves A*X=B for X using the singular value decomposition of A.
+            </summary>
+            <param name="a">On entry, the M by N matrix to decompose.</param>
+            <param name="rowsA">The number of rows in the A matrix.</param>
+            <param name="columnsA">The number of columns in the A matrix.</param>
+            <param name="b">The B matrix.</param>
+            <param name="columnsB">The number of columns of B.</param>
+            <param name="x">On exit, the solution matrix.</param>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.SvdSolveFactored(System.Int32,System.Int32,System.Single[],System.Single[],System.Single[],System.Single[],System.Int32,System.Single[])">
+            <summary>
+            Solves A*X=B for X using a previously SVD decomposed matrix.
+            </summary>
+            <param name="rowsA">The number of rows in the A matrix.</param>
+            <param name="columnsA">The number of columns in the A matrix.</param>
+            <param name="s">The s values returned by <see cref="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.SingularValueDecomposition(System.Boolean,System.Single[],System.Int32,System.Int32,System.Single[],System.Single[],System.Single[])"/>.</param>
+            <param name="u">The left singular vectors returned by  <see cref="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.SingularValueDecomposition(System.Boolean,System.Single[],System.Int32,System.Int32,System.Single[],System.Single[],System.Single[])"/>.</param>
+            <param name="vt">The right singular  vectors returned by  <see cref="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.SingularValueDecomposition(System.Boolean,System.Single[],System.Int32,System.Int32,System.Single[],System.Single[],System.Single[])"/>.</param>
+            <param name="b">The B matrix.</param>
+            <param name="columnsB">The number of columns of B.</param>
+            <param name="x">On exit, the solution matrix.</param>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.SingularValueDecomposition(System.Boolean,System.Single[],System.Int32,System.Int32,System.Single[],System.Single[],System.Single[])">
+            <summary>
+            Computes the singular value decomposition of A.
+            </summary>
+            <param name="computeVectors">Compute the singular U and VT vectors or not.</param>
+            <param name="a">On entry, the M by N matrix to decompose. On exit, A may be overwritten.</param>
+            <param name="rowsA">The number of rows in the A matrix.</param>
+            <param name="columnsA">The number of columns in the A matrix.</param>
+            <param name="s">The singular values of A in ascending value.</param>
+            <param name="u">If <paramref name="computeVectors"/> is <c>true</c>, on exit U contains the left
+            singular vectors.</param>
+            <param name="vt">If <paramref name="computeVectors"/> is <c>true</c>, on exit VT contains the transposed
+            right singular vectors.</param>
+            <remarks>This is equivalent to the GESVD LAPACK routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.AddArrays(System.Single[],System.Single[],System.Single[])">
+            <summary>
+            Does a point wise add of two arrays <c>z = x + y</c>. This can be used
+            to add vectors or matrices.
+            </summary>
+            <param name="x">The array x.</param>
+            <param name="y">The array y.</param>
+            <param name="result">The result of the addition.</param>
+            <remarks>There is no equivalent BLAS routine, but many libraries
+            provide optimized (parallel and/or vectorized) versions of this
+            routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.SubtractArrays(System.Single[],System.Single[],System.Single[])">
+            <summary>
+            Does a point wise subtraction of two arrays <c>z = x - y</c>. This can be used
+            to subtract vectors or matrices.
+            </summary>
+            <param name="x">The array x.</param>
+            <param name="y">The array y.</param>
+            <param name="result">The result of the subtraction.</param>
+            <remarks>There is no equivalent BLAS routine, but many libraries
+            provide optimized (parallel and/or vectorized) versions of this
+            routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.PointWiseMultiplyArrays(System.Single[],System.Single[],System.Single[])">
+            <summary>
+            Does a point wise multiplication of two arrays <c>z = x * y</c>. This can be used
+            to multiple elements of vectors or matrices.
+            </summary>
+            <param name="x">The array x.</param>
+            <param name="y">The array y.</param>
+            <param name="result">The result of the point wise multiplication.</param>
+            <remarks>There is no equivalent BLAS routine, but many libraries
+            provide optimized (parallel and/or vectorized) versions of this
+            routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.PointWiseDivideArrays(System.Single[],System.Single[],System.Single[])">
+            <summary>
+            Does a point wise division of two arrays <c>z = x / y</c>. This can be used
+            to divide elements of vectors or matrices.
+            </summary>
+            <param name="x">The array x.</param>
+            <param name="y">The array y.</param>
+            <param name="result">The result of the point wise division.</param>
+            <remarks>There is no equivalent BLAS routine, but many libraries
+            provide optimized (parallel and/or vectorized) versions of this
+            routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.PointWisePowerArrays(System.Single[],System.Single[],System.Single[])">
+            <summary>
+            Does a point wise power of two arrays <c>z = x ^ y</c>. This can be used
+            to raise elements of vectors or matrices to the powers of another vector or matrix.
+            </summary>
+            <param name="x">The array x.</param>
+            <param name="y">The array y.</param>
+            <param name="result">The result of the point wise power.</param>
+            <remarks>There is no equivalent BLAS routine, but many libraries
+            provide optimized (parallel and/or vectorized) versions of this
+            routine.</remarks>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklLinearAlgebraProvider.EigenDecomp(System.Boolean,System.Int32,System.Single[],System.Single[],System.Numerics.Complex[],System.Single[])">
+            <summary>
+            Computes the eigenvalues and eigenvectors of a matrix.
+            </summary>
+            <param name="isSymmetric">Whether the matrix is symmetric or not.</param>
+            <param name="order">The order of the matrix.</param>
+            <param name="matrix">The matrix to decompose. The length of the array must be order * order.</param>
+            <param name="matrixEv">On output, the matrix contains the eigen vectors. The length of the array must be order * order.</param>
+            <param name="vectorEv">On output, the eigen values (λ) of matrix in ascending value. The length of the array must <paramref name="order"/>.</param>
+            <param name="matrixD">On output, the block diagonal eigenvalue matrix. The length of the array must be order * order.</param>
+        </member>
+        <member name="T:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklError">
+            <summary>
+            Error codes return from the MKL provider.
+            </summary>
+        </member>
+        <member name="F:MathNet.Numerics.Providers.MKL.LinearAlgebra.MklError.MemoryAllocation">
+            <summary>
+            Unable to allocate memory.
+            </summary>
+        </member>
+        <member name="P:MathNet.Numerics.Providers.MKL.MklControl.HintPath">
+            <summary>
+            Optional path to try to load native provider binaries from.
+            If not set, Numerics will fall back to the environment variable
+            `MathNetNumericsMKLProviderPath` or the default probing paths.
+            </summary>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.MklControl.UseNativeMKL">
+            <summary>
+            Use the Intel MKL native provider for linear algebra.
+            Throws if it is not available or failed to initialize, in which case the previous provider is still active.
+            </summary>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.MklControl.UseNativeMKL(MathNet.Numerics.Providers.MKL.MklConsistency,MathNet.Numerics.Providers.MKL.MklPrecision,MathNet.Numerics.Providers.MKL.MklAccuracy)">
+            <summary>
+            Use the Intel MKL native provider for linear algebra, with the specified configuration parameters.
+            Throws if it is not available or failed to initialize, in which case the previous provider is still active.
+            </summary>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.MklControl.TryUseNativeMKL">
+            <summary>
+            Try to use the Intel MKL native provider for linear algebra.
+            </summary>
+            <returns>
+            True if the provider was found and initialized successfully.
+            False if it failed and the previous provider is still active.
+            </returns>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.MklProvider.Load(System.String)">
+            <returns>Revision</returns>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.MklProvider.Load(System.String,MathNet.Numerics.Providers.MKL.MklConsistency,MathNet.Numerics.Providers.MKL.MklPrecision,MathNet.Numerics.Providers.MKL.MklAccuracy)">
+            <returns>Revision</returns>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.MklProvider.FreeResources">
+            <summary>
+            Frees memory buffers, caches and handles allocated in or to the provider.
+            Does not unload the provider itself, it is still usable afterwards.
+            This method is safe to call, even if the provider is not loaded.
+            </summary>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.MklProvider.FreeBuffers">
+            <summary>
+            Frees the memory allocated to the MKL memory pool.
+            </summary>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.MklProvider.ThreadFreeBuffers">
+            <summary>
+            Frees the memory allocated to the MKL memory pool on the current thread.
+            </summary>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.MklProvider.DisableMemoryPool">
+            <summary>
+            Disable the MKL memory pool. May impact performance.
+            </summary>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.MklProvider.MemoryStatistics(System.Int32@)">
+            <summary>
+            Retrieves information about the MKL memory pool.
+            </summary>
+            <param name="allocatedBuffers">On output, returns the number of memory buffers allocated.</param>
+            <returns>Returns the number of bytes allocated to all memory buffers.</returns>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.MklProvider.EnablePeakMemoryStatistics">
+            <summary>
+            Enable gathering of peak memory statistics of the MKL memory pool.
+            </summary>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.MklProvider.DisablePeakMemoryStatistics">
+            <summary>
+            Disable gathering of peak memory statistics of the MKL memory pool.
+            </summary>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.MklProvider.PeakMemoryStatistics(System.Boolean)">
+            <summary>
+            Measures peak memory usage of the MKL memory pool.
+            </summary>
+            <param name="reset">Whether the usage counter should be reset.</param>
+            <returns>The peak number of bytes allocated to all memory buffers.</returns>
+        </member>
+        <member name="F:MathNet.Numerics.Providers.MKL.MklProvider.MklMemoryRequestMode.Disable">
+            <summary>
+            Disable gathering memory usage
+            </summary>
+        </member>
+        <member name="F:MathNet.Numerics.Providers.MKL.MklProvider.MklMemoryRequestMode.Enable">
+            <summary>
+            Enable gathering memory usage
+            </summary>
+        </member>
+        <member name="F:MathNet.Numerics.Providers.MKL.MklProvider.MklMemoryRequestMode.PeakMemory">
+            <summary>
+            Return peak memory usage
+            </summary>
+        </member>
+        <member name="F:MathNet.Numerics.Providers.MKL.MklProvider.MklMemoryRequestMode.PeakMemoryReset">
+            <summary>
+            Return peak memory usage and reset counter
+            </summary>
+        </member>
+        <member name="T:MathNet.Numerics.Providers.MKL.MklConsistency">
+            <summary>
+            Consistency vs. performance trade-off between runs on different machines.
+            </summary>
+        </member>
+        <member name="F:MathNet.Numerics.Providers.MKL.MklConsistency.Auto">
+            <summary>Consistent on the same CPU only (maximum performance)</summary>
+        </member>
+        <member name="F:MathNet.Numerics.Providers.MKL.MklConsistency.Compatible">
+            <summary>Consistent on Intel and compatible CPUs with SSE2 support (maximum compatibility)</summary>
+        </member>
+        <member name="F:MathNet.Numerics.Providers.MKL.MklConsistency.SSE2">
+            <summary>Consistent on Intel CPUs supporting SSE2 or later</summary>
+        </member>
+        <member name="F:MathNet.Numerics.Providers.MKL.MklConsistency.SSE4_2">
+            <summary>Consistent on Intel CPUs supporting SSE4.2 or later</summary>
+        </member>
+        <member name="F:MathNet.Numerics.Providers.MKL.MklConsistency.AVX">
+            <summary>Consistent on Intel CPUs supporting AVX or later</summary>
+        </member>
+        <member name="F:MathNet.Numerics.Providers.MKL.MklConsistency.AVX2">
+            <summary>Consistent on Intel CPUs supporting AVX2 or later</summary>
+        </member>
+        <member name="T:MathNet.Numerics.Providers.MKL.SafeNativeMethods">
+            <summary>
+            P/Invoke methods to the native math libraries.
+            </summary>
+        </member>
+        <member name="F:MathNet.Numerics.Providers.MKL.SafeNativeMethods.DllName">
+            <summary>
+            Name of the native DLL.
+            </summary>
+        </member>
+        <member name="T:MathNet.Numerics.Providers.MKL.SparseSolver.MklSparseSolverProvider">
+            <summary>
+            Intel's Math Kernel Library (MKL) direct sparse solver provider.
+            </summary>
+            <summary>
+            Intel's Math Kernel Library (MKL) direct sparse solver provider.
+            </summary>
+            <summary>
+            Intel's Math Kernel Library (MKL) sparse solver provider.
+            </summary>
+            <summary>
+            Intel's Math Kernel Library (MKL) direct sparse solver provider.
+            </summary>
+            <summary>
+            Intel's Math Kernel Library (MKL) direct sparse solver provider.
+            </summary>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.SparseSolver.MklSparseSolverProvider.Solve(MathNet.Numerics.Providers.SparseSolver.DssMatrixStructure,MathNet.Numerics.Providers.SparseSolver.DssMatrixType,MathNet.Numerics.Providers.SparseSolver.DssSystemType,System.Int32,System.Int32,System.Int32,System.Int32[],System.Int32[],System.Numerics.Complex[],System.Int32,System.Numerics.Complex[],System.Numerics.Complex[])">
+            <summary>
+            Solves sparse linear systems of equations, <b>AX = B</b>.
+            </summary>
+            <param name="matrixStructure">The symmetricity of the matrix. For a symmetric matrix, only upper ot lower triangular matrix is used.</param>
+            <param name="matrixType">The definiteness of the matrix.</param>
+            <param name="systemType">The type of the systems.</param>
+            <param name="rowCount">The number of rows of matrix.</param>
+            <param name="columnCount">The number of columns of matrix.</param>
+            <param name="nonZerosCount">The number of non zero elements of matrix.</param>
+            <param name="rowPointers">The array containing the row indices of the existing rows.</param>
+            <param name="columnIndices">The array containing the column indices of the non-zero values</param>
+            <param name="values">The array that contains the non-zero elements of matrix. No diagonal element can be ommitted. </param>
+            <param name="nRhs">The number of columns of the right hand side matrix.</param>
+            <param name="rhs">The right hand side matrix</param>
+            <param name="solution">The left hand side matrix</param>
+            <returns>The status of the solver.</returns>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.SparseSolver.MklSparseSolverProvider.Solve(MathNet.Numerics.Providers.SparseSolver.DssMatrixStructure,MathNet.Numerics.Providers.SparseSolver.DssMatrixType,MathNet.Numerics.Providers.SparseSolver.DssSystemType,System.Int32,System.Int32,System.Int32,System.Int32[],System.Int32[],MathNet.Numerics.Complex32[],System.Int32,MathNet.Numerics.Complex32[],MathNet.Numerics.Complex32[])">
+            <summary>
+            Solves sparse linear systems of equations, <b>AX = B</b>.
+            </summary>
+            <param name="matrixStructure">The symmetricity of the matrix. For a symmetric matrix, only upper ot lower triangular matrix is used.</param>
+            <param name="matrixType">The definiteness of the matrix.</param>
+            <param name="systemType">The type of the systems.</param>
+            <param name="rowCount">The number of rows of matrix.</param>
+            <param name="columnCount">The number of columns of matrix.</param>
+            <param name="nonZerosCount">The number of non zero elements of matrix.</param>
+            <param name="rowPointers">The array containing the row indices of the existing rows.</param>
+            <param name="columnIndices">The array containing the column indices of the non-zero values</param>
+            <param name="values">The array that contains the non-zero elements of matrix. No diagonal element can be ommitted. </param>
+            <param name="nRhs">The number of columns of the right hand side matrix.</param>
+            <param name="rhs">The right hand side matrix</param>
+            <param name="solution">The left hand side matrix</param>
+            <returns>The status of the solver.</returns>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.SparseSolver.MklSparseSolverProvider.#ctor(System.String)">
+            <param name="hintPath">Hint path where to look for the native binaries</param>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.SparseSolver.MklSparseSolverProvider.IsAvailable">
+            <summary>
+            Try to find out whether the provider is available, at least in principle.
+            Verification may still fail if available, but it will certainly fail if unavailable.
+            </summary>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.SparseSolver.MklSparseSolverProvider.InitializeVerify">
+            <summary>
+            Initialize and verify that the provided is indeed available.
+            If calling this method fails, consider to fall back to alternatives like the managed provider.
+            </summary>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.SparseSolver.MklSparseSolverProvider.FreeResources">
+            <summary>
+            Frees memory buffers, caches and handles allocated in or to the provider.
+            Does not unload the provider itself, it is still usable afterwards.
+            </summary>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.SparseSolver.MklSparseSolverProvider.Solve(MathNet.Numerics.Providers.SparseSolver.DssMatrixStructure,MathNet.Numerics.Providers.SparseSolver.DssMatrixType,MathNet.Numerics.Providers.SparseSolver.DssSystemType,System.Int32,System.Int32,System.Int32,System.Int32[],System.Int32[],System.Double[],System.Int32,System.Double[],System.Double[])">
+            <summary>
+            Solves sparse linear systems of equations, <b>AX = B</b>.
+            </summary>
+            <param name="matrixStructure">The symmetricity of the matrix. For a symmetric matrix, only upper ot lower triangular matrix is used.</param>
+            <param name="matrixType">The definiteness of the matrix.</param>
+            <param name="systemType">The type of the systems.</param>
+            <param name="rowCount">The number of rows of matrix.</param>
+            <param name="columnCount">The number of columns of matrix.</param>
+            <param name="nonZerosCount">The number of non zero elements of matrix.</param>
+            <param name="rowPointers">The array containing the row indices of the existing rows.</param>
+            <param name="columnIndices">The array containing the column indices of the non-zero values</param>
+            <param name="values">The array that contains the non-zero elements of matrix. No diagonal element can be ommitted. </param>
+            <param name="nRhs">The number of columns of the right hand side matrix.</param>
+            <param name="rhs">The right hand side matrix</param>
+            <param name="solution">The left hand side matrix</param>
+            <returns>The status of the solver.</returns>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.MKL.SparseSolver.MklSparseSolverProvider.Solve(MathNet.Numerics.Providers.SparseSolver.DssMatrixStructure,MathNet.Numerics.Providers.SparseSolver.DssMatrixType,MathNet.Numerics.Providers.SparseSolver.DssSystemType,System.Int32,System.Int32,System.Int32,System.Int32[],System.Int32[],System.Single[],System.Int32,System.Single[],System.Single[])">
+            <summary>
+            Solves sparse linear systems of equations, <b>AX = B</b>.
+            </summary>
+            <param name="matrixStructure">The symmetricity of the matrix. For a symmetric matrix, only upper ot lower triangular matrix is used.</param>
+            <param name="matrixType">The definiteness of the matrix.</param>
+            <param name="systemType">The type of the systems.</param>
+            <param name="rowCount">The number of rows of matrix.</param>
+            <param name="columnCount">The number of columns of matrix.</param>
+            <param name="nonZerosCount">The number of non zero elements of matrix.</param>
+            <param name="rowPointers">The array containing the row indices of the existing rows.</param>
+            <param name="columnIndices">The array containing the column indices of the non-zero values</param>
+            <param name="values">The array that contains the non-zero elements of matrix. No diagonal element can be ommitted. </param>
+            <param name="nRhs">The number of columns of the right hand side matrix.</param>
+            <param name="rhs">The right hand side matrix</param>
+            <param name="solution">The left hand side matrix</param>
+            <returns>The status of the solver.</returns>
+        </member>
+        <member name="T:MathNet.Numerics.Providers.Common.NativeProviderLoader">
+            <summary>
+            Helper class to load native libraries depending on the architecture of the OS and process.
+            </summary>
+        </member>
+        <member name="F:MathNet.Numerics.Providers.Common.NativeProviderLoader.NativeHandles">
+            <summary>
+            Dictionary of handles to previously loaded libraries,
+            </summary>
+        </member>
+        <member name="P:MathNet.Numerics.Providers.Common.NativeProviderLoader.LastException">
+            <summary>
+            If the last native library failed to load then gets the corresponding exception
+            which occurred or null if the library was successfully loaded.
+            </summary>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.Common.NativeProviderLoader.TryLoad(System.String,System.String)">
+            <summary>
+            Load the native library with the given filename.
+            </summary>
+            <param name="fileName">The file name of the library to load.</param>
+            <param name="hintPath">Hint path where to look for the native binaries. Can be null.</param>
+            <returns>True if the library was successfully loaded or if it has already been loaded.</returns>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.Common.NativeProviderLoader.TryLoadFromDirectory(System.String,System.String)">
+            <summary>
+            Try to load a native library by providing its name and a directory.
+            Tries to load an implementation suitable for the current CPU architecture
+            and process mode if there is a matching subfolder.
+            </summary>
+            <returns>True if the library was successfully loaded or if it has already been loaded.</returns>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.Common.NativeProviderLoader.TryLoadDirect(System.String)">
+            <summary>
+            Try to load a native library by only the file name of the library.
+            </summary>
+            <returns>True if the library was successfully loaded or if it has already been loaded.</returns>
+        </member>
+        <member name="M:MathNet.Numerics.Providers.Common.NativeProviderLoader.TryLoadFile(System.String,System.String,System.String)">
+            <summary>
+            Try to load a native library by providing the full path including the file name of the library.
+            </summary>
+            <returns>True if the library was successfully loaded or if it has already been loaded.</returns>
+        </member>
+    </members>
+</doc>

@@ -1,16 +1,19 @@
-﻿//
-// Created by Gregor Rehl on 08.06.2025.
-//
+﻿// AudioProcessorDLL.h
 
-#ifndef AUDIOPROCESSOR_H
-#define AUDIOPROCESSOR_H
+#pragma once
 
+class AudioProcessor
+{
+public:
+    AudioProcessor() = default;
 
+    // Verarbeitet das übergebene Float-Array in-place
+    static void process(float* data, int numSamples)
+    {
+        if (data == nullptr || numSamples <= 0)
+            return;
 
-class AudioProcessor {
-
+        for (int i = 0; i < numSamples; ++i)
+            data[i] *= 2.0f; // Beispiel: Lautstärke verdoppeln
+    }
 };
-
-
-
-#endif //AUDIOPROCESSOR_H
