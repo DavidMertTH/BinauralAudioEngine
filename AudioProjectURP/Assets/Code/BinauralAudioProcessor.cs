@@ -139,8 +139,7 @@ namespace Code
         {
             if (bypass || channels < 2 || !_isSetup) return;
             if (_impulseResponseLeft == null || _impulseResponseRight == null) return;
-
-            float[] dataOutput = new float[data.Length];
+            
             float[] dataLeft = new float[data.Length / 2];
             float[] dataRight = new float[data.Length / 2];
 
@@ -153,7 +152,7 @@ namespace Code
 
 
             dataLeft = reverb.ConvolveData(_impulseResponseLeft, dataLeft,ref _overlapBufferLeft);
-            dataRight =reverb.ConvolveData(_impulseResponseRight, dataLeft,ref _overlapBufferRight);
+            dataRight =reverb.ConvolveData(_impulseResponseRight, dataRight,ref _overlapBufferRight);
 
 
             for (int i = 0, j = 0; i < data.Length; i += 2, j++)

@@ -1,9 +1,7 @@
 using System.Numerics;
-using Code;
 using MathNet.Numerics.IntegralTransforms;
 using MathNet.Numerics.Providers.FourierTransform;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class LiveConvolutionReverb : MonoBehaviour
 {
@@ -97,7 +95,7 @@ public class LiveConvolutionReverb : MonoBehaviour
     private Complex[] Normalize(Complex[] complexAudioInput)
     {
         for (int i = 0; i < complexAudioInput.Length; i++)
-            complexAudioInput[i] /= 10;
+            complexAudioInput[i] /= 5;
 
         return complexAudioInput;
     }

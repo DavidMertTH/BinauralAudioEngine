@@ -165,11 +165,11 @@ namespace Code
 
                 if (AudioRays[index].Absorbtion <= 0.00001f)
                 {
-                    ray.Absorbtion = 0.3f;
+                    ray.Absorbtion = 0.1f;
                 }
                 else
                 {
-                    ray.Absorbtion = AudioRays[index].Absorbtion * 0.8f;
+                    ray.Absorbtion = AudioRays[index].Absorbtion * 0.9f;
                 }
                 ray.DistanceToImage += PreviousHit[index].distance;
                 ray.ImagePosition = PreviousHit[index].point + PreviousHit[index].normal * 0.001f;
