@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using MathNet.Numerics.IntegralTransforms;
 using MathNet.Numerics.Providers.FourierTransform;
@@ -34,8 +35,16 @@ namespace Code
             return halfIr;
         }
 
+        float GetRMS(float[] ir)
+        {
+            float sum = 0f;
+            foreach (var sample in ir) sum += sample * sample;
+            return Mathf.Sqrt(sum / ir.Length);
+        }
+
         public Complex[] ToFreqDomain(float[] inTimeDomain, List<float[]> previousInTimeDomain)
         {
+            float preRms = GetRMS(inTimeDomain);
             for (int i = 0; i < previousInTimeDomain.Count; i++)
             {
                 float[] prev = previousInTimeDomain[i];
@@ -45,9 +54,12 @@ namespace Code
                 }
             }
 
+            float postRms = GetRMS(inTimeDomain);
+            float ampFaktor = preRms / postRms;
             for (int i = 0; i < inTimeDomain.Length; i++)
             {
-                inTimeDomain[i] /= previousInTimeDomain.Count*2;
+                inTimeDomain[i] /= previousInTimeDomain.Count;
+                inTimeDomain[i] *= ampFaktor;
             }
 
             int lengthSum = 1024 + inTimeDomain.Length;

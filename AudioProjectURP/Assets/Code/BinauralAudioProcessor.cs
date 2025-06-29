@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using MathNet.Numerics.IntegralTransforms;
@@ -89,7 +90,7 @@ namespace Code
             _impulseResponseRight = new float[irLength];
 
             List<AudioRay> rays = GetAllSelectedRays();
-
+            int overshootLength = 20;
             foreach (var ray in rays)
             {
                 if (!ray.IsValid) continue;
@@ -111,23 +112,26 @@ namespace Code
                 if ((int)targetLeftDelaySamples >= irLength - 1 ||
                     (int)targetRightDelaySamples >= irLength - 1) continue;
 
-                float leftAmplitude = distanceAmplitude * (1 - binauralFactor) * ray.Absorbtion;
-                float rightAmplitude = distanceAmplitude * (1 + binauralFactor) * ray.Absorbtion;
+                float leftAmplitude = distanceAmplitude * (1 - binauralFactor) * ray.Absorbtion *Gain;
+                float rightAmplitude = distanceAmplitude * (1 + binauralFactor) * ray.Absorbtion * Gain;
 
                 _impulseResponseLeft[(int)targetLeftDelaySamples] += leftAmplitude;
                 _impulseResponseRight[(int)targetRightDelaySamples] += rightAmplitude;
 
-                _impulseResponseLeft[(int)targetLeftDelaySamples + 1] += leftAmplitude / 3;
-                _impulseResponseRight[(int)targetRightDelaySamples + 1] += rightAmplitude / 3;
+                for (int i = 1; i < overshootLength; i++)
+                {
+                    if(targetLeftDelaySamples+i >= irLength - 1) break;
+                    if(targetRightDelaySamples+i >= irLength - 1) break;
 
-                _impulseResponseLeft[(int)targetLeftDelaySamples - 1] += leftAmplitude / 3;
-                _impulseResponseRight[(int)targetRightDelaySamples - 1] += rightAmplitude / 3;
+                    _impulseResponseLeft[(int)targetLeftDelaySamples + i] += leftAmplitude / i;
+                    _impulseResponseRight[(int)targetRightDelaySamples + 1] += rightAmplitude / i;
+                }
             }
 
             Task.Run(() => {_freqDomainIrLeft = reverb.ToFreqDomain(_impulseResponseLeft,_previousImpulseResponsesLeft); });
             Task.Run(() => {_freqDomainIrRight = reverb.ToFreqDomain(_impulseResponseRight,_previousImpulseResponsesRight); });
 
-            if (_previousImpulseResponsesRight.Count > 5)
+            if (_previousImpulseResponsesRight.Count > 20)
             {
                 _previousImpulseResponsesRight.RemoveAt(0);
                 _previousImpulseResponsesLeft.RemoveAt(0); 
