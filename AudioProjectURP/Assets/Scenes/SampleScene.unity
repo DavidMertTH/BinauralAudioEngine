@@ -925,13 +925,14 @@ GameObject:
   - component: {fileID: 774592943}
   - component: {fileID: 774592942}
   - component: {fileID: 774592948}
+  - component: {fileID: 774592949}
   m_Layer: 6
   m_Name: Sphere
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &774592942
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -952,8 +953,9 @@ MonoBehaviour:
   useDirect: 1
   usePrimaryReflections: 1
   useSecondaryReflections: 1
-  useHigherOrderReflections: 0
+  useHigherOrderReflections: 1
   Gain: 1
+  reverb: {fileID: 774592949}
   delaySmoothFactor: 0
   _impulseResponseLeft: []
 --- !u!82 &774592943
@@ -1165,6 +1167,19 @@ AudioReverbFilter:
   m_LFReference: 250
   m_ReflectionsDelay: 0
   m_ReverbPreset: 27
+--- !u!114 &774592949
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 774592941}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: deebe1db5fa79f94eaed69f50f41c8fc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  wet: 1
 --- !u!1 &801160498
 GameObject:
   m_ObjectHideFlags: 0
@@ -1289,7 +1304,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!82 &826559469
 AudioSource:
   m_ObjectHideFlags: 0
@@ -1577,7 +1592,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!82 &997191932
 AudioSource:
   m_ObjectHideFlags: 0
@@ -1721,9 +1736,12 @@ MonoBehaviour:
   audioFileLoader: {fileID: 1453630338}
   audioClip: {fileID: 8300000, guid: 695d004f94aa35e488fd4df8c58f49b4, type: 3}
   iR: {fileID: 8300000, guid: 626079e0d228a1e4eb535ff7fb97b4e7, type: 3}
-  audioData: []
+  dry: []
+  wet: []
   iRData: []
   convert: 0
+  changeDryWet: 0
+  dryWet: 0
 --- !u!1 &1028355184
 GameObject:
   m_ObjectHideFlags: 0
