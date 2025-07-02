@@ -62,11 +62,7 @@ namespace Code
             _previousImpulseResponsesRight = new List<float[]>();
             _isSetup = true;
         }
-
-        private void OnDestroy()
-        {
-            ConvolutionReverb.shutdownReverb();
-        }
+        
 
         private void Update()
         {
