@@ -1,3 +1,6 @@
 [submodule "JuceDllFac/JUCE"]
 	path = JuceDllFac/JUCE
 	url = https://github.com/juce-framework/JUCE.git
+[submodule "Binaural_Binarys"]
+	path = Binaural_Binarys
+	url = https://github.com/DavidMertTH/Binaural_Binarys

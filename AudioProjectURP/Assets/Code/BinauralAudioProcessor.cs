@@ -137,7 +137,6 @@ namespace Code
                 _previousImpulseResponsesLeft.RemoveAt(0); 
             }
             
-            
             _previousImpulseResponsesLeft.Add(_impulseResponseLeft);
             _previousImpulseResponsesRight.Add(_impulseResponseRight);
         }
