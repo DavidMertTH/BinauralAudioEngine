@@ -61,17 +61,15 @@ namespace Code
                     PreviousRay = _previousCommands[i]
                 };
                 JobHandle fillHandle = fillJob.Schedule(initialCommands.Length, 8);
-                fillHandle.Complete();
-                JobHandle toTargetHandle = RaycastCommand.ScheduleBatch(_fromTarget, _targetHits, 1, 1);
-                toTargetHandle.Complete();
-
+                JobHandle toTargetHandle = RaycastCommand.ScheduleBatch(_fromTarget, _targetHits, 1, 1,fillHandle);
                 EvalRays evalJob = new EvalRays()
                 {
                     PreviousHits = _previousHits,
                     AudioRays = _audioRays[i],
                     CurrentHits = _targetHits,
                 };
-                JobHandle evalHandle = evalJob.Schedule(initialCommands.Length, 8);
+                JobHandle evalHandle = evalJob.Schedule(initialCommands.Length,1,toTargetHandle);
+                //JobHandle evalHandle = evalJob.Schedule(initialCommands.Length, 8);
                 evalHandle.Complete();
                 rays.AddRange(GetRayList(_audioRays[i]));
                 JobHandle reflectionHandle = RaycastCommand.ScheduleBatch(_reflectionCommands, _previousHits, 1, 1);
@@ -104,17 +102,11 @@ namespace Code
             }
         }
 
-        private List<AudioRay> GetRayList(NativeArray<AudioRay> audioRays)
+        private AudioRay[] GetRayList(NativeArray<AudioRay> audioRays)
         {
-            List<AudioRay> list = new List<AudioRay>(audioRays.Length);
-            int length = audioRays.Length;
-            for (int i = 0; i < length; i++)
-            {
-                AudioRay ray = audioRays[i];
-                if (ray.IsValid) list.Add(ray);
-            }
-
-            return list;
+            AudioRay[] rays = new AudioRay[audioRays.Length];
+            audioRays.CopyTo(rays);
+            return rays;
         }
 
         [BurstCompile]

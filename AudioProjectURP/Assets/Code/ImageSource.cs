@@ -68,7 +68,6 @@ public class ImageSource : MonoBehaviour
 
             float3 direction = math.normalize(ray.ImagePosition - (float3)source.transform.position);
 
-            // Runde Richtung (z. B. auf 2 Dezimalstellen, also *100)
             int3 roundedDir = new int3(
                 (int)math.round(direction.x * 100),
                 (int)math.round(direction.y * 100),
@@ -88,7 +87,6 @@ public class ImageSource : MonoBehaviour
             seen.Add(id);
             rays.Add(ray);
         }
-        //Debug.Log("Got " + rays.Count + "secundary ray(s)");
 
         return rays;
     }
@@ -208,7 +206,6 @@ public class ImageSource : MonoBehaviour
 
 
         List<AudioRay> reflections = SaveSecundaryReflections(secRays);
-        DrawSecundaryRays(secRays, secundaryHits);
 
         sourceHits.Dispose();
         targetHits.Dispose();
@@ -222,20 +219,6 @@ public class ImageSource : MonoBehaviour
         secRays.Dispose();
 
         return reflections;
-    }
-
-    public void DrawSecundaryRays(NativeArray<AudioRay> secundaryRays, NativeList<SecundaryHit> secundaryHits)
-    {
-        for (int i = 0; i < secundaryRays.Length; i++)
-        {
-            if (!secundaryRays[i].IsValid) continue;
-            Debug.DrawRay(source.transform.position, secundaryHits[i].SourcePlanePosition - source.transform.position,
-                Color.magenta);
-            Debug.DrawRay(secundaryHits[i].SourcePlanePosition,
-                secundaryHits[i].TargetPlanePosition - secundaryHits[i].SourcePlanePosition, Color.magenta);
-            Debug.DrawRay(target.transform.position, secundaryHits[i].TargetPlanePosition - target.transform.position,
-                Color.magenta);
-        }
     }
 
     public List<AudioRay> GetPrimaryReflections(NativeArray<RaycastHit> surroundingHits)
