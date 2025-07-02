@@ -26,7 +26,7 @@ namespace Code
         public List<AudioRay> PrimaryReflections;
         public List<AudioRay> SecundaryReflections;
         public List<AudioRay> HigherOrderReflections;
-        
+        public ImpulseGraphUI impulseGraphUI;
         private float[] _impulseResponseLeft;
         private float[] _impulseResponseRight;
         
@@ -49,7 +49,7 @@ namespace Code
         private Complex[] _freqDomainIrLeft;
         private Complex[] _freqDomainIrRight;
         private readonly float earOffset = 0.1f; // Abstand der Ohren zur Mitte in Metern
-
+        
         private void Awake()
         {
             _isSetup = false;
@@ -61,6 +61,7 @@ namespace Code
             _previousImpulseResponsesLeft = new List<float[]>();
             _previousImpulseResponsesRight = new List<float[]>();
             _isSetup = true;
+            Application.targetFrameRate = -1; 
         }
         
 
@@ -130,6 +131,7 @@ namespace Code
             
             _previousImpulseResponsesLeft.Add(_impulseResponseLeft);
             _previousImpulseResponsesRight.Add(_impulseResponseRight);
+            impulseGraphUI.impulseResponse = _impulseResponseLeft;
         }
 
 
