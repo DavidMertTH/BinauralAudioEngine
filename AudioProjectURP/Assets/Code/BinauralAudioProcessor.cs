@@ -1,14 +1,20 @@
 using System.Collections.Generic;
+using System;
 using System.Numerics;
 using System.Threading.Tasks;
 using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
+using System.Runtime.InteropServices;
 
 namespace Code
 {
     [RequireComponent(typeof(AudioSource))]
     public class BinauralAudioProcessor : MonoBehaviour
     {
+        [DllImport("hrtf_import")]
+        private static extern IntPtr mysofa_load(string filename, out int err);
+
+
         public Transform targetObject;
         public AudioFileLoader audioFileLoader;
         
@@ -49,7 +55,10 @@ namespace Code
         private Complex[] _freqDomainIrLeft;
         private Complex[] _freqDomainIrRight;
         private readonly float earOffset = 0.1f; // Abstand der Ohren zur Mitte in Metern
-        
+
+        private MySofaHRTF sofaHRTF;
+        private bool useFirstFunction = true;
+
         private void Awake()
         {
             _isSetup = false;
@@ -61,7 +70,14 @@ namespace Code
             _previousImpulseResponsesLeft = new List<float[]>();
             _previousImpulseResponsesRight = new List<float[]>();
             _isSetup = true;
-            Application.targetFrameRate = -1; 
+            Application.targetFrameRate = -1;
+
+            string filePath = "C:/Users/David/Dokumente/Unizeug/Master/Semester4/VAE/dtf_nh2.sofa"; // Pfad zur Datei
+            int errorCode;
+
+            IntPtr hrtfPtr = mysofa_load(filePath, out errorCode);
+
+            sofaHRTF = new MySofaHRTF(hrtfPtr);
         }
         
 
@@ -131,7 +147,7 @@ namespace Code
             
             _previousImpulseResponsesLeft.Add(_impulseResponseLeft);
             _previousImpulseResponsesRight.Add(_impulseResponseRight);
-            impulseGraphUI.impulseResponse = _impulseResponseLeft;
+            //impulseGraphUI.impulseResponse = _impulseResponseLeft;
         }
 
 
