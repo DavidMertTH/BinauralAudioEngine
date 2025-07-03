@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Threading.Tasks;
 using MathNet.Numerics.IntegralTransforms;
 using MathNet.Numerics.Providers.FourierTransform;
 using UnityEngine;
@@ -16,7 +17,7 @@ namespace Code
             FourierTransformControl.TryUseNativeMKL();
         }
 
-        private int GetMaxZweierPotenz(int size)
+        public static int GetMaxZweierPotenz(int size)
         {
             int fftLen = 1;
             while (fftLen < size)
@@ -42,9 +43,9 @@ namespace Code
             return Mathf.Sqrt(sum / ir.Length);
         }
 
-        public Complex[] ToFreqDomain(float[] inTimeDomain, List<float[]> previousInTimeDomain)
+        public Complex[] ToFreqDomain(float[] inTimeDomain, int length)
         {
-            float preRms = GetRMS(inTimeDomain);
+    /*        float preRms = GetRMS(inTimeDomain);
             for (int i = 0; i < previousInTimeDomain.Count; i++)
             {
                 float[] prev = previousInTimeDomain[i];
@@ -60,58 +61,17 @@ namespace Code
             {
                 inTimeDomain[i] /= previousInTimeDomain.Count;
                 inTimeDomain[i] *= ampFaktor;
-            }
-
-            int lengthSum = 1024 + inTimeDomain.Length;
-            int requiredLength = GetMaxZweierPotenz(lengthSum);
-            Complex[] complexIr = GetComplex(inTimeDomain, requiredLength);
+            }*/
+            Complex[] complexIr = GetComplex(inTimeDomain, length);
             Fourier.Forward(complexIr, FourierOptions.Matlab);
             return complexIr;
         }
-
-        public float[] ConvolveData(float[] ir, float[] audio, ref float[] overlapBuffer)
-        {
-            int lengthSum = audio.Length + ir.Length;
-            int requiredLength = GetMaxZweierPotenz(lengthSum);
-            if (overlapBuffer == null)
-            {
-                overlapBuffer = new float[requiredLength];
-            }
-
-            Complex[] complexAudioInput = GetComplex(audio, requiredLength);
-
-            Fourier.Forward(complexAudioInput, FourierOptions.Matlab);
-
-            Complex[] complexIrInput = GetComplex(ir, requiredLength);
-            Fourier.Forward(complexIrInput, FourierOptions.Matlab);
-
-            for (int i = 0; i < complexIrInput.Length; i++)
-            {
-                complexAudioInput[i] *= complexIrInput[i];
-            }
-
-            Fourier.Inverse(complexAudioInput, FourierOptions.Matlab);
-
-            complexAudioInput = Normalize(complexAudioInput);
-            float[] resultingSamples = new float[complexAudioInput.Length];
-
-            overlapBuffer = PullOverlapBuffer(overlapBuffer, audio.Length);
-            for (int i = 0; i < resultingSamples.Length; i++)
-            {
-                overlapBuffer[i] += (float)complexAudioInput[i].Real;
-            }
-
-            return Mix(audio, overlapBuffer);
-        }
+        
 
         public float[] ConvolveData(Complex[] irFreqDomain, float[] audio, ref float[] overlapBuffer)
         {
             int requiredLength = irFreqDomain.Length;
-            if (overlapBuffer == null)
-            {
-                overlapBuffer = new float[requiredLength];
-            }
-
+            if (overlapBuffer == null) overlapBuffer = new float[requiredLength];
             Complex[] complexAudioInput = GetComplex(audio, requiredLength);
 
             Fourier.Forward(complexAudioInput, FourierOptions.Matlab);
@@ -134,7 +94,27 @@ namespace Code
 
             return Mix(audio, overlapBuffer);
         }
+        public float[] ConvolveData(Complex[] irFreqDomain, Complex[] audioData, float[] dry, ref float[] overlapBuffer)
+        {
+            if (overlapBuffer == null) overlapBuffer = new float[audioData.Length];
+            
+            for (int i = 0; i < irFreqDomain.Length; i++)
+            {
+                audioData[i] *= irFreqDomain[i];
+            }
+            Fourier.Inverse(audioData, FourierOptions.Matlab);
 
+            audioData = Normalize(audioData);
+            float[] resultingSamples = new float[audioData.Length];
+
+            overlapBuffer = PullOverlapBuffer(overlapBuffer, dry.Length);
+            for (int i = 0; i < resultingSamples.Length; i++)
+            {
+                overlapBuffer[i] += (float)audioData[i].Real;
+            }
+
+            return Mix(dry, overlapBuffer);
+        }
         private float[] PullOverlapBuffer(float[] overlapBuffer, int pullLength)
         {
             for (int i = 0; i < overlapBuffer.Length - pullLength; i++)
