@@ -75,27 +75,39 @@ namespace Code
 
         public void CreatePrimitiveImpulseresponse()
         {
-            int irLength = 2024 * 2;
+            int irLength = 2024 * 4;
             // TOTO DAVID MARTIN KARG __ Diese Funktion sollte mit der HRTF Funktion ersetzt werden
             if (bypass || !_isSetup) return;
+            
             _impulseResponseLeft = new float[irLength];
             _impulseResponseRight = new float[irLength];
 
             List<AudioRay> rays = GetAllSelectedRays();
             int overshootLength = 20;
+
+            float lengthDirectRay = DirectHit.DistanceToImage;
             foreach (var ray in rays)
             {
                 if (!ray.IsValid) continue;
 
-                float leftDistance = ray.DistanceToImage + Vector3.Distance(ray.ImagePosition, _leftEar);
-                float rightDistance = ray.DistanceToImage + Vector3.Distance(ray.ImagePosition, _rightEar);
+                if (ray.DistanceToImage < lengthDirectRay)
+                {
+                    print("error");
+                }
 
+                float imageToCenter = Vector3.Distance(targetObject.transform.position, ray.ImagePosition);
+                
+                float offsetLeft = imageToCenter - Vector3.Distance(_leftEar, ray.ImagePosition);
+                float offsetRight = imageToCenter - Vector3.Distance(_rightEar, ray.ImagePosition);
+                float leftDistance = ray.DistanceToImage - offsetLeft;
+                float rightDistance = ray.DistanceToImage - offsetRight;
+                
                 float leftDelaySec = leftDistance / 343f;
                 float rightDelaySec = rightDistance / 343f;
 
                 float targetLeftDelaySamples = _sampleRate * leftDelaySec;
                 float targetRightDelaySamples = _sampleRate * rightDelaySec;
-
+                
                 float maxEarDist = Vector3.Distance(_rightEar, _leftEar);
                 float binauralFactor = Mathf.Clamp((leftDistance - rightDistance) / (4 * maxEarDist), -2f, 2f);
                 float averageDistance = (leftDistance + rightDistance) / 2;
