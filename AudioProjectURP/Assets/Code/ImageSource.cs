@@ -25,11 +25,6 @@ public class ImageSource : MonoBehaviour
     private List<AudioRay> _secundaryReflectionsList;
 
 
-    private void Update()
-    {
-        binauralAudioProcessor.SecundaryReflections = _secundaryReflectionsList;
-    }
-
     private void OnDestroy()
     {
         if (_primaryReflections.IsCreated) _primaryReflections.Dispose();
@@ -121,7 +116,7 @@ public class ImageSource : MonoBehaviour
 
         return rays;
     }
-    
+
 
     public List<AudioRay> GetSecundaryReflections(NativeArray<RaycastHit> sourroundingHitsSource,
         NativeArray<RaycastHit> sourroundingHitsTarget, float absorbtion)
@@ -266,8 +261,8 @@ public class ImageSource : MonoBehaviour
 
         public void Execute(int index)
         {
-            if (ToSourceHit[index].distance < 0.001f || ToTargetHit[index].distance < 0.001f ||
-                ImageToImageHit[index].distance < 0.001)
+            if (ToSourceHit[index].distance < 0.0001f || ToTargetHit[index].distance < 0.0001f ||
+                ImageToImageHit[index].distance < 0.0001)
             {
                 AudioRay falseRay = new AudioRay
                 {
@@ -275,14 +270,15 @@ public class ImageSource : MonoBehaviour
                 };
 
                 AudioRays[index] = falseRay;
+                return;
             }
 
             if (ToSourceHit[index].normal != SecHits[index].SourcePlaneNormal) return;
-            if (ToSourceHit[index].point != SecHits[index].SourcePlanePosition) return;
+            if ((ToSourceHit[index].point - SecHits[index].SourcePlanePosition).magnitude > 0.01f) return;
             if (ToTargetHit[index].normal != SecHits[index].TargetPlaneNormal) return;
-            if (ToTargetHit[index].point != SecHits[index].TargetPlanePosition) return;
+            if ((ToTargetHit[index].point - SecHits[index].TargetPlanePosition).magnitude > 0.01f) return;
             if (ImageToImageHit[index].normal != SecHits[index].TargetPlaneNormal) return;
-            if (ImageToImageHit[index].point != SecHits[index].TargetPlanePosition) return;
+            if ((ImageToImageHit[index].point - SecHits[index].TargetPlanePosition).magnitude > 0.01f) return;
 
             float distanceToSource = math.distance(Source, ToSourceHit[index].point);
             float distanceToTarget = math.distance(Target, ToTargetHit[index].point);
@@ -334,8 +330,7 @@ public class ImageSource : MonoBehaviour
     private struct GetPossibleSecundaryHits : IJobParallelFor
     {
         public NativeList<SecundaryHit>.ParallelWriter PossibleHits;
-
-
+        
         [ReadOnly] public Vector3 Source;
         [ReadOnly] public Vector3 Target;
 
@@ -377,7 +372,7 @@ public class ImageSource : MonoBehaviour
                 Vector3 intersectionPointSource =
                     flippedSource + rayDirection * tSource + InitHitSource[index].normal * 0.001f;
                 Vector3 intersectionPointTarget =
-                    flippedSource + rayDirection * tTarget + InitHitTarget[index].normal * 0.001f;
+                    flippedSource + rayDirection * tTarget - InitHitTarget[index].normal * 0.001f;
 
                 SecundaryHit hit = new SecundaryHit()
                 {
