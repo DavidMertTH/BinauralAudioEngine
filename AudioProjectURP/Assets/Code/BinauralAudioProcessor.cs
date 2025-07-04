@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
@@ -121,13 +122,25 @@ namespace Code
             _previousImpulseResponsesLeft.Add(_impulseResponseLeft);
             _previousImpulseResponsesRight.Add(_impulseResponseRight);
             impulseGraphUI.impulseResponse = _impulseResponseLeft;
+
+            _nativeImpulseResponseLeft.Dispose();
+            _nativeImpulseResponseRight.Dispose();
+        }
+
+        private void OnDestroy()
+        {
+            if (!_jobIsRunning) return;
+            _leftJobHandle.Complete();
+            _rightJobHandle.Complete();
+            if (_nativeImpulseResponseLeft.IsCreated) _nativeImpulseResponseLeft.Dispose();
+            if (_nativeImpulseResponseRight.IsCreated) _nativeImpulseResponseRight.Dispose();
         }
 
         public void StartPrimitiveImpulseResponse()
         {
             if (bypass || !_isSetup) return;
 
-            _irLength = 2024 * 4;
+            _irLength = 2024;
 
             List<AudioRay> rays = GetAllSelectedRays();
 

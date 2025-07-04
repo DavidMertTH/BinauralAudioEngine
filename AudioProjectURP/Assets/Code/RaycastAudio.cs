@@ -191,8 +191,7 @@ namespace Code
                 ray.ImagePosition = PreviousHit[index].point + PreviousHit[index].normal * 0.001f;
                 ray.Positions.Add(ray.ImagePosition);
 
-              
-
+                
                 FromTarget[index] = new RaycastCommand(Target, PreviousHit[index].point - Target,
                     QueryParameters.Default);
 
