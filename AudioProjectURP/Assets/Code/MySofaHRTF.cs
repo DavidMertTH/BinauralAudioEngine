@@ -18,12 +18,21 @@ namespace Code
         public List<float> azimuth;
         public List<float> elevation;
 
+        List<(float, float)> sortedList;
+
+
+
+
 
         public MySofaHRTF(IntPtr hrtfData)
         {
             this.hrtfData = MarshalHRTF(hrtfData);
 
             hrtfMap = createHRTFDictionary(this.hrtfData);
+
+            sortedList = hrtfMap.Keys.OrderBy(key => key.Item1)
+                                                          .ThenBy(key => key.Item2)
+                                                          .ToList();
 
             azimuth = hrtfMap.Keys.Select(key => key.Item1).Distinct().OrderBy(x => x).ToList();
             elevation = hrtfMap.Keys.Select(key => key.Item2).Distinct().OrderBy(x => x).ToList();
@@ -58,49 +67,15 @@ namespace Code
             float closestAzimuth = FindClosest(azimuth, targetAzimuth);
             float closestElevation = FindClosest(elevation, targetElevation);
 
-            int indexAzimuth = azimuth.IndexOf(closestAzimuth);
-            int indexElevation = elevation.IndexOf(closestElevation);
+            (float, float) closestBoth = FindClosestKey(sortedList, (targetAzimuth, targetElevation));
 
-            int count = 1;
 
-            while (!hrtfMap.ContainsKey((closestAzimuth, closestElevation)))
-            {
-                // Erzeuge mögliche Kandidaten in beide Richtungen (+ und -)
-                var candidates = new List<(int, int)>
-                {
-                    (indexAzimuth, indexElevation + count),
-                    (indexAzimuth + count, indexElevation),
-                    (indexAzimuth, indexElevation - count),
-                    (indexAzimuth - count, indexElevation),
-                };
-
-                if( indexAzimuth + count > azimuth.Count || indexAzimuth - count < 0 ||
-                    indexElevation + count > elevation.Count || indexElevation - count < 0)
-                {
-                    Debug.Log("they're just to small those lists");
-                    break;
-                }
-
-                foreach (var candidate in candidates)
-                {
-                    if (hrtfMap.ContainsKey(candidate))
-                    {
-                        closestAzimuth = azimuth[candidate.Item1];
-                        closestElevation = elevation[candidate.Item2];
-                        Debug.Log("found after hardships");
-                        break;
-                    }
-                }
-
-                count++;
-            }
-
-            if (!hrtfMap.ContainsKey((closestAzimuth, closestElevation)))
+            if (!hrtfMap.ContainsKey((closestBoth)))
             {
                 throw new InvalidOperationException("Kein gültiger HRTF-Schlüssel gefunden.");
             }
 
-            (float[] leftEarResponse, float[] rightEarResponse) = hrtfMap[(closestAzimuth, closestElevation)];
+            (float[] leftEarResponse, float[] rightEarResponse) = hrtfMap[(closestBoth)];
             return (leftEarResponse, rightEarResponse);
         }
 
@@ -131,6 +106,50 @@ namespace Code
 
             return closest;
         }
+
+        static (float, float) FindClosestKey(List<(float, float)> sortedList, (float, float) target)
+        {
+            // Binäre Suche nach dem nächstgelegenen x-Wert
+            int left = 0;
+            int right = sortedList.Count - 1;
+            while (left <= right)
+            {
+                int mid = left + (right - left) / 2;
+                if (sortedList[mid].Item1 == target.Item1)
+                {
+                    left = mid;
+                    break;
+                }
+                else if (sortedList[mid].Item1 < target.Item1)
+                {
+                    left = mid + 1;
+                }
+                else
+                {
+                    right = mid - 1;
+                }
+            }
+
+            // Bestimme den nächsten Key-Pair
+            (float, float) closestKey = sortedList[Math.Max(0, Math.Min(left, sortedList.Count - 1))];
+
+            // Überprüfe Nachbarn um die präziseste Entfernung zu holen
+            for (int i = Math.Max(0, left - 1); i <= Math.Min(sortedList.Count - 1, left + 1); ++i)
+            {
+                if (Distance(sortedList[i], target) < Distance(closestKey, target))
+                {
+                    closestKey = sortedList[i];
+                }
+            }
+
+            return closestKey;
+        }
+
+        static double Distance((float, float) point1, (float, float) point2)
+        {
+            return Math.Sqrt(Math.Pow(point1.Item1 - point2.Item1, 2) + Math.Pow(point1.Item2 - point2.Item2, 2));
+        }
+ 
 
 
         private float[] GetArrayFromIntPtr(IntPtr valuesPtr, uint numberOfElements)
