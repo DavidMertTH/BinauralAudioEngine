@@ -37,8 +37,8 @@ namespace Code
         private NativeArray<float> _nativeImpulseResponseLeft;
         private NativeArray<float> _nativeImpulseResponseRight;
 
-        private List<float[]> _previousImpulseResponsesLeft;
-        private List<float[]> _previousImpulseResponsesRight;
+        private Complex[] _previousImpulseResponsesLeft;
+        private Complex[] _previousImpulseResponsesRight;
 
         private float _timeSinceLastImpulse;
 
@@ -69,6 +69,7 @@ namespace Code
         private FillImpulseResponseParallel _impulseJobRight;
         private bool _jobIsRunning;
 
+        private int _dataBufferLength;
         private void Awake()
         {
             _isSetup = false;
@@ -77,11 +78,13 @@ namespace Code
         private void Start()
         {
             _sampleRate = AudioSettings.outputSampleRate;
-            _previousImpulseResponsesLeft = new List<float[]>();
-            _previousImpulseResponsesRight = new List<float[]>();
             _isSetup = true;
             Application.targetFrameRate = -1;
-            _lastData = new float[1024 * 2];
+            int bufferLength;
+            int numBuffers;
+            AudioSettings.GetDSPBufferSize(out bufferLength, out numBuffers);
+            _dataBufferLength = bufferLength * numBuffers;
+            _lastData = new float[bufferLength * numBuffers];
             _jobIsRunning = false;
         }
 
@@ -104,23 +107,37 @@ namespace Code
             _leftJobHandle.Complete();
             _rightJobHandle.Complete();
 
+            _previousImpulseResponsesLeft = _freqDomainIrLeft;
+            _previousImpulseResponsesRight = _freqDomainIrRight;
+
             _impulseJobLeft.ImpulseResponse.CopyTo(_impulseResponseLeft);
             _impulseJobRight.ImpulseResponse.CopyTo(_impulseResponseRight);
 
-            int lengthSum = 1024 + _irLength;
+            int lengthSum = (_dataBufferLength/2) + _irLength;
             int requiredLength = LiveConvolutionReverb.GetMaxZweierPotenz(lengthSum);
+
+            if (_overlapBufferLeft == null || _overlapBufferRight == null)
+            {
+                _overlapBufferLeft = new float[requiredLength];
+                _overlapBufferRight = new float[requiredLength];
+            }
+
+            if (_freqDomainIrLeft != null)
+            {
+                _previousImpulseResponsesLeft = new Complex[_freqDomainIrLeft.Length];
+                _previousImpulseResponsesRight = new Complex[_freqDomainIrRight.Length];
+
+                for (int i = 0; i < _freqDomainIrLeft.Length; i++)
+                {
+                    _previousImpulseResponsesLeft[i] = _freqDomainIrLeft[i];
+                    _previousImpulseResponsesRight[i] = _freqDomainIrRight[i];
+                }
+            }
+            
 
             Task.Run(() => { _freqDomainIrLeft = reverb.ToFreqDomain(_impulseResponseLeft, requiredLength); });
             Task.Run(() => { _freqDomainIrRight = reverb.ToFreqDomain(_impulseResponseRight, requiredLength); });
 
-            if (_previousImpulseResponsesRight.Count > 20)
-            {
-                _previousImpulseResponsesRight.RemoveAt(0);
-                _previousImpulseResponsesLeft.RemoveAt(0);
-            }
-
-            _previousImpulseResponsesLeft.Add(_impulseResponseLeft);
-            _previousImpulseResponsesRight.Add(_impulseResponseRight);
             impulseGraphUI.impulseResponse = _impulseResponseLeft;
 
             _nativeImpulseResponseLeft.Dispose();
@@ -191,6 +208,7 @@ namespace Code
             };
             _leftJobHandle = _impulseJobLeft.Schedule(_nativeImpulseResponseLeft.Length, 1, dataHandle);
             _rightJobHandle = _impulseJobRight.Schedule(_nativeImpulseResponseRight.Length, 1, dataHandle);
+
             _jobIsRunning = true;
         }
 
@@ -225,10 +243,13 @@ namespace Code
                 float[] right = dataRight;
                 rightCompData = reverb.ToFreqDomain(right, _freqDomainIrLeft.Length);
 
-                dataLeft = reverb.ConvolveData(_freqDomainIrLeft, leftCompData, dataLeft, ref _overlapBufferLeft);
-                dataRight = reverb.ConvolveData(_freqDomainIrRight, rightCompData, dataRight, ref _overlapBufferRight);
+                dataLeft = reverb.ConvolveData(_freqDomainIrLeft, _previousImpulseResponsesLeft, leftCompData, dataLeft,
+                    ref _overlapBufferLeft);
+                dataRight = reverb.ConvolveData(_freqDomainIrRight, _previousImpulseResponsesRight, rightCompData,
+                    dataRight, ref _overlapBufferRight);
 
-
+                _previousImpulseResponsesLeft = _freqDomainIrLeft;
+                _previousImpulseResponsesRight = _freqDomainIrRight;
                 for (int i = 0, j = 0; i < data.Length; i += 2, j++)
                 {
                     _lastData[i] = dataLeft[j];
@@ -316,7 +337,7 @@ namespace Code
                 float maxEarDist = Vector3.Distance(RightEarPosition, LeftEarPosition);
                 float binauralFactor = Mathf.Clamp((leftDistance - rightDistance) / (4 * maxEarDist), -2f, 2f);
                 float averageDistance = (leftDistance + rightDistance) / 2;
-                float distanceAmplitude = 1 / (averageDistance);
+                float distanceAmplitude = 3 / (averageDistance);
 
                 float leftAmplitude = distanceAmplitude * (1 - binauralFactor) * ray.Absorbtion * Gain;
                 float rightAmplitude = distanceAmplitude * (1 + binauralFactor) * ray.Absorbtion * Gain;

@@ -1297,6 +1297,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   wet: 1
+  crossoverLength: 64
 --- !u!1 &801160498
 GameObject:
   m_ObjectHideFlags: 0

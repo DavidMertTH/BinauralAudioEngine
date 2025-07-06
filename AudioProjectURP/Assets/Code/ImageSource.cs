@@ -277,8 +277,8 @@ public class ImageSource : MonoBehaviour
             if ((ToSourceHit[index].point - SecHits[index].SourcePlanePosition).magnitude > 0.01f) return;
             if (ToTargetHit[index].normal != SecHits[index].TargetPlaneNormal) return;
             if ((ToTargetHit[index].point - SecHits[index].TargetPlanePosition).magnitude > 0.01f) return;
-            if (ImageToImageHit[index].normal != SecHits[index].TargetPlaneNormal) return;
-            if ((ImageToImageHit[index].point - SecHits[index].TargetPlanePosition).magnitude > 0.01f) return;
+            if (ImageToImageHit[index].normal != SecHits[index].SourcePlaneNormal) return;
+            if ((ImageToImageHit[index].point - SecHits[index].SourcePlanePosition).magnitude > 0.01f) return;
 
             float distanceToSource = math.distance(Source, ToSourceHit[index].point);
             float distanceToTarget = math.distance(Target, ToTargetHit[index].point);
@@ -291,6 +291,7 @@ public class ImageSource : MonoBehaviour
                 ImagePosition = ToTargetHit[index].point + ToTargetHit[index].normal * 0.001f,
                 IsValid = true,
             };
+            
             ray.Positions.Add(ToSourceHit[index].point);
             ray.Positions.Add(ToTargetHit[index].point);
             AudioRays[index] = ray;
@@ -330,7 +331,7 @@ public class ImageSource : MonoBehaviour
     private struct GetPossibleSecundaryHits : IJobParallelFor
     {
         public NativeList<SecundaryHit>.ParallelWriter PossibleHits;
-        
+
         [ReadOnly] public Vector3 Source;
         [ReadOnly] public Vector3 Target;
 
@@ -406,8 +407,8 @@ public class ImageSource : MonoBehaviour
                 QueryParameters.Default);
             ToTarget[index] = new RaycastCommand(Target, SecHits[index].TargetPlanePosition - Target,
                 QueryParameters.Default);
-            ImageToImage[index] = new RaycastCommand(SecHits[index].SourcePlanePosition,
-                SecHits[index].TargetPlanePosition - SecHits[index].SourcePlanePosition, QueryParameters.Default);
+            ImageToImage[index] = new RaycastCommand(SecHits[index].TargetPlanePosition,
+                SecHits[index].SourcePlanePosition - SecHits[index].TargetPlanePosition, QueryParameters.Default);
         }
     }
 
