@@ -72,7 +72,7 @@ namespace Code
             _isSetup = true;
             Application.targetFrameRate = -1;
 
-            string filePath = "C:/Users/David/Dokumente/Unizeug/Master/Semester4/VAE/dtf_nh2.sofa"; // Pfad zur Datei
+            string filePath = Application.streamingAssetsPath + "/sofafiles/hrtf0.sofa";
             int errorCode;
 
             IntPtr hrtfPtr = mysofa_load(filePath, out errorCode);
@@ -90,6 +90,42 @@ namespace Code
             {
                 // Wechselt zwischen den beiden Funktionen
                 useFirstFunction = !useFirstFunction;
+            }
+            if (Input.GetKeyDown(KeyCode.Keypad0))
+            {
+                string filePath = Application.streamingAssetsPath + "/sofafiles/hrtf0.sofa"; // Pfad zur Datei
+                int errorCode;
+
+                IntPtr hrtfPtr = mysofa_load(filePath, out errorCode);
+
+                sofaHRTF = new MySofaHRTF(hrtfPtr);
+            }
+            else if(Input.GetKeyDown(KeyCode.Keypad1))
+            {
+                string filePath = Application.streamingAssetsPath + "/sofafiles/hrtf1.sofa";
+                int errorCode;
+
+                IntPtr hrtfPtr = mysofa_load(filePath, out errorCode);
+
+                sofaHRTF = new MySofaHRTF(hrtfPtr);
+            }
+            else if (Input.GetKeyDown(KeyCode.Keypad2))
+            {
+                string filePath = Application.streamingAssetsPath + "/sofafiles/hrtf2.sofa";
+                int errorCode;
+
+                IntPtr hrtfPtr = mysofa_load(filePath, out errorCode);
+
+                sofaHRTF = new MySofaHRTF(hrtfPtr);
+            }
+            else if (Input.GetKeyDown(KeyCode.Keypad3))
+            {
+                string filePath = Application.streamingAssetsPath + "/sofafiles/hrtf4.sofa";
+                int errorCode;
+
+                IntPtr hrtfPtr = mysofa_load(filePath, out errorCode);
+
+                sofaHRTF = new MySofaHRTF(hrtfPtr);
             }
 
             // Ruft je nach Zustand die richtige Funktion auf
@@ -198,7 +234,6 @@ namespace Code
             _impulseResponseRight = new float[irLength];
 
             List<AudioRay> rays = GetAllSelectedRays();
-            int overshootLength = 20;
 
             float lengthDirectRay = DirectHit.DistanceToImage;
             foreach (var ray in rays)
@@ -224,7 +259,7 @@ namespace Code
                     float distanceToSource = Vector3.Distance(targetObject.transform.position, ray.ImagePosition);
                     float propagationDelaySec = distanceToSource / 343f; // Schallgeschwindigkeit: 343 m/s
                     float propagationDelaySamples = _sampleRate * propagationDelaySec;
-                    float distanceAmplitudeTwo = 1 / distanceToSource;
+                    float distanceAmplitudeTwo = 8 / distanceToSource;
 
                     for (int i = 0; i < sofaHRTF.hrtfData.N; i++)
                     {

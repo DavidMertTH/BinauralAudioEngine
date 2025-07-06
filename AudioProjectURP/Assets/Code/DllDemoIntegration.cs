@@ -98,7 +98,7 @@ namespace Code
             Debug.Log("3 * 4 = " + result2);
 
 
-            string filePath = "C:/Users/David/Dokumente/Unizeug/Master/Semester4/VAE/dtf_nh2.sofa"; // Pfad zur Datei
+            string filePath = Application.streamingAssetsPath + "/sofafiles/hrtf0.sofa"; // Pfad zur Datei
             int errorCode;
 
             // Rufe die externe Funktion auf
