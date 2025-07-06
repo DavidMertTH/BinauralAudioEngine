@@ -9,13 +9,13 @@ namespace Code
 
 
         [DllImport("MyLibrary")]
-        private static extern int add(int a, int b);
+        public static extern int add(int a, int b);
 
         [DllImport("hrtf_import")]
-        private static extern int multiply(int a, int b);
+        public static extern int multiply(int a, int b);
 
         [DllImport("hrtf_import")]
-        private static extern IntPtr mysofa_load(string filename, out int err);
+        public static extern IntPtr mysofa_load(string filename, out int err);
 
 
         private static MYSOFA_HRTF MarshalHRTF(IntPtr hrtfPtr)
