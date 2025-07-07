@@ -1,59 +1,103 @@
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI.Extensions;
+using UnityEngine.UI;
 
 namespace Code
 {
-    [RequireComponent(typeof(UILineRenderer))]
     public class ImpulseGraphUI : MonoBehaviour
     {
-        public RectTransform graphArea; // UI Panel area
-        public float[] impulseResponse;
-        public float lineWidth = 4f;
-        public Color lineColor = Color.green;
-        [Range(0.1f, 8f)]
-        public float heightScale = 3f; // Scale vertical height
+        [Header("Graph Settings")]
+        public float heightScale = 1f;
 
-        private UILineRenderer uiLineRenderer;
+        [Range(0f, 1f)]
+        public float zeroLinePosition = 0.35f; // Vertical offset for the 0-line
+
+        [Header("Colors")]
+        public Color backgroundColor = new Color(0.1f, 0.1f, 0.1f, 1f);
+        public Color leftColor = Color.green;
+        public Color rightColor = Color.red;
+
+        [Header("UI Elements")]
+        public RawImage graphDisplayUI; // Assign this in the inspector
+
+        [Header("Texture Settings")]
+        public int textureWidth = 512;
+        public int textureHeight = 256;
+
+        [HideInInspector] public float[] impulseResponseLeft;
+        [HideInInspector] public float[] impulseResponseRight;
+
+        private RenderTexture _renderTexture;
+        private Material _lineMaterial;
 
         void Start()
         {
-            uiLineRenderer = GetComponent<UILineRenderer>();
-            uiLineRenderer.LineThickness = lineWidth;
-            uiLineRenderer.color = lineColor;
-            uiLineRenderer.transform.SetParent(graphArea, false);
-            uiLineRenderer.transform.localPosition = Vector3.zero;
+            SetupRenderTexture();
+            SetupMaterial();
+
+            if (graphDisplayUI != null)
+                graphDisplayUI.texture = _renderTexture;
+        }
+
+        void SetupRenderTexture()
+        {
+            _renderTexture = new RenderTexture(textureWidth, textureHeight, 0, RenderTextureFormat.ARGB32);
+            _renderTexture.Create();
+        }
+
+        void SetupMaterial()
+        {
+            Shader shader = Shader.Find("Hidden/Internal-Colored");
+            _lineMaterial = new Material(shader)
+            {
+                hideFlags = HideFlags.HideAndDontSave
+            };
+
+            _lineMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            _lineMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            _lineMaterial.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Off);
+            _lineMaterial.SetInt("_ZWrite", 0);
         }
 
         void Update()
         {
-            if (graphArea == null || impulseResponse == null || impulseResponse.Length == 0)
-                return;
+            bool hasLeft = impulseResponseLeft != null && impulseResponseLeft.Length > 0;
+            bool hasRight = impulseResponseRight != null && impulseResponseRight.Length > 0;
 
-            DrawGraph();
+            if (!hasLeft && !hasRight) return;
+
+            Graphics.SetRenderTarget(_renderTexture);
+            GL.Clear(true, true, backgroundColor);
+
+            _lineMaterial.SetPass(0);
+            GL.PushMatrix();
+            GL.LoadPixelMatrix(0, textureWidth, 0, textureHeight);
+
+            if (hasLeft)
+                DrawImpulseResponse(impulseResponseLeft, leftColor);
+
+            if (hasRight)
+                DrawImpulseResponse(impulseResponseRight, rightColor);
+
+            GL.PopMatrix();
+            Graphics.SetRenderTarget(null);
         }
 
-        void DrawGraph()
+        void DrawImpulseResponse(float[] data, Color color)
         {
-            float width = graphArea.rect.width;
-            float height = graphArea.rect.height;
+            int len = data.Length;
+            float zeroLineY = textureHeight * zeroLinePosition;
 
-            float maxAbs = 1f; // You can set this dynamically if needed
+            GL.Begin(GL.LINE_STRIP);
+            GL.Color(color);
 
-            var points = new List<Vector2>();
-
-            for (int i = 0; i < impulseResponse.Length; i++)
+            for (int i = 0; i < len; i++)
             {
-                float x = (i / (float)(impulseResponse.Length - 1)) * width;
-                float y = (impulseResponse[i] / maxAbs) * height / 2f * heightScale;
-
-                float baselineY = -height / 4f; // shifts it downward from center
-                points.Add(new Vector2(x - width / 2f, y + baselineY));
+                float x = (i / (float)(len - 1)) * textureWidth;
+                float y = zeroLineY + data[i] * heightScale * textureHeight * 0.5f;
+                GL.Vertex3(x, y, 0);
             }
 
-            uiLineRenderer.Points = points.ToArray();
-            uiLineRenderer.SetAllDirty(); // Force redraw
+            GL.End();
         }
     }
 }
-

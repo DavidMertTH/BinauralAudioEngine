@@ -131,7 +131,9 @@ namespace Code
             
             _previousImpulseResponsesLeft.Add(_impulseResponseLeft);
             _previousImpulseResponsesRight.Add(_impulseResponseRight);
-            impulseGraphUI.impulseResponse = _impulseResponseLeft;
+         //   impulseGraphUI.impulseResponse = _impulseResponseLeft;
+            impulseGraphUI.impulseResponseLeft = _impulseResponseLeft;
+            impulseGraphUI.impulseResponseRight = _impulseResponseRight;
         }
 
 
