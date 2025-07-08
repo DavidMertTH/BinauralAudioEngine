@@ -1,10 +1,7 @@
-using System;
 using System.Numerics;
 using Code;
 using MathNet.Numerics.IntegralTransforms;
-using Unity.PlasticSCM.Editor.WebApi;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class NotLiveConvReverb : MonoBehaviour
 {
