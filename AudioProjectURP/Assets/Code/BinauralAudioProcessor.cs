@@ -138,7 +138,8 @@ namespace Code
             Task.Run(() => { _freqDomainIrLeft = reverb.ToFreqDomain(_impulseResponseLeft, requiredLength); });
             Task.Run(() => { _freqDomainIrRight = reverb.ToFreqDomain(_impulseResponseRight, requiredLength); });
 
-            impulseGraphUI.impulseResponse = _impulseResponseLeft;
+            impulseGraphUI.impulseResponseLeft = _impulseResponseLeft;
+            impulseGraphUI.impulseResponseRight = _impulseResponseRight;
 
             _nativeImpulseResponseLeft.Dispose();
             _nativeImpulseResponseRight.Dispose();

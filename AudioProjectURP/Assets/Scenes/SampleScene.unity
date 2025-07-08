@@ -4667,7 +4667,12 @@ MonoBehaviour:
   raycastAudio: {fileID: 330585550}
   binauralAudioProcessor: {fileID: 774592942}
   source: {fileID: 774592943}
+  renderDirectRay: 0
+  renderPrimaryRay: 0
+  renderSecondaryRay: 0
+  renderHigherOrderRays: 0
   bounces: 20
+  absorbtion: 0.9
 --- !u!136 &330585552
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -12629,6 +12634,7 @@ GameObject:
   - component: {fileID: 774592944}
   - component: {fileID: 774592943}
   - component: {fileID: 774592942}
+  - component: {fileID: 774592948}
   m_Layer: 6
   m_Name: Sphere
   m_TagString: Untagged
@@ -12654,9 +12660,9 @@ MonoBehaviour:
   useDirect: 1
   usePrimaryReflections: 1
   useSecondaryReflections: 1
-  useHigherOrderReflections: 0
-  Gain: 0.2
-  reverb: {fileID: 0}
+  useHigherOrderReflections: 1
+  Gain: 1.5
+  reverb: {fileID: 774592948}
   impulseGraphUI: {fileID: 1702655289}
 --- !u!82 &774592943
 AudioSource:
@@ -12844,6 +12850,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &774592948
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 774592941}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: deebe1db5fa79f94eaed69f50f41c8fc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  wet: 1
+  crossoverLength: 64
 --- !u!1001 &778100733
 PrefabInstance:
   m_ObjectHideFlags: 0
