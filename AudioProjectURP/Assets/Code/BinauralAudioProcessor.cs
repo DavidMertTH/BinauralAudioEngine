@@ -77,6 +77,8 @@ namespace Code
             IntPtr hrtfPtr = DllDemoIntegration.mysofa_load(filePath, out errorCode);
 
             sofaHRTF = new MySofaHRTF(hrtfPtr);
+
+            Debug.Log(sofaHRTF.radius);
         }
 
 
@@ -233,31 +235,28 @@ namespace Code
             {
                 if (!ray.IsValid) continue;
 
-                Vector3 vecSourceListener = targetObject.transform.position -
-                                            new Vector3(ray.ImagePosition.x, ray.ImagePosition.y, ray.ImagePosition.z);
+                Vector3 vecSourceListener = targetObject.transform.position - new Vector3(ray.ImagePosition.x, ray.ImagePosition.y, ray.ImagePosition.z);
                 Vector3 listenerUp = targetObject.transform.up;
                 Vector3 listenerForward = targetObject.transform.forward;
 
                 float azimuth = Mathf.Atan2(
                     Vector3.Dot(Vector3.Cross(listenerUp, listenerForward), vecSourceListener.normalized),
                     Vector3.Dot(listenerForward, vecSourceListener)) * Mathf.Rad2Deg;
-
                 float elevation = Mathf.Asin(Vector3.Dot(vecSourceListener, listenerUp)) * Mathf.Rad2Deg;
 
                 (float[] leftEarResponse, float[] rightEarResponse) = sofaHRTF.FindBestHRTF(azimuth, elevation);
 
-
                 if (leftEarResponse != null && rightEarResponse != null)
                 {
                     float distanceToSource = ray.DistanceToImage +
-                                             Vector3.Distance(targetObject.transform.position, ray.ImagePosition);
+                                             (Vector3.Distance(targetObject.transform.position, ray.ImagePosition) - sofaHRTF.radius * 2);
                     float propagationDelaySec = distanceToSource / 343f; // Schallgeschwindigkeit: 343 m/s
                     float propagationDelaySamples = _sampleRate * propagationDelaySec;
-                    float distanceAmplitudeTwo = ray.Absorbtion * (8 / distanceToSource);
+                    float distanceAmplitudeTwo = ray.Absorbtion * (8 / distanceToSource) * Gain;
 
                     for (int i = 0; i < sofaHRTF.hrtfData.N; i++)
                     {
-                        if (i + propagationDelaySamples >= irLength - 1) break;
+                        if (i + propagationDelaySamples >= irLength - 1 || propagationDelaySamples < 0) break;
 
                         _impulseResponseLeft[i + (int)propagationDelaySamples] +=
                             leftEarResponse[i] * distanceAmplitudeTwo;

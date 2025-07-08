@@ -14,14 +14,9 @@ namespace Code
 
         // Beispielstruktur zum Speichern der HRTFs
         public Dictionary<(float, float), (float[], float[])> hrtfMap;
-
-        public List<float> azimuth;
-        public List<float> elevation;
+        public float radius;
 
         List<(float, float)> sortedList;
-
-
-
 
 
         public MySofaHRTF(IntPtr hrtfData)
@@ -34,8 +29,7 @@ namespace Code
                                                           .ThenBy(key => key.Item2)
                                                           .ToList();
 
-            azimuth = hrtfMap.Keys.Select(key => key.Item1).Distinct().OrderBy(x => x).ToList();
-            elevation = hrtfMap.Keys.Select(key => key.Item2).Distinct().OrderBy(x => x).ToList();
+            (float[] leftEarResponse, float[] rightEarResponse) = hrtfMap[(0,-30)];
         }
 
         private Dictionary<(float, float), (float[], float[])> createHRTFDictionary(MYSOFA_HRTF hrtfData)
@@ -46,15 +40,20 @@ namespace Code
             float[] sourcePos = GetArrayFromIntPtr(hrtfData.SourcePosition.values, hrtfData.SourcePosition.elements);
 
             uint hrtfLength = hrtfData.N; // Länge der einzelnen Impulsantwort
-            float[] extractedHRTFLeft = new float[hrtfLength];
-            float[] extractedHRTFRight = new float[hrtfLength];
+            radius = sourcePos[2];
 
             for (int i = 0; i < hrtfData.M; i++)
             {
+                float[] extractedHRTFLeft = new float[hrtfLength];
+                float[] extractedHRTFRight = new float[hrtfLength];
+
                 Array.Copy(completeHRTFArray, i * 256 * 2, extractedHRTFLeft, 0, hrtfLength);
                 Array.Copy(completeHRTFArray, (i * 256 * 2) + 256, extractedHRTFRight, 0, hrtfLength);
 
                 soundso.Add((sourcePos[(i * 3)], sourcePos[(i * 3) + 1]), (extractedHRTFLeft, extractedHRTFRight));
+
+                (float[] leftEarResponse, float[] rightEarResponse) = soundso[(sourcePos[(i * 3)], sourcePos[(i * 3) + 1])];
+
             }
 
             return soundso;
@@ -64,11 +63,7 @@ namespace Code
         // Suche und Interpolation
         public (float[], float[]) FindBestHRTF(float targetAzimuth, float targetElevation)
         {
-            float closestAzimuth = FindClosest(azimuth, targetAzimuth);
-            float closestElevation = FindClosest(elevation, targetElevation);
-
             (float, float) closestBoth = FindClosestKey(sortedList, (targetAzimuth, targetElevation));
-
 
             if (!hrtfMap.ContainsKey((closestBoth)))
             {
@@ -76,35 +71,8 @@ namespace Code
             }
 
             (float[] leftEarResponse, float[] rightEarResponse) = hrtfMap[(closestBoth)];
+
             return (leftEarResponse, rightEarResponse);
-        }
-
-
-        // Hilfsfunktion zum Finden des nächsten Werts
-        float FindClosest(List<float> sortedCollection, float target)
-        {
-            int left = 0;
-            int right = sortedCollection.Count - 1;
-            while (left <= right)
-            {
-                int mid = left + (right - left) / 2;
-                if (sortedCollection[mid] == target)
-                    return sortedCollection[mid];
-                else if (sortedCollection[mid] < target)
-                    left = mid + 1;
-                else
-                    right = mid - 1;
-            }
-
-            float closest = sortedCollection[left % sortedCollection.Count];
-            if (left > 0)
-            {
-                float before = sortedCollection[left - 1];
-                if (Mathf.Abs(before - target) < Mathf.Abs(closest - target))
-                    closest = before;
-            }
-
-            return closest;
         }
 
         static (float, float) FindClosestKey(List<(float, float)> sortedList, (float, float) target)
