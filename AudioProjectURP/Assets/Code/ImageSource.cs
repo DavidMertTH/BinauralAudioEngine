@@ -106,8 +106,8 @@ public class ImageSource : MonoBehaviour
 
             int ignoreLayer = 6;
             int layerMask = ~(1 << ignoreLayer); // Invertiert: Alle Layer außer 6
-
-            if (!Physics.Raycast(ray.ImagePosition, toTarget.normalized, out hit, toTarget.magnitude, layerMask))
+            Physics.Raycast(ray.ImagePosition, toTarget.normalized, out hit, toTarget.magnitude, layerMask);
+            if (hit.collider == null)
             {
                 seenDistances.Add(roundedDistance);
                 rays.Add(ray);
@@ -291,7 +291,7 @@ public class ImageSource : MonoBehaviour
                 ImagePosition = ToTargetHit[index].point + ToTargetHit[index].normal * 0.001f,
                 IsValid = true,
             };
-            
+
             ray.Positions.Add(ToSourceHit[index].point);
             ray.Positions.Add(ToTargetHit[index].point);
             AudioRays[index] = ray;

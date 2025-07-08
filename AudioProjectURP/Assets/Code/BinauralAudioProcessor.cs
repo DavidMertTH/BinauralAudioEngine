@@ -157,7 +157,7 @@ namespace Code
         {
             if (bypass || !_isSetup) return;
 
-            _irLength = 2024;
+            _irLength = 2024 * 3;
 
             List<AudioRay> rays = GetAllSelectedRays();
 
