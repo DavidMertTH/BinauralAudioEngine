@@ -56,7 +56,7 @@ namespace Code
         private Complex[] _freqDomainIrRight;
         private readonly float earOffset = 0.1f; // Abstand der Ohren zur Mitte in Metern
 
-        private MySofaHRTF sofaHRTF;
+        private MySofaHRIR sofaHRIR;
         public bool useFirstFunction = true;
 
         private void Awake()
@@ -76,9 +76,9 @@ namespace Code
             int errorCode;
             IntPtr hrtfPtr = DllDemoIntegration.mysofa_load(filePath, out errorCode);
 
-            sofaHRTF = new MySofaHRTF(hrtfPtr);
+            sofaHRIR = new MySofaHRIR(hrtfPtr);
 
-            Debug.Log(sofaHRTF.radius);
+            Debug.Log(sofaHRIR.radius);
         }
 
 
@@ -100,7 +100,7 @@ namespace Code
 
                 IntPtr hrtfPtr = mysofa_load(filePath, out errorCode);
 
-                sofaHRTF = new MySofaHRTF(hrtfPtr);
+                sofaHRIR = new MySofaHRIR(hrtfPtr);
             }
             else if (Input.GetKeyDown(KeyCode.Keypad1))
             {
@@ -109,7 +109,7 @@ namespace Code
 
                 IntPtr hrtfPtr = mysofa_load(filePath, out errorCode);
 
-                sofaHRTF = new MySofaHRTF(hrtfPtr);
+                sofaHRIR = new MySofaHRIR(hrtfPtr);
             }
             else if (Input.GetKeyDown(KeyCode.Keypad2))
             {
@@ -118,7 +118,7 @@ namespace Code
 
                 IntPtr hrtfPtr = mysofa_load(filePath, out errorCode);
 
-                sofaHRTF = new MySofaHRTF(hrtfPtr);
+                sofaHRIR = new MySofaHRIR(hrtfPtr);
             }
             else if (Input.GetKeyDown(KeyCode.Keypad3))
             {
@@ -127,13 +127,13 @@ namespace Code
 
                 IntPtr hrtfPtr = mysofa_load(filePath, out errorCode);
 
-                sofaHRTF = new MySofaHRTF(hrtfPtr);
+                sofaHRIR = new MySofaHRIR(hrtfPtr);
             }
 
             // Ruft je nach Zustand die richtige Funktion auf
             if (useFirstFunction)
             {
-                //CreatePrimitiveImpulseresponse();
+                CreatePrimitiveImpulseresponse();
             }
             else
             {
@@ -143,7 +143,7 @@ namespace Code
 
         public void CreatePrimitiveImpulseresponse()
         {
-            int irLength = 2024 * 3;
+            int irLength = 2024 * 2;
             // TOTO DAVID MARTIN KARG __ Diese Funktion sollte mit der HRTF Funktion ersetzt werden
             if (bypass || !_isSetup) return;
 
@@ -200,6 +200,7 @@ namespace Code
                 }
             }
 
+            impulseGraphUI.impulseResponse = _impulseResponseLeft;
 
             int lengthSum = 1024 + irLength;
             int requiredLength = LiveConvolutionReverb.GetMaxZweierPotenz(lengthSum);
@@ -243,17 +244,17 @@ namespace Code
                     Vector3.Dot(listenerForward, vecSourceListener)) * Mathf.Rad2Deg;
                 float elevation = Mathf.Asin(Vector3.Dot(vecSourceListener, listenerUp)) * Mathf.Rad2Deg;
 
-                (float[] leftEarResponse, float[] rightEarResponse) = sofaHRTF.FindBestHRTF(azimuth, elevation);
+                (float[] leftEarResponse, float[] rightEarResponse) = sofaHRIR.FindBestHRIR(azimuth, elevation);
 
                 if (leftEarResponse != null && rightEarResponse != null)
                 {
                     float distanceToSource = ray.DistanceToImage +
-                                             (Vector3.Distance(targetObject.transform.position, ray.ImagePosition) - sofaHRTF.radius * 2);
+                                             (Vector3.Distance(targetObject.transform.position, ray.ImagePosition) - sofaHRIR.radius * 2);
                     float propagationDelaySec = distanceToSource / 343f; // Schallgeschwindigkeit: 343 m/s
                     float propagationDelaySamples = _sampleRate * propagationDelaySec;
                     float distanceAmplitudeTwo = ray.Absorbtion * (8 / distanceToSource) * Gain;
 
-                    for (int i = 0; i < sofaHRTF.hrtfData.N; i++)
+                    for (int i = 0; i < sofaHRIR.hrtfData.N; i++)
                     {
                         if (i + propagationDelaySamples >= irLength - 1 || propagationDelaySamples < 0) break;
 
@@ -265,6 +266,7 @@ namespace Code
                 }
             }
 
+            impulseGraphUI.impulseResponse = _impulseResponseLeft;
             int lengthSum = 1024 + irLength;
             int requiredLength = LiveConvolutionReverb.GetMaxZweierPotenz(lengthSum);
 
