@@ -7,23 +7,23 @@ using System.Runtime.InteropServices;
 
 namespace Code
 {
-    public class MySofaHRTF
+    public class MySofaHRIR
     {
 
-        public MYSOFA_HRTF hrtfData;
+        public MYSOFA_HRIR hrtfData;
 
-        // Beispielstruktur zum Speichern der HRTFs
+        // Beispielstruktur zum Speichern der HRIRs
         public Dictionary<(float, float), (float[], float[])> hrtfMap;
         public float radius;
 
         List<(float, float)> sortedList;
 
 
-        public MySofaHRTF(IntPtr hrtfData)
+        public MySofaHRIR(IntPtr hrtfData)
         {
-            this.hrtfData = MarshalHRTF(hrtfData);
+            this.hrtfData = MarshalHRIR(hrtfData);
 
-            hrtfMap = createHRTFDictionary(this.hrtfData);
+            hrtfMap = createHRIRDictionary(this.hrtfData);
 
             sortedList = hrtfMap.Keys.OrderBy(key => key.Item1)
                                                           .ThenBy(key => key.Item2)
@@ -32,11 +32,11 @@ namespace Code
             (float[] leftEarResponse, float[] rightEarResponse) = hrtfMap[(0,-30)];
         }
 
-        private Dictionary<(float, float), (float[], float[])> createHRTFDictionary(MYSOFA_HRTF hrtfData)
+        private Dictionary<(float, float), (float[], float[])> createHRIRDictionary(MYSOFA_HRIR hrtfData)
         {
             Dictionary<(float, float), (float[], float[])> soundso = new Dictionary<(float, float), (float[], float[])>();
 
-            float[] completeHRTFArray = GetArrayFromIntPtr(hrtfData.DataIR.values, hrtfData.DataIR.elements);
+            float[] completeHRIRArray = GetArrayFromIntPtr(hrtfData.DataIR.values, hrtfData.DataIR.elements);
             float[] sourcePos = GetArrayFromIntPtr(hrtfData.SourcePosition.values, hrtfData.SourcePosition.elements);
 
             uint hrtfLength = hrtfData.N; // Länge der einzelnen Impulsantwort
@@ -44,13 +44,13 @@ namespace Code
 
             for (int i = 0; i < hrtfData.M; i++)
             {
-                float[] extractedHRTFLeft = new float[hrtfLength];
-                float[] extractedHRTFRight = new float[hrtfLength];
+                float[] extractedHRIRLeft = new float[hrtfLength];
+                float[] extractedHRIRRight = new float[hrtfLength];
 
-                Array.Copy(completeHRTFArray, i * 256 * 2, extractedHRTFLeft, 0, hrtfLength);
-                Array.Copy(completeHRTFArray, (i * 256 * 2) + 256, extractedHRTFRight, 0, hrtfLength);
+                Array.Copy(completeHRIRArray, i * 256 * 2, extractedHRIRLeft, 0, hrtfLength);
+                Array.Copy(completeHRIRArray, (i * 256 * 2) + 256, extractedHRIRRight, 0, hrtfLength);
 
-                soundso.Add((sourcePos[(i * 3)], sourcePos[(i * 3) + 1]), (extractedHRTFLeft, extractedHRTFRight));
+                soundso.Add((sourcePos[(i * 3)], sourcePos[(i * 3) + 1]), (extractedHRIRLeft, extractedHRIRRight));
 
                 (float[] leftEarResponse, float[] rightEarResponse) = soundso[(sourcePos[(i * 3)], sourcePos[(i * 3) + 1])];
 
@@ -61,13 +61,13 @@ namespace Code
 
 
         // Suche und Interpolation
-        public (float[], float[]) FindBestHRTF(float targetAzimuth, float targetElevation)
+        public (float[], float[]) FindBestHRIR(float targetAzimuth, float targetElevation)
         {
             (float, float) closestBoth = FindClosestKey(sortedList, (targetAzimuth, targetElevation));
 
             if (!hrtfMap.ContainsKey((closestBoth)))
             {
-                throw new InvalidOperationException("Kein gültiger HRTF-Schlüssel gefunden.");
+                throw new InvalidOperationException("Kein gültiger HRIR-Schlüssel gefunden.");
             }
 
             (float[] leftEarResponse, float[] rightEarResponse) = hrtfMap[(closestBoth)];
@@ -130,9 +130,9 @@ namespace Code
             return result;
         }
 
-        private static MYSOFA_HRTF MarshalHRTF(IntPtr hrtfPtr)
+        private static MYSOFA_HRIR MarshalHRIR(IntPtr hrtfPtr)
         {
-            return Marshal.PtrToStructure<MYSOFA_HRTF>(hrtfPtr);
+            return Marshal.PtrToStructure<MYSOFA_HRIR>(hrtfPtr);
         }
 
         private static MYSOFA_ARRAY MarshalArray(IntPtr hrtfPtr)

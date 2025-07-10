@@ -29,7 +29,7 @@ namespace Code
     };
 
     [StructLayout(LayoutKind.Sequential)]
-    public struct MYSOFA_HRTF
+    public struct MYSOFA_HRIR
     {
         /* Dimensions defined in AES69
         M Number of measurements; must be integer greater than zero.

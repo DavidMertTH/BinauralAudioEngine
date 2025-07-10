@@ -18,9 +18,9 @@ namespace Code
         public static extern IntPtr mysofa_load(string filename, out int err);
 
 
-        private static MYSOFA_HRTF MarshalHRTF(IntPtr hrtfPtr)
+        private static MYSOFA_HRIR MarshalHRIR(IntPtr hrtfPtr)
         {
-            return Marshal.PtrToStructure<MYSOFA_HRTF>(hrtfPtr);
+            return Marshal.PtrToStructure<MYSOFA_HRIR>(hrtfPtr);
         }
 
         private static MYSOFA_ARRAY MarshalArray(IntPtr hrtfPtr)
@@ -59,7 +59,7 @@ namespace Code
             return 0;
         }
 
-        void ApplyHRTFFromSOFA(string sofaFilePath, AudioRay ray, float[] inputSignal)
+        void ApplyHRIRFromSOFA(string sofaFilePath, AudioRay ray, float[] inputSignal)
         {
             int errorCode;
             Vector3 listenerPosition = new Vector3(0, 0, 0);
@@ -71,10 +71,10 @@ namespace Code
             float azimuth = CalculateAzimuth(ray.ImagePosition, listenerPosition);
             float elevation = CalculateElevation(ray.ImagePosition, listenerPosition);
 
-            // 3. Suchen der nächstliegenden HRTF
-            //var hrtfData = sofaData.GetHRTFDataForAngle(azimuth, elevation);
+            // 3. Suchen der nächstliegenden HRIR
+            //var hrtfData = sofaData.GetHRIRDataForAngle(azimuth, elevation);
 
-            // 4. Anwenden der HRTF durch Faltung
+            // 4. Anwenden der HRIR durch Faltung
             //float[] leftEarSignal = Convolve(inputSignal, hrtfData.LeftEarResponse);
             //float[] rightEarSignal = Convolve(inputSignal, hrtfData.RightEarResponse);
 
@@ -114,7 +114,7 @@ namespace Code
             }
 
             // Dekodiere die Struktur aus dem Pointer
-            MYSOFA_HRTF hrtfData = MarshalHRTF(hrtfPtr);
+            MYSOFA_HRIR hrtfData = MarshalHRIR(hrtfPtr);
 
             // Nutz die Daten...
             Debug.Log("Number of measurements (M): " + hrtfData.M);
