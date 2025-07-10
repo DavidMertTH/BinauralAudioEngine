@@ -1,5 +1,6 @@
 using System;
 using System.Numerics;
+using System.Threading.Tasks;
 using MathNet.Numerics;
 using MathNet.Numerics.IntegralTransforms;
 using UnityEngine;
@@ -34,7 +35,8 @@ namespace Code
             if (audioProcessor == null) return;
             irLeft.floatBuffer = audioProcessor.impulseResponseRight;
             irRight.floatBuffer = audioProcessor.impulseResponseRight;
-            spectreLeft.floatBuffer = ComputeLogEqBands(audioProcessor.leftData, audioProcessor.sampleRate, 40);
+            Task.Run(() =>
+                spectreLeft.floatBuffer = ComputeLogEqBands(audioProcessor.leftData, audioProcessor.sampleRate, 40));
             rawAudio.floatBuffer = audioProcessor.leftData;
         }
 
@@ -53,7 +55,7 @@ namespace Code
             if (fMin < 0 || fMax <= fMin) throw new ArgumentException("Frequency range invalid.");
             if (fMax > sampleRate / 2f) fMax = sampleRate / 2f; // Clamp an Nyquist
             float[] reducedAudio = new float[256];
-            
+
             for (int i = 0; i < reducedAudio.Length; i++)
             {
                 reducedAudio[i] = audioData[i];

@@ -68,7 +68,9 @@ namespace Code
         private Task rightTask;
 
         private MySofaHRIR sofaHRIR;
-        public bool useFirstFunction = true;
+
+        [FormerlySerializedAs("useFirstFunction")]
+        public bool useHRTFs = true;
 
         private FillImpulseResponseParallel _impulseJobLeft;
         private FillImpulseResponseParallel _impulseJobRight;
@@ -96,8 +98,8 @@ namespace Code
             _lastData = new float[bufferLength * numBuffers];
             _jobIsRunning = false;
             _irLength = reverb.fullIrLength - bufferLength;
-            _overlapBufferLeft = new float[_irLength*2];
-            _overlapBufferRight = new float[_irLength*2];
+            _overlapBufferLeft = new float[_irLength * 2];
+            _overlapBufferRight = new float[_irLength * 2];
 
             string filePath = Application.streamingAssetsPath + "/sofafiles/hrtf0.sofa";
             int errorCode;
@@ -110,17 +112,26 @@ namespace Code
 
         private void Update()
         {
-            //SavePrimitiveImpulseResponse();
-            //StartPrimitiveImpulseResponse();
-            CreateHRTFImpulseresponse();
+            GetUserInput();
+            if (useHRTFs)
+            {
+                CreateHRTFImpulseresponse();
+            }
+            else
+            {
+                SavePrimitiveImpulseResponse();
+                StartPrimitiveImpulseResponse();
+            }
 
             _leftEar = targetObject.transform.position - targetObject.transform.right * earOffset;
             _rightEar = targetObject.transform.position + targetObject.transform.right * earOffset;
+        }
 
+        private void GetUserInput()
+        {
             if (Input.GetKeyDown(KeyCode.Space))
             {
-                // Wechselt zwischen den beiden Funktionen
-                useFirstFunction = !useFirstFunction;
+                useHRTFs = !useHRTFs;
             }
 
             if (Input.GetKeyDown(KeyCode.Keypad0))
@@ -160,7 +171,6 @@ namespace Code
                 sofaHRIR = new MySofaHRIR(hrtfPtr);
             }
         }
-
 
         public void SavePrimitiveImpulseResponse()
         {
@@ -282,9 +292,7 @@ namespace Code
 
                 if (leftEarResponse != null && rightEarResponse != null)
                 {
-                    float distanceToSource = ray.DistanceToImage +
-                                             (Vector3.Distance(targetObject.transform.position, ray.ImagePosition) -
-                                              sofaHRIR.radius * 2);
+                    float distanceToSource = ray.DistanceToImage + ( sofaHRIR.radius );
                     float propagationDelaySec = distanceToSource / 343f; // Schallgeschwindigkeit: 343 m/s
                     float propagationDelaySamples = sampleRate * propagationDelaySec;
                     float distanceAmplitudeTwo = ray.Absorbtion * (8 / distanceToSource) * Gain;
@@ -305,7 +313,8 @@ namespace Code
         void OnAudioFilterRead(float[] data, int channels)
         {
             if (bypass || channels < 2 || !_isSetup) return;
-            if (impulseResponseLeft == null || impulseResponseRight == null || impulseResponseRight.Length == 0 || impulseResponseLeft.Length == 0) return;
+            if (impulseResponseLeft == null || impulseResponseRight == null || impulseResponseRight.Length == 0 ||
+                impulseResponseLeft.Length == 0) return;
 
             float[] dataLeft = new float[data.Length / 2];
             float[] dataRight = new float[data.Length / 2];
@@ -331,8 +340,8 @@ namespace Code
                 {
                     _lastData[i] = dataLeft[j];
                 }
-                leftData = dataLeft;
 
+                leftData = dataLeft;
             });
             rightTask = Task.Run(() =>
             {

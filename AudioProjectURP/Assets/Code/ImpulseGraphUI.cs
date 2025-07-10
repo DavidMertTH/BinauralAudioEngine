@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System;
+using System.Threading.Tasks;
 using UnityEngine.Serialization;
 
 namespace Code
@@ -88,21 +89,22 @@ namespace Code
             float[] result = new float[targetSize];
             float samplesPerBucket = (float)source.Length / targetSize;
 
-            for (int i = 0; i < targetSize; i++)
+            
+            Parallel.For(0, targetSize, i =>
             {
                 int start = Mathf.FloorToInt(i * samplesPerBucket);
-                int end = Mathf.Min(Mathf.CeilToInt((i + 1) * samplesPerBucket), source.Length);
+                int end   = Mathf.Min(Mathf.CeilToInt((i + 1) * samplesPerBucket), source.Length);
                 float maxVal = 0f;
 
                 for (int j = start; j < end; j++)
                 {
                     float candidate = source[j];
                     if (Mathf.Abs(candidate) > Mathf.Abs(maxVal))
-                        maxVal = candidate; // preserve sign
+                        maxVal = candidate; // Vorzeichen erhalten
                 }
 
                 result[i] = maxVal;
-            }
+            });
 
             return result;
         }
