@@ -29,7 +29,7 @@ namespace Code
             if (audioProcessor == null) return;
             irLeft.floatBuffer = audioProcessor.impulseResponseLeft;
             irRight.floatBuffer = audioProcessor.impulseResponseRight;
-            spectreLeft.floatBuffer = audioProcessor.impulseResponseLeft;
+            spectreLeft.floatBuffer = audioProcessor.spectre;
             spectreRight.floatBuffer = audioProcessor.impulseResponseRight;
         }
     }

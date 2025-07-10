@@ -12,7 +12,7 @@ namespace Code
     {
         [Range(0, 1)] [SerializeField] public float wet;
         [Range(1, 128)] [SerializeField] public int crossoverLength;
-
+        public float[] spectre;
         private void Start()
         {
             FourierTransformControl.TryUseNativeMKL();
@@ -54,6 +54,7 @@ namespace Code
                 oldAudioFolded[i] = audioData[i] * lastIrFreqDomain[i];
             }
 
+            spectre = newAudioFolded.Select(complex => (float)complex.Magnitude).ToArray();
             Fourier.Inverse(newAudioFolded, FourierOptions.Matlab);
             Fourier.Inverse(oldAudioFolded, FourierOptions.Matlab);
 

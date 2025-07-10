@@ -32,7 +32,7 @@ namespace Code
         public List<AudioRay> PrimaryReflections;
         public List<AudioRay> SecundaryReflections;
         public List<AudioRay> HigherOrderReflections;
-        
+        public float[] spectre;
         public ImpulseGraphUI impulseGraphUIRight;
         public ImpulseGraphUI impulseGraphUILeft;
         
@@ -98,11 +98,12 @@ namespace Code
         private void Update()
         {
             SavePrimitiveImpulseResponse();
-
+            spectre = reverb.spectre;
             _leftEar = targetObject.transform.position - targetObject.transform.right * earOffset;
             _rightEar = targetObject.transform.position + targetObject.transform.right * earOffset;
 
             StartPrimitiveImpulseResponse();
+            
         }
 
 
