@@ -7,8 +7,7 @@ using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
-using MathNet.Numerics.IntegralTransforms;
-using UnityEngine.Serialization;
+
 
 namespace Code
 {
@@ -32,7 +31,9 @@ namespace Code
         public List<AudioRay> PrimaryReflections;
         public List<AudioRay> SecundaryReflections;
         public List<AudioRay> HigherOrderReflections;
-        public float[] spectre;
+        public float[] spectreLeft;
+        public float[] spectreRight;
+
         public ImpulseGraphUI impulseGraphUIRight;
         public ImpulseGraphUI impulseGraphUILeft;
         
@@ -48,7 +49,7 @@ namespace Code
         private float _timeSinceLastImpulse;
 
         private int _bufferLength;
-        private int _sampleRate;
+        public int sampleRate;
 
         private Vector3 _leftEar;
         private Vector3 _rightEar;
@@ -83,7 +84,7 @@ namespace Code
 
         private void Start()
         {
-            _sampleRate = AudioSettings.outputSampleRate;
+            sampleRate = AudioSettings.outputSampleRate;
             _isSetup = true;
             Application.targetFrameRate = -1;
             int bufferLength;
@@ -98,7 +99,6 @@ namespace Code
         private void Update()
         {
             SavePrimitiveImpulseResponse();
-            spectre = reverb.spectre;
             _leftEar = targetObject.transform.position - targetObject.transform.right * earOffset;
             _rightEar = targetObject.transform.position + targetObject.transform.right * earOffset;
 
@@ -192,7 +192,7 @@ namespace Code
                 Gain = Gain,
                 IrLength = _irLength,
                 Rays = nativeAudioRays,
-                SampleRate = _sampleRate,
+                SampleRate = sampleRate,
                 LeftEarPosition = _leftEar,
                 RightEarPosition = _rightEar,
                 TargetPosition = targetObject.transform.position
@@ -255,6 +255,10 @@ namespace Code
 
                 _previousImpulseResponsesLeft = _freqDomainIrLeft;
                 _previousImpulseResponsesRight = _freqDomainIrRight;
+                
+                spectreLeft = dataLeft;
+                spectreRight = dataLeft;
+
                 for (int i = 0, j = 0; i < data.Length; i += 2, j++)
                 {
                     _lastData[i] = dataLeft[j];

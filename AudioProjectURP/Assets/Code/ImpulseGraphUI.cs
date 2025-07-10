@@ -13,7 +13,7 @@ namespace Code
 
         [Range(0f, 2f)] public float amplitudeScale = 0.8f;
 
-        [Header("Colors")] public Color lineColor = Color.green;
+        [Header("Colors")] public Color lineColor;
 
         [Header("UI Elements")] public RawImage graphDisplayUI;
 
