@@ -1,7 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System;
 using System.Numerics;
 using System.Threading.Tasks;
+using Unity.Burst;
+using Unity.Collections;
+using Unity.Jobs;
 using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
 using System.Runtime.InteropServices;
@@ -24,7 +28,7 @@ namespace Code
         public bool usePrimaryReflections = false;
         public bool useSecondaryReflections = false;
         public bool useHigherOrderReflections = false;
-
+        public float alpha;
         public float Gain;
 
         public LiveConvolutionReverb reverb;
@@ -36,14 +40,15 @@ namespace Code
         public ImpulseGraphUI impulseGraphUI;
         public float[] impulseResponseLeft;
         public float[] impulseResponseRight;
+        [HideInInspector] public float[] leftData;
 
-        private List<float[]> _previousImpulseResponsesLeft;
-        private List<float[]> _previousImpulseResponsesRight;
+        private NativeArray<float> _nativeImpulseResponseLeft;
+        private NativeArray<float> _nativeImpulseResponseRight;
 
         private float _timeSinceLastImpulse;
 
         private int _bufferLength;
-        private int _sampleRate;
+        public int sampleRate;
 
         private Vector3 _leftEar;
         private Vector3 _rightEar;
@@ -56,9 +61,23 @@ namespace Code
         private Complex[] _freqDomainIrLeft;
         private Complex[] _freqDomainIrRight;
         private readonly float earOffset = 0.1f; // Abstand der Ohren zur Mitte in Metern
+        private float[] _lastData;
+        private Task<Complex[]> _rightTask;
+        private Task<Complex[]> _leftTask;
+        private Task leftTask;
+        private Task rightTask;
 
         private MySofaHRIR sofaHRIR;
         public bool useFirstFunction = true;
+
+        private FillImpulseResponseParallel _impulseJobLeft;
+        private FillImpulseResponseParallel _impulseJobRight;
+        private bool _jobIsRunning;
+
+        private int _dataBufferLength;
+        private JobHandle _leftJobHandle;
+        private JobHandle _rightJobHandle;
+        private int _irLength;
 
         private void Awake()
         {
@@ -67,24 +86,34 @@ namespace Code
 
         private void Start()
         {
-            _sampleRate = AudioSettings.outputSampleRate;
-            _previousImpulseResponsesLeft = new List<float[]>();
-            _previousImpulseResponsesRight = new List<float[]>();
+            sampleRate = AudioSettings.outputSampleRate;
             _isSetup = true;
             Application.targetFrameRate = -1;
+            int bufferLength;
+            int numBuffers;
+            AudioSettings.GetDSPBufferSize(out bufferLength, out numBuffers);
+            _dataBufferLength = bufferLength;
+            _lastData = new float[bufferLength * numBuffers];
+            _jobIsRunning = false;
+            _irLength = reverb.fullIrLength - bufferLength;
+            _overlapBufferLeft = new float[_irLength*2];
+            _overlapBufferRight = new float[_irLength*2];
 
             string filePath = Application.streamingAssetsPath + "/sofafiles/hrtf0.sofa";
             int errorCode;
             IntPtr hrtfPtr = DllDemoIntegration.mysofa_load(filePath, out errorCode);
-
+            impulseResponseLeft = new float[_irLength];
             sofaHRIR = new MySofaHRIR(hrtfPtr);
-
             Debug.Log(sofaHRIR.radius);
         }
 
 
         private void Update()
         {
+            //SavePrimitiveImpulseResponse();
+            //StartPrimitiveImpulseResponse();
+            CreateHRTFImpulseresponse();
+
             _leftEar = targetObject.transform.position - targetObject.transform.right * earOffset;
             _rightEar = targetObject.transform.position + targetObject.transform.right * earOffset;
 
@@ -130,102 +159,107 @@ namespace Code
 
                 sofaHRIR = new MySofaHRIR(hrtfPtr);
             }
-
-            // Ruft je nach Zustand die richtige Funktion auf
-            if (useFirstFunction)
-            {
-                CreatePrimitiveImpulseresponse();
-            }
-            else
-            {
-                CreateHRTFImpulseresponse();
-            }
         }
 
-        public void CreatePrimitiveImpulseresponse()
+
+        public void SavePrimitiveImpulseResponse()
         {
-            int irLength = 2024 * 2;
-            // TOTO DAVID MARTIN KARG __ Diese Funktion sollte mit der HRTF Funktion ersetzt werden
-            if (bypass || !_isSetup) return;
+            if (!_jobIsRunning) return;
+            _jobIsRunning = false;
+            _leftJobHandle.Complete();
+            _rightJobHandle.Complete();
+            impulseResponseLeft = new float[_irLength];
+            impulseResponseRight = new float[_irLength];
+            _impulseJobLeft.ImpulseResponse.CopyTo(impulseResponseLeft);
+            _impulseJobRight.ImpulseResponse.CopyTo(impulseResponseRight);
 
-            impulseResponseLeft = new float[irLength];
-            impulseResponseRight = new float[irLength];
-
-            List<AudioRay> rays = GetAllSelectedRays();
-            int overshootLength = 20;
-
-            float lengthDirectRay = DirectHit.DistanceToImage;
-            foreach (var ray in rays)
-            {
-                if (!ray.IsValid) continue;
-
-                if (ray.DistanceToImage < lengthDirectRay)
-                {
-                    print("error");
-                }
-
-                float imageToCenter = Vector3.Distance(targetObject.transform.position, ray.ImagePosition);
-
-                float offsetLeft = imageToCenter - Vector3.Distance(_leftEar, ray.ImagePosition);
-                float offsetRight = imageToCenter - Vector3.Distance(_rightEar, ray.ImagePosition);
-                float leftDistance = ray.DistanceToImage - offsetLeft;
-                float rightDistance = ray.DistanceToImage - offsetRight;
-
-                float leftDelaySec = leftDistance / 343f;
-                float rightDelaySec = rightDistance / 343f;
-
-                float targetLeftDelaySamples = _sampleRate * leftDelaySec;
-                float targetRightDelaySamples = _sampleRate * rightDelaySec;
-
-                float maxEarDist = Vector3.Distance(_rightEar, _leftEar);
-                float binauralFactor = Mathf.Clamp((leftDistance - rightDistance) / (4 * maxEarDist), -2f, 2f);
-                float averageDistance = (leftDistance + rightDistance) / 2;
-                float distanceAmplitude = 2 / averageDistance;
-
-                if ((int)targetLeftDelaySamples >= irLength - 1 ||
-                    (int)targetRightDelaySamples >= irLength - 1) continue;
-
-                float leftAmplitude = distanceAmplitude * (1 - binauralFactor) * ray.Absorbtion * Gain;
-                float rightAmplitude = distanceAmplitude * (1 + binauralFactor) * ray.Absorbtion * Gain;
-
-                impulseResponseLeft[(int)targetLeftDelaySamples] += leftAmplitude;
-                impulseResponseRight[(int)targetRightDelaySamples] += rightAmplitude;
-
-                for (int i = 1; i < overshootLength; i++)
-                {
-                    if (targetLeftDelaySamples + i >= irLength - 1) break;
-                    if (targetRightDelaySamples + i >= irLength - 1) break;
-
-                    impulseResponseLeft[(int)targetLeftDelaySamples + i] += leftAmplitude / i;
-                    impulseResponseRight[(int)targetRightDelaySamples + 1] += rightAmplitude / i;
-                }
-            }
-            
-            int lengthSum = 1024 + irLength;
+            int lengthSum = (_dataBufferLength / 2) + _irLength;
             int requiredLength = LiveConvolutionReverb.GetMaxZweierPotenz(lengthSum);
+
+            if (_overlapBufferLeft == null || _overlapBufferRight == null)
+            {
+                _overlapBufferLeft = new float[requiredLength];
+                _overlapBufferRight = new float[requiredLength];
+            }
 
             Task.Run(() => { _freqDomainIrLeft = reverb.ToFreqDomain(impulseResponseLeft, requiredLength); });
             Task.Run(() => { _freqDomainIrRight = reverb.ToFreqDomain(impulseResponseRight, requiredLength); });
 
-            if (_previousImpulseResponsesRight.Count > 20)
-            {
-                _previousImpulseResponsesRight.RemoveAt(0);
-                _previousImpulseResponsesLeft.RemoveAt(0);
-            }
-
-            _previousImpulseResponsesLeft.Add(impulseResponseLeft);
-            _previousImpulseResponsesRight.Add(impulseResponseRight);
+            _nativeImpulseResponseLeft.Dispose();
+            _nativeImpulseResponseRight.Dispose();
         }
 
+        private void OnDestroy()
+        {
+            if (!_jobIsRunning) return;
+            _leftJobHandle.Complete();
+            _rightJobHandle.Complete();
+            if (_nativeImpulseResponseLeft.IsCreated) _nativeImpulseResponseLeft.Dispose();
+            if (_nativeImpulseResponseRight.IsCreated) _nativeImpulseResponseRight.Dispose();
+        }
+
+        public void StartPrimitiveImpulseResponse()
+        {
+            if (bypass || !_isSetup) return;
+
+
+            List<AudioRay> rays = GetAllSelectedRays();
+
+            _nativeImpulseResponseLeft = new NativeArray<float>(_irLength, Allocator.TempJob);
+            _nativeImpulseResponseRight = new NativeArray<float>(_irLength, Allocator.TempJob);
+
+            NativeArray<int> timeDelayLeft = new NativeArray<int>(rays.Count, Allocator.TempJob);
+            NativeArray<int> timeDelayRight = new NativeArray<int>(rays.Count, Allocator.TempJob);
+
+            NativeArray<float> amplitudeLeft = new NativeArray<float>(rays.Count, Allocator.TempJob);
+            NativeArray<float> amplitudeRight = new NativeArray<float>(rays.Count, Allocator.TempJob);
+
+
+            NativeArray<AudioRay> nativeAudioRays = new NativeArray<AudioRay>(rays.Count, Allocator.TempJob);
+            nativeAudioRays.CopyFrom(rays.ToArray());
+
+
+            GetRayToImpulseData dataJob = new GetRayToImpulseData()
+            {
+                AmplitudeLeft = amplitudeLeft,
+                AmplitudeRight = amplitudeRight,
+                TimeDelaySamplesLeft = timeDelayLeft,
+                TimeDelaySamplesRight = timeDelayRight,
+
+                Gain = Gain,
+                IrLength = _irLength,
+                Rays = nativeAudioRays,
+                SampleRate = sampleRate,
+                LeftEarPosition = _leftEar,
+                RightEarPosition = _rightEar,
+                TargetPosition = targetObject.transform.position
+            };
+            JobHandle dataHandle = dataJob.Schedule(amplitudeLeft.Length, 1);
+
+            _impulseJobLeft = new FillImpulseResponseParallel()
+            {
+                ImpulseResponse = _nativeImpulseResponseLeft,
+                Amplitude = amplitudeLeft,
+                TimeDelaySamples = timeDelayLeft,
+            };
+            _impulseJobRight = new FillImpulseResponseParallel()
+            {
+                ImpulseResponse = _nativeImpulseResponseRight,
+                Amplitude = amplitudeRight,
+                TimeDelaySamples = timeDelayRight,
+            };
+            _leftJobHandle = _impulseJobLeft.Schedule(_nativeImpulseResponseLeft.Length, 1, dataHandle);
+            _rightJobHandle = _impulseJobRight.Schedule(_nativeImpulseResponseRight.Length, 1, dataHandle);
+
+            _jobIsRunning = true;
+        }
 
         public void CreateHRTFImpulseresponse()
         {
-            int irLength = 2024 * 2;
-
             if (bypass || !_isSetup) return;
 
-            impulseResponseLeft = new float[irLength];
-            impulseResponseRight = new float[irLength];
+            impulseResponseLeft = new float[_irLength];
+            impulseResponseRight = new float[_irLength];
 
             List<AudioRay> rays = GetAllSelectedRays();
 
@@ -234,7 +268,8 @@ namespace Code
             {
                 if (!ray.IsValid) continue;
 
-                Vector3 vecSourceListener = targetObject.transform.position - new Vector3(ray.ImagePosition.x, ray.ImagePosition.y, ray.ImagePosition.z);
+                Vector3 vecSourceListener = targetObject.transform.position -
+                                            new Vector3(ray.ImagePosition.x, ray.ImagePosition.y, ray.ImagePosition.z);
                 Vector3 listenerUp = targetObject.transform.up;
                 Vector3 listenerForward = targetObject.transform.forward;
 
@@ -248,14 +283,15 @@ namespace Code
                 if (leftEarResponse != null && rightEarResponse != null)
                 {
                     float distanceToSource = ray.DistanceToImage +
-                                             (Vector3.Distance(targetObject.transform.position, ray.ImagePosition) - sofaHRIR.radius * 2);
+                                             (Vector3.Distance(targetObject.transform.position, ray.ImagePosition) -
+                                              sofaHRIR.radius * 2);
                     float propagationDelaySec = distanceToSource / 343f; // Schallgeschwindigkeit: 343 m/s
-                    float propagationDelaySamples = _sampleRate * propagationDelaySec;
+                    float propagationDelaySamples = sampleRate * propagationDelaySec;
                     float distanceAmplitudeTwo = ray.Absorbtion * (8 / distanceToSource) * Gain;
 
                     for (int i = 0; i < sofaHRIR.hrtfData.N; i++)
                     {
-                        if (i + propagationDelaySamples >= irLength - 1 || propagationDelaySamples < 0) break;
+                        if (i + propagationDelaySamples >= _irLength - 1 || propagationDelaySamples < 0) break;
 
                         impulseResponseLeft[i + (int)propagationDelaySamples] +=
                             leftEarResponse[i] * distanceAmplitudeTwo;
@@ -264,28 +300,12 @@ namespace Code
                     }
                 }
             }
-
-            int lengthSum = 1024 + irLength;
-            int requiredLength = LiveConvolutionReverb.GetMaxZweierPotenz(lengthSum);
-
-            Task.Run(() => { _freqDomainIrLeft = reverb.ToFreqDomain(impulseResponseLeft, requiredLength); });
-            Task.Run(() => { _freqDomainIrRight = reverb.ToFreqDomain(impulseResponseRight, requiredLength); });
-
-            if (_previousImpulseResponsesRight.Count > 20)
-            {
-                _previousImpulseResponsesRight.RemoveAt(0);
-                _previousImpulseResponsesLeft.RemoveAt(0);
-            }
-
-            _previousImpulseResponsesLeft.Add(impulseResponseLeft);
-            _previousImpulseResponsesRight.Add(impulseResponseRight);
         }
-
 
         void OnAudioFilterRead(float[] data, int channels)
         {
             if (bypass || channels < 2 || !_isSetup) return;
-            if (_freqDomainIrLeft == null || _freqDomainIrRight == null) return;
+            if (impulseResponseLeft == null || impulseResponseRight == null || impulseResponseRight.Length == 0 || impulseResponseLeft.Length == 0) return;
 
             float[] dataLeft = new float[data.Length / 2];
             float[] dataRight = new float[data.Length / 2];
@@ -296,33 +316,40 @@ namespace Code
                 dataRight[j] = data[i + 1] * Gain;
             }
 
-            Complex[] leftCompData;
-            Complex[] rightCompData;
 
-
-            int requiredLength =
-                LiveConvolutionReverb.GetMaxZweierPotenz(impulseResponseLeft.Length + dataLeft.Length);
-
-            var left = dataLeft;
-            var leftTask = Task.Run(() => reverb.ToFreqDomain(left, _freqDomainIrLeft.Length));
-            var right = dataRight;
-            var rightTask = Task.Run(() => reverb.ToFreqDomain(right, _freqDomainIrLeft.Length));
-
-            Task.WaitAll(leftTask, rightTask);
-
-            leftCompData = leftTask.Result;
-            rightCompData = rightTask.Result;
-
-            dataLeft = reverb.ConvolveData(_freqDomainIrLeft,_freqDomainIrLeft, leftCompData, dataLeft, ref _overlapBufferLeft);
-            dataRight = reverb.ConvolveData(_freqDomainIrRight,_freqDomainIrRight, rightCompData, dataRight, ref _overlapBufferRight);
-/*
-            dataLeft = reverb.ConvolveData(_freqDomainIrLeft, dataLeft, ref _overlapBufferLeft);
-            dataRight = reverb.ConvolveData(_freqDomainIrRight, dataRight, ref _overlapBufferRight);
-*/
-            for (int i = 0, j = 0; i < data.Length; i += 2, j++)
+            if (leftTask != null)
             {
-                data[i] = dataLeft[j];
-                data[i + 1] = dataRight[j];
+                Task.WaitAll(leftTask);
+                Task.WaitAll(rightTask);
+            }
+
+            leftTask = Task.Run(() =>
+            {
+                dataLeft = reverb.ProgressiveConvolve(impulseResponseLeft, dataLeft, dataLeft, ref _overlapBufferLeft,
+                    dataLeft.Length);
+                for (int i = 0, j = 0; i < data.Length; i += 2, j++)
+                {
+                    _lastData[i] = dataLeft[j];
+                }
+                leftData = dataLeft;
+
+            });
+            rightTask = Task.Run(() =>
+            {
+                dataRight = reverb.ProgressiveConvolve(impulseResponseRight, dataRight, dataRight,
+                    ref _overlapBufferRight,
+                    dataRight.Length);
+                for (int i = 0, j = 0; i < data.Length; i += 2, j++)
+                {
+                    _lastData[i + 1] = dataRight[j];
+                }
+            });
+            if (_lastData != null)
+            {
+                for (int i = 0; i < data.Length; i++)
+                {
+                    data[i] = _lastData[i];
+                }
             }
         }
 
@@ -339,6 +366,95 @@ namespace Code
             if (useHigherOrderReflections && HigherOrderReflections != null && HigherOrderReflections.Count > 0)
                 rays.AddRange(HigherOrderReflections);
             return rays;
+        }
+
+        [BurstCompile]
+        private struct GetRayToImpulseData : IJobParallelFor
+        {
+            public NativeArray<int> TimeDelaySamplesLeft;
+            public NativeArray<int> TimeDelaySamplesRight;
+
+            public NativeArray<float> AmplitudeLeft;
+            public NativeArray<float> AmplitudeRight;
+
+            [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<AudioRay> Rays;
+            [ReadOnly] public Vector3 LeftEarPosition;
+            [ReadOnly] public Vector3 RightEarPosition;
+            [ReadOnly] public Vector3 TargetPosition;
+
+            [ReadOnly] public float Gain;
+            [ReadOnly] public float SampleRate;
+            [ReadOnly] public int IrLength;
+
+            public void Execute(int index)
+            {
+                AudioRay ray = Rays[index];
+
+                if (!ray.IsValid)
+                {
+                    TimeDelaySamplesLeft[index] = -1;
+                    TimeDelaySamplesRight[index] = -1;
+                    return;
+                }
+
+                float imageToCenter = Vector3.Distance(TargetPosition, ray.ImagePosition);
+
+                float offsetLeft = imageToCenter - Vector3.Distance(LeftEarPosition, ray.ImagePosition);
+                float offsetRight = imageToCenter - Vector3.Distance(RightEarPosition, ray.ImagePosition);
+
+                float leftDistance = ray.DistanceToImage - offsetLeft;
+                float rightDistance = ray.DistanceToImage - offsetRight;
+
+                float leftDelaySec = leftDistance / 343f;
+                float rightDelaySec = rightDistance / 343f;
+
+                float targetLeftDelaySamples = SampleRate * leftDelaySec;
+                float targetRightDelaySamples = SampleRate * rightDelaySec;
+
+                if ((int)targetLeftDelaySamples >= IrLength - 1 ||
+                    (int)targetRightDelaySamples >= IrLength - 1)
+                {
+                    TimeDelaySamplesLeft[index] = -1;
+                    TimeDelaySamplesRight[index] = -1;
+                    return;
+                }
+
+                TimeDelaySamplesLeft[index] = (int)targetLeftDelaySamples;
+                TimeDelaySamplesRight[index] = (int)targetRightDelaySamples;
+
+                float maxEarDist = Vector3.Distance(RightEarPosition, LeftEarPosition);
+                float binauralFactor = Mathf.Clamp((leftDistance - rightDistance) / (4 * maxEarDist), -2f, 2f);
+                float averageDistance = (leftDistance + rightDistance) / 2;
+                float distanceAmplitude = 3 / (averageDistance);
+
+                float leftAmplitude = distanceAmplitude * (1 - binauralFactor) * ray.Absorbtion * Gain;
+                float rightAmplitude = distanceAmplitude * (1 + binauralFactor) * ray.Absorbtion * Gain;
+
+                leftAmplitude = Mathf.Min(leftAmplitude, 1);
+                rightAmplitude = Mathf.Min(rightAmplitude, 1);
+
+                AmplitudeLeft[index] = leftAmplitude;
+                AmplitudeRight[index] = rightAmplitude;
+            }
+        }
+
+
+        [BurstCompile]
+        private struct FillImpulseResponseParallel : IJobParallelFor
+        {
+            public NativeArray<float> ImpulseResponse;
+
+            [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<int> TimeDelaySamples;
+            [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<float> Amplitude;
+
+            public void Execute(int index)
+            {
+                for (int r = 0; r < TimeDelaySamples.Length; r++)
+                {
+                    if (TimeDelaySamples[r] != index) continue;
+                    ImpulseResponse[index] += Amplitude[r];
+                }
+            }
         }
     }
 }

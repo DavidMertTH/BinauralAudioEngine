@@ -13274,21 +13274,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetObject: {fileID: 330585546}
-  audioFileLoader: {fileID: 0}
   bypass: 0
   useDirect: 1
   usePrimaryReflections: 1
   useSecondaryReflections: 1
   useHigherOrderReflections: 1
+  alpha: 0
   Gain: 1.5
   reverb: {fileID: 774592948}
-  spectreLeft: []
-  spectreRight: []
-  impulseGraphUIRight: {fileID: 180689283}
-  impulseGraphUILeft: {fileID: 1702655289}
+  impulseGraphUI: {fileID: 0}
   impulseResponseLeft: []
   impulseResponseRight: []
+  leftData: []
   sampleRate: 0
+  useFirstFunction: 1
 --- !u!82 &774592943
 AudioSource:
   m_ObjectHideFlags: 0
@@ -13489,6 +13488,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   wet: 1
   crossoverLength: 64
+  clip: {fileID: 0}
+  hallReverb: 0
+  fullIrLength: 0
 --- !u!1001 &778100733
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -18796,7 +18798,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1113141552
 Transform:
   m_ObjectHideFlags: 0
@@ -22269,7 +22271,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1304986975
 Transform:
   m_ObjectHideFlags: 0

@@ -59,13 +59,13 @@ public class NotLiveConvReverb : MonoBehaviour
     }
     private void LoadData()
     {
-        audioFileLoader.clip = audioClip;
+        audioFileLoader.Clip = audioClip;
         audioFileLoader.LoadClip();
-        dry = audioFileLoader.samples;
+        dry = audioFileLoader.Samples;
             
-        audioFileLoader.clip = iR;
+        audioFileLoader.Clip = iR;
         audioFileLoader.LoadClip();
-        iRData = audioFileLoader.samples;
+        iRData = audioFileLoader.Samples;
         
         int potenz = GetMaxZweierPotenz(dry.Length);
         Debug.Log("Max Potenz: "+potenz);
@@ -107,15 +107,15 @@ public class NotLiveConvReverb : MonoBehaviour
             Complex tmp = new Complex(iRData[i],0);
             complexIrInput[i] = tmp;
         }
-        MathNet.Numerics.IntegralTransforms.Fourier.Forward(complexAudioData, FourierOptions.Matlab);
-        MathNet.Numerics.IntegralTransforms.Fourier.Forward(complexIrInput, FourierOptions.Matlab);
+        Fourier.Forward(complexAudioData, FourierOptions.Matlab);
+        Fourier.Forward(complexIrInput, FourierOptions.Matlab);
         
         for (int i = 0; i < complexIrInput.Length; i++)
         {
             complexAudioData[i] *= complexIrInput[i];
         }
         
-        MathNet.Numerics.IntegralTransforms.Fourier.Inverse(complexAudioData, FourierOptions.Matlab);
+        Fourier.Inverse(complexAudioData, FourierOptions.Matlab);
         
         for (int i = 0; i < complexAudioData.Length; i++)
             complexAudioData[i] /= complexAudioData.Length;

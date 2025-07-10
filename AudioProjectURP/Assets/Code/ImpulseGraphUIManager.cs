@@ -34,10 +34,8 @@ namespace Code
             if (audioProcessor == null) return;
             irLeft.floatBuffer = audioProcessor.impulseResponseRight;
             irRight.floatBuffer = audioProcessor.impulseResponseRight;
-            //spectreLeft.floatBuffer = ComputeLogEqBands(audioProcessor.spectreLeft, audioProcessor.sampleRate, 40);
-            //spectreRight.floatBuffer = ComputeLogEqBands(audioProcessor.spectreRight, audioProcessor.sampleRate, 40);
-
-            //rawAudio.floatBuffer = audioProcessor.spectreLeft;
+            spectreLeft.floatBuffer = ComputeLogEqBands(audioProcessor.leftData, audioProcessor.sampleRate, 40);
+            rawAudio.floatBuffer = audioProcessor.leftData;
         }
 
         public static float[] ComputeLogEqBands(
