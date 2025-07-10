@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
@@ -5,17 +6,51 @@ using System.Threading.Tasks;
 using MathNet.Numerics.IntegralTransforms;
 using MathNet.Numerics.Providers.FourierTransform;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Code
 {
     public class LiveConvolutionReverb : MonoBehaviour
     {
         [Range(0, 1)] [SerializeField] public float wet;
-        [Range(1, 128)] [SerializeField] public int crossoverLength;
+        [Range(1, 1024 * 4)] [SerializeField] public int crossoverLength;
+        public AudioClip clip;
+        [Range(0, 1)] [SerializeField] public float hallReverb;
+        [HideInInspector] public int fullIrLength;
+        private Complex[] _reverbLayerFreq;
+
+        private void Awake()
+        {
+            fullIrLength = 1024 * 5;
+        }
 
         private void Start()
         {
             FourierTransformControl.TryUseNativeMKL();
+            AudioFileLoader audioFileLoader = new AudioFileLoader();
+            audioFileLoader.Clip = clip;
+            audioFileLoader.LoadClip();
+            //float[] samples = SmoothEnds(audioFileLoader.Samples, fullIrLength, 128);
+            //_reverbLayerFreq = ToFreqDomain(samples, fullIrLength);
+        }
+
+        public float[] SmoothEnds(float[] samples, int chopSize, int smoothRadius)
+        {
+            float[] choppedSamples = new float[chopSize];
+            for (int i = 0; i < chopSize; i++)
+            {
+                if (i < chopSize - smoothRadius)
+                {
+                    choppedSamples[i] = samples[i];
+                }
+                else
+                {
+                    float koefficent = (i - ((float)chopSize - smoothRadius)) / smoothRadius;
+                    choppedSamples[i] = samples[i] * (1 - koefficent);
+                }
+            }
+
+            return choppedSamples;
         }
 
         public static int GetMaxZweierPotenz(int size)
@@ -33,21 +68,16 @@ namespace Code
             return complexIr;
         }
 
-        public Complex[] ToFreqDomain(float[] inTimeDomain, int length, int blocksize)
-        {
-            int blockAmount = blocksize / length;
-
-            Complex[] complexIr = GetComplex(inTimeDomain, length);
-            Fourier.Forward(complexIr, FourierOptions.Matlab);
-            return complexIr;
-        }
 
         public float[] ConvolveData(Complex[] irFreqDomain, Complex[] lastIrFreqDomain, Complex[] audioData,
             float[] dry, ref float[] overlapBuffer)
         {
             if (lastIrFreqDomain == null) lastIrFreqDomain = irFreqDomain;
+
+
             Complex[] oldAudioFolded = new Complex[irFreqDomain.Length];
             Complex[] newAudioFolded = new Complex[irFreqDomain.Length];
+
             for (int i = 0; i < irFreqDomain.Length; i++)
             {
                 newAudioFolded[i] = audioData[i] * irFreqDomain[i];
@@ -57,28 +87,93 @@ namespace Code
             Fourier.Inverse(newAudioFolded, FourierOptions.Matlab);
             Fourier.Inverse(oldAudioFolded, FourierOptions.Matlab);
 
-            //audioData = Normalize(audioData);
-
             overlapBuffer = PullOverlapBuffer(overlapBuffer, dry.Length);
             for (int i = 0; i < newAudioFolded.Length; i++)
             {
-                float crossover = (float)i / (float)crossoverLength;
+                float crossover = i / (float)newAudioFolded.Length;
 
-                float toAddAudioPart = 0f;
-                if (crossover < 1f)
-                {
-                    toAddAudioPart = (float)(crossover * (float)newAudioFolded[i].Real +
-                                             (1 - crossover) * oldAudioFolded[i].Real);
-                }
-                else
-                {
-                    toAddAudioPart = (float)newAudioFolded[i].Real;
-                }
+
+                float toAddAudioPart = (float)(crossover * (float)newAudioFolded[i].Real +
+                                               (1 - crossover) * oldAudioFolded[i].Real);
+
 
                 overlapBuffer[i] += toAddAudioPart;
             }
 
             return Mix(dry, overlapBuffer);
+        }
+
+        public float[] ProgressiveConvolve(float[] irTimeDomain, float[] audioData,
+            float[] dry, ref float[] overlapBuffer, int blockLength)
+        {
+            if (audioData.Length % blockLength != 0 || irTimeDomain.Length % blockLength != 0)
+            {
+                print("FAULTY BLOCKLENGTH");
+                return null;
+            }
+
+            int paddedLength = blockLength * 2;
+            int irBlockAmount = irTimeDomain.Length / blockLength;
+
+
+            Complex[] audioDataFreq = ToFreqDomain(audioData, paddedLength);
+            float[][] irBlocks = new float[irBlockAmount][];
+            Complex[][] irFreqBlocks = new Complex[irBlockAmount][];
+            Complex[][] audioBlocksConvolved = new Complex[irBlockAmount][];
+
+            Parallel.For(0, irBlockAmount, j =>
+            {
+                var block = new float[paddedLength];
+                int offset = j * blockLength;
+                for (int i = 0; i < blockLength; i++)
+                    block[i] = irTimeDomain[offset + i];
+                irBlocks[j] = block;
+
+                var irFreq = ToFreqDomain(block, paddedLength);
+                irFreqBlocks[j] = irFreq;
+
+                var convFreq = ConvolveFreqDomain(irFreq, audioDataFreq);
+                Fourier.Inverse(convFreq, FourierOptions.Matlab);
+
+                audioBlocksConvolved[j] = convFreq;
+            });
+            Complex[] fullAudioFreq =  AddOverlappingData(audioBlocksConvolved);
+
+            overlapBuffer = PullOverlapBuffer(overlapBuffer, dry.Length);
+            for (int i = 0; i < fullAudioFreq.Length; i++)
+            {
+                overlapBuffer[i] += (float)fullAudioFreq[i].Real;
+            }
+            
+            return Mix(dry, overlapBuffer);
+        }
+
+        private Complex[] AddOverlappingData(Complex[][] audioBlocks)
+        {
+            int oneBlockWithoutPadding = audioBlocks[0].Length / 2;
+            int fullLength = audioBlocks.Length * oneBlockWithoutPadding + oneBlockWithoutPadding;
+            Complex[] result = new Complex[fullLength];
+
+            for (int i = 0; i < audioBlocks.Length; i++)
+            {
+                int offset = i * oneBlockWithoutPadding;
+                for (int j = 0; j < audioBlocks[0].Length; j++)
+                {
+                    result[offset + j] += audioBlocks[i][j];
+                }
+            }
+            return result;
+        }
+
+        private Complex[] ConvolveFreqDomain(Complex[] irFreqDomain, Complex[] audioData)
+        {
+            Complex[] result = new Complex[irFreqDomain.Length];
+            for (int i = 0; i < irFreqDomain.Length; i++)
+            {
+                result[i] = audioData[i] * irFreqDomain[i];
+            }
+
+            return result;
         }
 
         private float[] PullOverlapBuffer(float[] overlapBuffer, int pullLength)
@@ -118,7 +213,7 @@ namespace Code
         private Complex[] GetComplex(float[] buffer, int requiredLength)
         {
             Complex[] complexAudioData = new Complex[requiredLength];
-            for (int i = 0; i < buffer.Length; i++)
+            for (int i = 0; i < Math.Min(buffer.Length, requiredLength); i++)
             {
                 Complex tmp = new Complex(buffer[i], 0);
                 complexAudioData[i] = tmp;

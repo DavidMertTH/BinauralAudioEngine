@@ -21,7 +21,7 @@ namespace Code
         public bool usePrimaryReflections = false;
         public bool useSecondaryReflections = false;
         public bool useHigherOrderReflections = false;
-
+        public float alpha;
         public float Gain;
 
         public LiveConvolutionReverb reverb;
@@ -70,6 +70,7 @@ namespace Code
         private bool _jobIsRunning;
 
         private int _dataBufferLength;
+
         private void Awake()
         {
             _isSetup = false;
@@ -83,9 +84,13 @@ namespace Code
             int bufferLength;
             int numBuffers;
             AudioSettings.GetDSPBufferSize(out bufferLength, out numBuffers);
-            _dataBufferLength = bufferLength * numBuffers;
+            _dataBufferLength = bufferLength;
             _lastData = new float[bufferLength * numBuffers];
             _jobIsRunning = false;
+            _irLength = reverb.fullIrLength - 1024;
+
+            _impulseResponseLeft = new float[_irLength];
+            _impulseResponseRight = new float[_irLength];
         }
 
 
@@ -110,10 +115,11 @@ namespace Code
             _previousImpulseResponsesLeft = _freqDomainIrLeft;
             _previousImpulseResponsesRight = _freqDomainIrRight;
 
+
             _impulseJobLeft.ImpulseResponse.CopyTo(_impulseResponseLeft);
             _impulseJobRight.ImpulseResponse.CopyTo(_impulseResponseRight);
 
-            int lengthSum = (_dataBufferLength/2) + _irLength;
+            int lengthSum = (_dataBufferLength / 2) + _irLength;
             int requiredLength = LiveConvolutionReverb.GetMaxZweierPotenz(lengthSum);
 
             if (_overlapBufferLeft == null || _overlapBufferRight == null)
@@ -133,7 +139,6 @@ namespace Code
                     _previousImpulseResponsesRight[i] = _freqDomainIrRight[i];
                 }
             }
-            
 
             Task.Run(() => { _freqDomainIrLeft = reverb.ToFreqDomain(_impulseResponseLeft, requiredLength); });
             Task.Run(() => { _freqDomainIrRight = reverb.ToFreqDomain(_impulseResponseRight, requiredLength); });
@@ -157,7 +162,6 @@ namespace Code
         {
             if (bypass || !_isSetup) return;
 
-            _irLength = 2024 * 3;
 
             List<AudioRay> rays = GetAllSelectedRays();
 
@@ -174,8 +178,6 @@ namespace Code
             NativeArray<AudioRay> nativeAudioRays = new NativeArray<AudioRay>(rays.Count, Allocator.TempJob);
             nativeAudioRays.CopyFrom(rays.ToArray());
 
-            _impulseResponseLeft = new float[_irLength];
-            _impulseResponseRight = new float[_irLength];
 
             GetRayToImpulseData dataJob = new GetRayToImpulseData()
             {
@@ -227,13 +229,20 @@ namespace Code
                 dataRight[j] = data[i + 1] * Gain;
             }
 
+
             if (task != null)
             {
                 Task.WaitAll(task);
             }
-
+/*
+            dataLeft = reverb.ProgressiveConvolve(_impulseResponseLeft, dataLeft, dataLeft, ref _overlapBufferLeft,
+                1024);
+            dataRight = reverb.ProgressiveConvolve(_impulseResponseRight, dataRight, dataRight, ref _overlapBufferRight,
+                1024);
+*/
             task = Task.Run(() =>
             {
+                /*
                 Complex[] leftCompData;
                 Complex[] rightCompData;
 
@@ -248,6 +257,15 @@ namespace Code
                 dataRight = reverb.ConvolveData(_freqDomainIrRight, _previousImpulseResponsesRight, rightCompData,
                     dataRight, ref _overlapBufferRight);
 
+                */
+                
+                dataLeft = reverb.ProgressiveConvolve(_impulseResponseLeft, dataLeft, dataLeft, ref _overlapBufferLeft,
+                    1024);
+                dataRight = reverb.ProgressiveConvolve(_impulseResponseRight, dataRight, dataRight,
+                    ref _overlapBufferRight,
+                    1024);
+
+
                 _previousImpulseResponsesLeft = _freqDomainIrLeft;
                 _previousImpulseResponsesRight = _freqDomainIrRight;
                 for (int i = 0, j = 0; i < data.Length; i += 2, j++)
@@ -256,6 +274,7 @@ namespace Code
                     _lastData[i + 1] = dataRight[j];
                 }
             });
+
             if (_lastData != null)
             {
                 for (int i = 0; i < data.Length; i++)

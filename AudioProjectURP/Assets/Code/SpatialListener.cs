@@ -65,11 +65,7 @@ namespace Code
             _surroundingHitsTarget.Dispose();
         }
 
-        private void OnDestroy()
-        {
-            _surroundingHitsSource.Dispose();
-            _surroundingHitsTarget.Dispose();
-        }
+
 
         private void OnDrawGizmos()
         {

@@ -1089,12 +1089,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetObject: {fileID: 330585546}
-  audioFileLoader: {fileID: 0}
   bypass: 0
   useDirect: 1
   usePrimaryReflections: 1
   useSecondaryReflections: 1
   useHigherOrderReflections: 1
+  alpha: 0
   Gain: 1
   reverb: {fileID: 774592948}
   impulseGraphUI: {fileID: 1702655289}
@@ -1297,7 +1297,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   wet: 1
-  crossoverLength: 64
+  crossoverLength: 1
+  clip: {fileID: 0}
+  hallReverb: 0.144
+  fullIrLength: 0
 --- !u!1 &801160498
 GameObject:
   m_ObjectHideFlags: 0
