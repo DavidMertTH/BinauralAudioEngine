@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
@@ -18,10 +19,11 @@ namespace Code
         [Range(0, 1)] [SerializeField] public float hallReverb;
         [HideInInspector] public int fullIrLength;
         private Complex[] _reverbLayerFreq;
+        public static readonly Stopwatch Clock = Stopwatch.StartNew();
 
         private void Awake()
         {
-            fullIrLength = 1024 * 5;
+            fullIrLength = 1024 * 10;
         }
 
         private void Start()
@@ -106,6 +108,7 @@ namespace Code
         public float[] ProgressiveConvolve(float[] irTimeDomain, float[] audioData,
             float[] dry, ref float[] overlapBuffer, int blockLength)
         {
+            
             if (audioData.Length % blockLength != 0 || irTimeDomain.Length % blockLength != 0)
             {
                 print("FAULTY BLOCKLENGTH");
@@ -113,17 +116,20 @@ namespace Code
             }
 
             int paddedLength = blockLength * 2;
+            
             int irBlockAmount = irTimeDomain.Length / blockLength;
-
+            int audioBlockAmount = audioData.Length / blockLength;
 
             Complex[] audioDataFreq = ToFreqDomain(audioData, paddedLength);
+            
             float[][] irBlocks = new float[irBlockAmount][];
+            float[][] audioBlocks = new float[audioBlockAmount][];
+
             Complex[][] irFreqBlocks = new Complex[irBlockAmount][];
             Complex[][] audioBlocksConvolved = new Complex[irBlockAmount][];
-
             Parallel.For(0, irBlockAmount, j =>
             {
-                var block = new float[paddedLength];
+                float[] block = new float[paddedLength];
                 int offset = j * blockLength;
                 for (int i = 0; i < blockLength; i++)
                     block[i] = irTimeDomain[offset + i];
@@ -144,7 +150,6 @@ namespace Code
             {
                 overlapBuffer[i] += (float)fullAudioFreq[i].Real;
             }
-            
             return Mix(dry, overlapBuffer);
         }
 

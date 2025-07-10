@@ -87,7 +87,7 @@ namespace Code
             _dataBufferLength = bufferLength;
             _lastData = new float[bufferLength * numBuffers];
             _jobIsRunning = false;
-            _irLength = reverb.fullIrLength - 1024;
+            _irLength = reverb.fullIrLength - bufferLength;
 
             _impulseResponseLeft = new float[_irLength];
             _impulseResponseRight = new float[_irLength];
@@ -259,11 +259,8 @@ namespace Code
 
                 */
                 
-                dataLeft = reverb.ProgressiveConvolve(_impulseResponseLeft, dataLeft, dataLeft, ref _overlapBufferLeft,
-                    1024);
-                dataRight = reverb.ProgressiveConvolve(_impulseResponseRight, dataRight, dataRight,
-                    ref _overlapBufferRight,
-                    1024);
+                dataLeft = reverb.ProgressiveConvolve(_impulseResponseLeft, dataLeft, dataLeft, ref _overlapBufferLeft,dataLeft.Length);
+                dataRight = reverb.ProgressiveConvolve(_impulseResponseRight, dataRight, dataRight, ref _overlapBufferRight, dataLeft.Length);
 
 
                 _previousImpulseResponsesLeft = _freqDomainIrLeft;
