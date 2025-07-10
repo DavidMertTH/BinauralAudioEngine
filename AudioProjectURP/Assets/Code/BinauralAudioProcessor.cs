@@ -8,6 +8,7 @@ using Unity.Jobs;
 using UnityEngine;
 using Vector3 = UnityEngine.Vector3;
 using MathNet.Numerics.IntegralTransforms;
+using UnityEngine.Serialization;
 
 namespace Code
 {
@@ -31,10 +32,12 @@ namespace Code
         public List<AudioRay> PrimaryReflections;
         public List<AudioRay> SecundaryReflections;
         public List<AudioRay> HigherOrderReflections;
+        
         public ImpulseGraphUI impulseGraphUIRight;
         public ImpulseGraphUI impulseGraphUILeft;
-        private float[] _impulseResponseLeft;
-        private float[] _impulseResponseRight;
+        
+        public float[] impulseResponseLeft;
+        public float[] impulseResponseRight;
 
         private NativeArray<float> _nativeImpulseResponseLeft;
         private NativeArray<float> _nativeImpulseResponseRight;
@@ -69,6 +72,7 @@ namespace Code
 
         private FillImpulseResponseParallel _impulseJobLeft;
         private FillImpulseResponseParallel _impulseJobRight;
+        
         private bool _jobIsRunning;
 
         private int _dataBufferLength;
@@ -112,8 +116,10 @@ namespace Code
             _previousImpulseResponsesLeft = _freqDomainIrLeft;
             _previousImpulseResponsesRight = _freqDomainIrRight;
 
-            _impulseJobLeft.ImpulseResponse.CopyTo(_impulseResponseLeft);
-            _impulseJobRight.ImpulseResponse.CopyTo(_impulseResponseRight);
+            impulseResponseLeft = new float[_irLength];
+            impulseResponseRight = new float[_irLength];
+            _impulseJobLeft.ImpulseResponse.CopyTo(impulseResponseLeft);
+            _impulseJobRight.ImpulseResponse.CopyTo(impulseResponseRight);
 
             int lengthSum = (_dataBufferLength/2) + _irLength;
             int requiredLength = LiveConvolutionReverb.GetMaxZweierPotenz(lengthSum);
@@ -137,11 +143,8 @@ namespace Code
             }
             
 
-            Task.Run(() => { _freqDomainIrLeft = reverb.ToFreqDomain(_impulseResponseLeft, requiredLength); });
-            Task.Run(() => { _freqDomainIrRight = reverb.ToFreqDomain(_impulseResponseRight, requiredLength); });
-
-            impulseGraphUILeft.impulseResponseLeft = _impulseResponseLeft;
-            impulseGraphUIRight.impulseResponseRight = _impulseResponseRight;
+            Task.Run(() => { _freqDomainIrLeft = reverb.ToFreqDomain(impulseResponseLeft, requiredLength); });
+            Task.Run(() => { _freqDomainIrRight = reverb.ToFreqDomain(impulseResponseRight, requiredLength); });
           
             _nativeImpulseResponseLeft.Dispose();
             _nativeImpulseResponseRight.Dispose();
@@ -160,7 +163,7 @@ namespace Code
         {
             if (bypass || !_isSetup) return;
 
-            _irLength = 2024 * 3;
+            _irLength = 1024 * 3;
 
             List<AudioRay> rays = GetAllSelectedRays();
 
@@ -177,8 +180,6 @@ namespace Code
             NativeArray<AudioRay> nativeAudioRays = new NativeArray<AudioRay>(rays.Count, Allocator.TempJob);
             nativeAudioRays.CopyFrom(rays.ToArray());
 
-            _impulseResponseLeft = new float[_irLength];
-            _impulseResponseRight = new float[_irLength];
 
             GetRayToImpulseData dataJob = new GetRayToImpulseData()
             {

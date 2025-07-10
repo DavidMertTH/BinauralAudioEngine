@@ -1,28 +1,23 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System;
+using UnityEngine.Serialization;
 
 namespace Code
 {
     [RequireComponent(typeof(RawImage))]
     public class ImpulseGraphUI : MonoBehaviour
     {
-        public enum IR { Left, Right }
-        public IR ImpulseResponse = IR.Left;
+        [Header("Graph Settings")] [Range(0f, 1f)]
+        public float zeroLinePosition = 0.35f;
 
-        [Header("Graph Settings")]
-        [Range(0f, 1f)] public float zeroLinePosition = 0.35f;
         [Range(0f, 2f)] public float amplitudeScale = 0.8f;
 
-        [Header("Colors")]
-        public Color lineColor = Color.green;
+        [Header("Colors")] public Color lineColor = Color.green;
 
-        [Header("UI Elements")]
-        public RawImage graphDisplayUI;
+        [Header("UI Elements")] public RawImage graphDisplayUI;
 
-        [HideInInspector]
-        public float[] impulseResponseRight = null;
-        public float[] impulseResponseLeft = null;
+        [HideInInspector] public float[] floatBuffer;
 
         float thickness = 0.0002f;
         float zeroLineThickness = 0.0002f;
@@ -43,18 +38,15 @@ namespace Code
 
         void Update()
         {
-            float[] sourceData = ImpulseResponse == IR.Left ? impulseResponseLeft : impulseResponseRight;
-
-            if (sourceData == null || sourceData.Length == 0)
+            if (floatBuffer == null || floatBuffer.Length == 0)
                 return;
 
-            lineColor = ImpulseResponse == IR.Left ? Color.green : Color.red;
 
             int targetResolution = Mathf.RoundToInt(graphDisplayUI.rectTransform.rect.width);
             targetResolution = Mathf.Clamp(targetResolution, 16, 2048); // Avoid extremely small/large values
 
             // ── 1) Downsample to match visual resolution ──
-            float[] downsampled = Downsample(sourceData, targetResolution);
+            float[] downsampled = Downsample(floatBuffer, targetResolution);
 
             // ── 2) Rebuild the texture if needed ──
             if (_irTex == null || _irTex.width != downsampled.Length)
@@ -114,7 +106,5 @@ namespace Code
 
             return result;
         }
-
-
     }
 }
