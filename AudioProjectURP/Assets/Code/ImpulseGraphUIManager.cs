@@ -32,12 +32,12 @@ namespace Code
         private void Update()
         {
             if (audioProcessor == null) return;
-            irLeft.floatBuffer = audioProcessor.impulseResponseLeft;
+            irLeft.floatBuffer = audioProcessor.impulseResponseRight;
             irRight.floatBuffer = audioProcessor.impulseResponseRight;
-            spectreLeft.floatBuffer = ComputeLogEqBands(audioProcessor.spectreLeft, audioProcessor.sampleRate, 40);
-            spectreRight.floatBuffer = ComputeLogEqBands(audioProcessor.spectreRight, audioProcessor.sampleRate, 40);
+            //spectreLeft.floatBuffer = ComputeLogEqBands(audioProcessor.spectreLeft, audioProcessor.sampleRate, 40);
+            //spectreRight.floatBuffer = ComputeLogEqBands(audioProcessor.spectreRight, audioProcessor.sampleRate, 40);
 
-            rawAudio.floatBuffer = audioProcessor.spectreLeft;
+            //rawAudio.floatBuffer = audioProcessor.spectreLeft;
         }
 
         public static float[] ComputeLogEqBands(
