@@ -1,103 +1,120 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System;
 
 namespace Code
 {
+    [RequireComponent(typeof(RawImage))]
     public class ImpulseGraphUI : MonoBehaviour
     {
-        [Header("Graph Settings")]
-        public float heightScale = 1f;
+        public enum IR { Left, Right }
+        public IR ImpulseResponse = IR.Left;
 
-        [Range(0f, 1f)]
-        public float zeroLinePosition = 0.35f; // Vertical offset for the 0-line
+        [Header("Graph Settings")]
+        [Range(0f, 1f)] public float zeroLinePosition = 0.35f;
+        [Range(0f, 2f)] public float amplitudeScale = 0.8f;
 
         [Header("Colors")]
-        public Color backgroundColor = new Color(0.1f, 0.1f, 0.1f, 1f);
-        public Color leftColor = Color.green;
-        public Color rightColor = Color.red;
+        public Color lineColor = Color.green;
 
         [Header("UI Elements")]
-        public RawImage graphDisplayUI; // Assign this in the inspector
+        public RawImage graphDisplayUI;
 
-        [Header("Texture Settings")]
-        public int textureWidth = 512;
-        public int textureHeight = 256;
+        [HideInInspector]
+        public float[] impulseResponseRight = null;
+        public float[] impulseResponseLeft = null;
 
-        [HideInInspector] public float[] impulseResponseLeft;
-        [HideInInspector] public float[] impulseResponseRight;
+        float thickness = 0.0002f;
+        float zeroLineThickness = 0.0002f;
 
-        private RenderTexture _renderTexture;
-        private Material _lineMaterial;
+        Material _mat;
+        Texture2D _irTex;
 
         void Start()
         {
-            SetupRenderTexture();
-            SetupMaterial();
+            _mat = new Material(Shader.Find("UI/ImpulseGraphShader"));
+            _mat.hideFlags = HideFlags.DontSave;
 
-            if (graphDisplayUI != null)
-                graphDisplayUI.texture = _renderTexture;
-        }
+            if (graphDisplayUI == null)
+                graphDisplayUI = GetComponent<RawImage>();
 
-        void SetupRenderTexture()
-        {
-            _renderTexture = new RenderTexture(textureWidth, textureHeight, 0, RenderTextureFormat.ARGB32);
-            _renderTexture.Create();
-        }
-
-        void SetupMaterial()
-        {
-            Shader shader = Shader.Find("Hidden/Internal-Colored");
-            _lineMaterial = new Material(shader)
-            {
-                hideFlags = HideFlags.HideAndDontSave
-            };
-
-            _lineMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-            _lineMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-            _lineMaterial.SetInt("_Cull", (int)UnityEngine.Rendering.CullMode.Off);
-            _lineMaterial.SetInt("_ZWrite", 0);
+            graphDisplayUI.material = _mat;
         }
 
         void Update()
         {
-            bool hasLeft = impulseResponseLeft != null && impulseResponseLeft.Length > 0;
-            bool hasRight = impulseResponseRight != null && impulseResponseRight.Length > 0;
+            float[] sourceData = ImpulseResponse == IR.Left ? impulseResponseLeft : impulseResponseRight;
 
-            if (!hasLeft && !hasRight) return;
+            if (sourceData == null || sourceData.Length == 0)
+                return;
 
-            Graphics.SetRenderTarget(_renderTexture);
-            GL.Clear(true, true, backgroundColor);
+            lineColor = ImpulseResponse == IR.Left ? Color.green : Color.red;
 
-            _lineMaterial.SetPass(0);
-            GL.PushMatrix();
-            GL.LoadPixelMatrix(0, textureWidth, 0, textureHeight);
+            int targetResolution = Mathf.RoundToInt(graphDisplayUI.rectTransform.rect.width);
+            targetResolution = Mathf.Clamp(targetResolution, 16, 2048); // Avoid extremely small/large values
 
-            if (hasLeft)
-                DrawImpulseResponse(impulseResponseLeft, leftColor);
+            // ── 1) Downsample to match visual resolution ──
+            float[] downsampled = Downsample(sourceData, targetResolution);
 
-            if (hasRight)
-                DrawImpulseResponse(impulseResponseRight, rightColor);
-
-            GL.PopMatrix();
-            Graphics.SetRenderTarget(null);
-        }
-
-        void DrawImpulseResponse(float[] data, Color color)
-        {
-            int len = data.Length;
-            float zeroLineY = textureHeight * zeroLinePosition;
-
-            GL.Begin(GL.LINE_STRIP);
-            GL.Color(color);
-
-            for (int i = 0; i < len; i++)
+            // ── 2) Rebuild the texture if needed ──
+            if (_irTex == null || _irTex.width != downsampled.Length)
             {
-                float x = (i / (float)(len - 1)) * textureWidth;
-                float y = zeroLineY + data[i] * heightScale * textureHeight * 0.5f;
-                GL.Vertex3(x, y, 0);
+                if (_irTex != null) Destroy(_irTex);
+                _irTex = new Texture2D(downsampled.Length, 1, TextureFormat.RFloat, false);
+                _irTex.wrapMode = TextureWrapMode.Clamp;
+                graphDisplayUI.texture = _irTex;
             }
 
-            GL.End();
+            zeroLinePosition = Mathf.Clamp01(zeroLinePosition);
+            amplitudeScale = Mathf.Max(0.001f, amplitudeScale);
+
+            // ── 3) Fill texture with downsampled values ──
+            var cols = new Color[downsampled.Length];
+            for (int i = 0; i < cols.Length; i++)
+                cols[i] = new Color(downsampled[i] * amplitudeScale, 0, 0, 0);
+            _irTex.SetPixels(cols);
+            _irTex.Apply();
+
+            // ── 4) Push uniforms into the shader ──
+            _mat.SetFloat("_ZeroLine", zeroLinePosition);
+            _mat.SetFloat("_ZeroLineThickness", zeroLineThickness);
+            _mat.SetFloat("_Scale", amplitudeScale);
+            _mat.SetFloat("_Thickness", thickness);
+            _mat.SetColor("_LineColor", lineColor);
+
+            graphDisplayUI.SetMaterialDirty();
         }
+
+        /// <summary>
+        /// Downsamples the source array to a smaller array using max-abs-pooling (preserves peaks).
+        /// </summary>
+        float[] Downsample(float[] source, int targetSize)
+        {
+            if (source.Length <= targetSize)
+                return source;
+
+            float[] result = new float[targetSize];
+            float samplesPerBucket = (float)source.Length / targetSize;
+
+            for (int i = 0; i < targetSize; i++)
+            {
+                int start = Mathf.FloorToInt(i * samplesPerBucket);
+                int end = Mathf.Min(Mathf.CeilToInt((i + 1) * samplesPerBucket), source.Length);
+                float maxVal = 0f;
+
+                for (int j = start; j < end; j++)
+                {
+                    float candidate = source[j];
+                    if (Mathf.Abs(candidate) > Mathf.Abs(maxVal))
+                        maxVal = candidate; // preserve sign
+                }
+
+                result[i] = maxVal;
+            }
+
+            return result;
+        }
+
+
     }
 }

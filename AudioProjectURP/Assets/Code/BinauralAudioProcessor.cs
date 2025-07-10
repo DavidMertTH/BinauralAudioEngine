@@ -30,7 +30,8 @@ namespace Code
         public List<AudioRay> PrimaryReflections;
         public List<AudioRay> SecundaryReflections;
         public List<AudioRay> HigherOrderReflections;
-        public ImpulseGraphUI impulseGraphUI;
+        public ImpulseGraphUI impulseGraphUIRight;
+        public ImpulseGraphUI impulseGraphUILeft;
         private float[] _impulseResponseLeft;
         private float[] _impulseResponseRight;
 
@@ -138,9 +139,9 @@ namespace Code
             Task.Run(() => { _freqDomainIrLeft = reverb.ToFreqDomain(_impulseResponseLeft, requiredLength); });
             Task.Run(() => { _freqDomainIrRight = reverb.ToFreqDomain(_impulseResponseRight, requiredLength); });
 
-            impulseGraphUI.impulseResponseLeft = _impulseResponseLeft;
-            impulseGraphUI.impulseResponseRight = _impulseResponseRight;
-
+            impulseGraphUILeft.impulseResponseLeft = _impulseResponseLeft;
+            impulseGraphUIRight.impulseResponseRight = _impulseResponseRight;
+          
             _nativeImpulseResponseLeft.Dispose();
             _nativeImpulseResponseRight.Dispose();
         }
