@@ -59,7 +59,8 @@ namespace Code
         private float[] _lastData;
         private Task<Complex[]> _rightTask;
         private Task<Complex[]> _leftTask;
-        private Task task;
+        private Task leftTask;
+        private Task rightTask;
 
         private JobHandle _leftJobHandle;
         private JobHandle _rightJobHandle;
@@ -230,48 +231,30 @@ namespace Code
             }
 
 
-            if (task != null)
+            if (leftTask != null)
             {
-                Task.WaitAll(task);
+                Task.WaitAll(leftTask);
+                Task.WaitAll(rightTask);
             }
-/*
-            dataLeft = reverb.ProgressiveConvolve(_impulseResponseLeft, dataLeft, dataLeft, ref _overlapBufferLeft,
-                1024);
-            dataRight = reverb.ProgressiveConvolve(_impulseResponseRight, dataRight, dataRight, ref _overlapBufferRight,
-                1024);
-*/
-            task = Task.Run(() =>
+          
+            leftTask = Task.Run(() =>
             {
-                /*
-                Complex[] leftCompData;
-                Complex[] rightCompData;
-
-                float[] left = dataLeft;
-                leftCompData = reverb.ToFreqDomain(left, _freqDomainIrLeft.Length);
-
-                float[] right = dataRight;
-                rightCompData = reverb.ToFreqDomain(right, _freqDomainIrLeft.Length);
-
-                dataLeft = reverb.ConvolveData(_freqDomainIrLeft, _previousImpulseResponsesLeft, leftCompData, dataLeft,
-                    ref _overlapBufferLeft);
-                dataRight = reverb.ConvolveData(_freqDomainIrRight, _previousImpulseResponsesRight, rightCompData,
-                    dataRight, ref _overlapBufferRight);
-
-                */
-                
                 dataLeft = reverb.ProgressiveConvolve(_impulseResponseLeft, dataLeft, dataLeft, ref _overlapBufferLeft,dataLeft.Length);
-                dataRight = reverb.ProgressiveConvolve(_impulseResponseRight, dataRight, dataRight, ref _overlapBufferRight, dataLeft.Length);
-
-
                 _previousImpulseResponsesLeft = _freqDomainIrLeft;
-                _previousImpulseResponsesRight = _freqDomainIrRight;
                 for (int i = 0, j = 0; i < data.Length; i += 2, j++)
                 {
                     _lastData[i] = dataLeft[j];
+                }
+            });
+            rightTask = Task.Run(() =>
+            {
+                dataRight = reverb.ProgressiveConvolve(_impulseResponseRight, dataRight, dataRight, ref _overlapBufferRight, dataLeft.Length);
+                _previousImpulseResponsesRight = _freqDomainIrRight;
+                for (int i = 0, j = 0; i < data.Length; i += 2, j++)
+                {
                     _lastData[i + 1] = dataRight[j];
                 }
             });
-
             if (_lastData != null)
             {
                 for (int i = 0; i < data.Length; i++)
