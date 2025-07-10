@@ -133,7 +133,7 @@ namespace Code
             // Ruft je nach Zustand die richtige Funktion auf
             if (useFirstFunction)
             {
-                CreatePrimitiveImpulseresponse();
+                //CreatePrimitiveImpulseresponse();
             }
             else
             {
@@ -143,7 +143,7 @@ namespace Code
 
         public void CreatePrimitiveImpulseresponse()
         {
-            int irLength = 2024 * 2;
+            int irLength = 2024 * 3;
             // TOTO DAVID MARTIN KARG __ Diese Funktion sollte mit der HRTF Funktion ersetzt werden
             if (bypass || !_isSetup) return;
 
@@ -200,7 +200,6 @@ namespace Code
                 }
             }
 
-            impulseGraphUI.impulseResponse = _impulseResponseLeft;
 
             int lengthSum = 1024 + irLength;
             int requiredLength = LiveConvolutionReverb.GetMaxZweierPotenz(lengthSum);
@@ -266,7 +265,6 @@ namespace Code
                 }
             }
 
-            impulseGraphUI.impulseResponse = _impulseResponseLeft;
             int lengthSum = 1024 + irLength;
             int requiredLength = LiveConvolutionReverb.GetMaxZweierPotenz(lengthSum);
 

@@ -273,6 +273,7 @@ GameObject:
   - component: {fileID: 330585548}
   - component: {fileID: 330585551}
   - component: {fileID: 330585550}
+  - component: {fileID: 330585552}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -464,6 +465,31 @@ MonoBehaviour:
   renderHigherOrderRays: 0
   bounces: 10
   absorbtion: 0.8
+--- !u!143 &330585552
+CharacterController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 330585543}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Height: 2
+  m_Radius: 0.5
+  m_SlopeLimit: 45
+  m_StepOffset: 0.3
+  m_SkinWidth: 0.08
+  m_MinMoveDistance: 0.001
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &342100450
 GameObject:
   m_ObjectHideFlags: 0
@@ -1097,7 +1123,7 @@ MonoBehaviour:
   useHigherOrderReflections: 1
   Gain: 1
   reverb: {fileID: 774592948}
-  impulseGraphUI: {fileID: 1702655289}
+  impulseGraphUI: {fileID: 0}
   useFirstFunction: 1
 --- !u!82 &774592943
 AudioSource:
@@ -1109,8 +1135,8 @@ AudioSource:
   m_Enabled: 1
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
-  m_audioClip: {fileID: 8300000, guid: 74f5de165b993e144b78750d620a291c, type: 3}
-  m_Resource: {fileID: 8300000, guid: 74f5de165b993e144b78750d620a291c, type: 3}
+  m_audioClip: {fileID: 8300000, guid: b41fbe646cebd2e469ffada5bab4f2aa, type: 3}
+  m_Resource: {fileID: 8300000, guid: b41fbe646cebd2e469ffada5bab4f2aa, type: 3}
   m_PlayOnAwake: 1
   m_Volume: 1
   m_Pitch: 1
@@ -2149,7 +2175,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e51bd932276581d438b0e6ca91f24e01, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  graphArea: {fileID: 1473426060}
+  graphArea: {fileID: 0}
   impulseResponse: []
   lineWidth: 4
   lineColor: {r: 0, g: 0, b: 0, a: 1}
