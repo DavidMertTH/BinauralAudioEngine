@@ -30,7 +30,7 @@ namespace Code
         public bool useHigherOrderReflections = false;
         public float alpha;
         public float Gain;
-
+        public int blockSize = 128;
         public LiveConvolutionReverb reverb;
 
         public AudioRay DirectHit;
@@ -80,6 +80,8 @@ namespace Code
         private JobHandle _leftJobHandle;
         private JobHandle _rightJobHandle;
         private int _irLength;
+        private float[][] _leftBlocks;
+        private float[][] _rightBlocks;
 
         private void Awake()
         {
@@ -107,6 +109,10 @@ namespace Code
             impulseResponseLeft = new float[_irLength];
             sofaHRIR = new MySofaHRIR(hrtfPtr);
             Debug.Log(sofaHRIR.radius);
+            print(_dataBufferLength);
+            int blockAmount = _dataBufferLength / blockSize;
+            _leftBlocks = new float[blockAmount][];
+            _rightBlocks = new float[blockAmount][];
         }
 
 
@@ -292,7 +298,7 @@ namespace Code
 
                 if (leftEarResponse != null && rightEarResponse != null)
                 {
-                    float distanceToSource = ray.DistanceToImage + ( sofaHRIR.radius );
+                    float distanceToSource = ray.DistanceToImage + (sofaHRIR.radius);
                     float propagationDelaySec = distanceToSource / 343f; // Schallgeschwindigkeit: 343 m/s
                     float propagationDelaySamples = sampleRate * propagationDelaySec;
                     float distanceAmplitudeTwo = ray.Absorbtion * (8 / distanceToSource) * Gain;
@@ -309,22 +315,30 @@ namespace Code
                 }
             }
         }
-
+        
         void OnAudioFilterRead(float[] data, int channels)
         {
             if (bypass || channels < 2 || !_isSetup) return;
             if (impulseResponseLeft == null || impulseResponseRight == null || impulseResponseRight.Length == 0 ||
                 impulseResponseLeft.Length == 0) return;
+            int blockAmount = _dataBufferLength / blockSize;
+
+            if (data.Length % blockSize != 0)
+            {
+                print("FAULTY BLOCKLENGTH (AUDIO)");
+                return;
+            }
 
             float[] dataLeft = new float[data.Length / 2];
             float[] dataRight = new float[data.Length / 2];
 
             for (int i = 0, j = 0; i < data.Length; i += 2, j++)
             {
-                dataLeft[j] = data[i] * Gain;
+                dataLeft[j] =  data[i] * Gain;
                 dataRight[j] = data[i + 1] * Gain;
             }
-
+            // Hann.ApplyHann(dataLeft);
+            // Hann.ApplyHann(dataRight);
 
             if (leftTask != null)
             {
@@ -361,8 +375,7 @@ namespace Code
                 }
             }
         }
-
-
+        
         private List<AudioRay> GetAllSelectedRays()
         {
             List<AudioRay> rays = new List<AudioRay> { };

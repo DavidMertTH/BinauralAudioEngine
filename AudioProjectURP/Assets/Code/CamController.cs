@@ -7,7 +7,6 @@ public class CamController : MonoBehaviour
     public float lookSensitivity = 2f;
     public float maxLookX = 90f;
     public float minLookX = -90f;
-
     private float rotX = 0f;
 
     void Start()

@@ -119,7 +119,7 @@ namespace Code
                 {
                     if (ray.Positions.Length == 0) continue;
                     if (!ray.IsValid) continue;
-                    color = new Color(1, 1, 1, ray.Absorbtion);
+                    color = new Color(0, 0, 0, ray.Absorbtion/2);
                     Gizmos.color = color;
 
                     Gizmos.DrawRay(ray.Positions[0], source.transform.position - (Vector3)ray.Positions[0]);

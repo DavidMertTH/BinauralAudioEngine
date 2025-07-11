@@ -4,6 +4,7 @@ using System.Numerics;
 using System.Threading.Tasks;
 using MathNet.Numerics.IntegralTransforms;
 using MathNet.Numerics.Providers.FourierTransform;
+
 using UnityEngine;
 
 namespace Code
@@ -20,7 +21,7 @@ namespace Code
 
         private void Awake()
         {
-            fullIrLength = 1024 * 4;
+            fullIrLength = 1024 * 5;
         }
 
         private void Start()
@@ -29,27 +30,6 @@ namespace Code
             AudioFileLoader audioFileLoader = new AudioFileLoader();
             audioFileLoader.Clip = clip;
             audioFileLoader.LoadClip();
-            //float[] samples = SmoothEnds(audioFileLoader.Samples, fullIrLength, 128);
-            //_reverbLayerFreq = ToFreqDomain(samples, fullIrLength);
-        }
-
-        public float[] SmoothEnds(float[] samples, int chopSize, int smoothRadius)
-        {
-            float[] choppedSamples = new float[chopSize];
-            for (int i = 0; i < chopSize; i++)
-            {
-                if (i < chopSize - smoothRadius)
-                {
-                    choppedSamples[i] = samples[i];
-                }
-                else
-                {
-                    float koefficent = (i - ((float)chopSize - smoothRadius)) / smoothRadius;
-                    choppedSamples[i] = samples[i] * (1 - koefficent);
-                }
-            }
-
-            return choppedSamples;
         }
 
         public static int GetMaxZweierPotenz(int size)

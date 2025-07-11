@@ -1,30 +1,31 @@
 using UnityEngine;
 using UnityEngine.UI;
-using System;
-using System.Threading.Tasks;
-using UnityEngine.Serialization;
 
 namespace Code
 {
     [RequireComponent(typeof(RawImage))]
     public class ImpulseGraphUI : MonoBehaviour
     {
-        [Header("Graph Settings")] [Range(0f, 1f)]
-        public float zeroLinePosition = 0.35f;
-
+        [Header("Graph Settings")] 
+        [Range(0f, 1f)] public float zeroLinePosition = 0.35f;
         [Range(0f, 2f)] public float amplitudeScale = 0.8f;
 
-        [Header("Colors")] public Color lineColor;
+        [Header("Colors")] 
+        public Color lineColor;
 
-        [Header("UI Elements")] public RawImage graphDisplayUI;
+        [Header("UI Elements")] 
+        public RawImage graphDisplayUI;
 
         [HideInInspector] public float[] floatBuffer;
 
-        float thickness = 0.0002f;
-        float zeroLineThickness = 0.0002f;
+        // intern
+        private int _currentResolution = -1;
+        private float[] _downsampled;               // Puffer für Downsample-Ergebnis
+        private Texture2D _irTex;                   // RFloat-Textur
 
-        Material _mat;
-        Texture2D _irTex;
+        private Material _mat;
+        private const float thickness = 0.0002f;
+        private const float zeroLineThickness = 0.0002f;
 
         void Start()
         {
@@ -42,18 +43,21 @@ namespace Code
             if (floatBuffer == null || floatBuffer.Length == 0)
                 return;
 
-
+            // Ziel-Auflösung basierend auf der UI-Breite
             int targetResolution = Mathf.RoundToInt(graphDisplayUI.rectTransform.rect.width);
-            targetResolution = Mathf.Clamp(targetResolution, 16, 2048); // Avoid extremely small/large values
+            targetResolution = Mathf.Clamp(targetResolution, 16, 2048);
 
-            // ── 1) Downsample to match visual resolution ──
-            float[] downsampled = Downsample(floatBuffer, targetResolution);
-
-            // ── 2) Rebuild the texture if needed ──
-            if (_irTex == null || _irTex.width != downsampled.Length)
+            // Nur neu anlegen, wenn sich die Auflösung geändert hat
+            if (_currentResolution != targetResolution)
             {
-                if (_irTex != null) Destroy(_irTex);
-                _irTex = new Texture2D(downsampled.Length, 1, TextureFormat.RFloat, false);
+                _currentResolution = targetResolution;
+                _downsampled = new float[targetResolution];
+
+                if (_irTex != null)
+                    Destroy(_irTex);
+
+                // RFloat-Texture für direkten Float-Upload
+                _irTex = new Texture2D(targetResolution, 1, TextureFormat.RFloat, false);
                 _irTex.wrapMode = TextureWrapMode.Clamp;
                 graphDisplayUI.texture = _irTex;
             }
@@ -61,14 +65,27 @@ namespace Code
             zeroLinePosition = Mathf.Clamp01(zeroLinePosition);
             amplitudeScale = Mathf.Max(0.001f, amplitudeScale);
 
-            // ── 3) Fill texture with downsampled values ──
-            var cols = new Color[downsampled.Length];
-            for (int i = 0; i < cols.Length; i++)
-                cols[i] = new Color(downsampled[i] * amplitudeScale, 0, 0, 0);
-            _irTex.SetPixels(cols);
-            _irTex.Apply();
+            // Downsample mit Max-Abs-Pooling (inline, ohne neue Puffer pro Frame)
+            float samplesPerBucket = (float)floatBuffer.Length / _currentResolution;
+            for (int i = 0; i < _currentResolution; i++)
+            {
+                int start = Mathf.FloorToInt(i * samplesPerBucket);
+                int end   = Mathf.Min(Mathf.CeilToInt((i + 1) * samplesPerBucket), floatBuffer.Length);
+                float maxVal = 0f;
+                for (int j = start; j < end; j++)
+                {
+                    float candidate = floatBuffer[j];
+                    if (Mathf.Abs(candidate) > Mathf.Abs(maxVal))
+                        maxVal = candidate;
+                }
+                _downsampled[i] = maxVal * amplitudeScale;
+            }
 
-            // ── 4) Push uniforms into the shader ──
+            // Direkter Upload der Float-Daten in die RFloat-Textur
+            _irTex.SetPixelData(_downsampled, 0);
+            _irTex.Apply(false, false);
+
+            // Shader-Uniforms
             _mat.SetFloat("_ZeroLine", zeroLinePosition);
             _mat.SetFloat("_ZeroLineThickness", zeroLineThickness);
             _mat.SetFloat("_Scale", amplitudeScale);
@@ -76,37 +93,6 @@ namespace Code
             _mat.SetColor("_LineColor", lineColor);
 
             graphDisplayUI.SetMaterialDirty();
-        }
-
-        /// <summary>
-        /// Downsamples the source array to a smaller array using max-abs-pooling (preserves peaks).
-        /// </summary>
-        float[] Downsample(float[] source, int targetSize)
-        {
-            if (source.Length <= targetSize)
-                return source;
-
-            float[] result = new float[targetSize];
-            float samplesPerBucket = (float)source.Length / targetSize;
-
-            
-            Parallel.For(0, targetSize, i =>
-            {
-                int start = Mathf.FloorToInt(i * samplesPerBucket);
-                int end   = Mathf.Min(Mathf.CeilToInt((i + 1) * samplesPerBucket), source.Length);
-                float maxVal = 0f;
-
-                for (int j = start; j < end; j++)
-                {
-                    float candidate = source[j];
-                    if (Mathf.Abs(candidate) > Mathf.Abs(maxVal))
-                        maxVal = candidate; // Vorzeichen erhalten
-                }
-
-                result[i] = maxVal;
-            });
-
-            return result;
         }
     }
 }

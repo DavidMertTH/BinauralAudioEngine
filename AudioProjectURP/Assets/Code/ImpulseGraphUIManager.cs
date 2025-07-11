@@ -33,7 +33,7 @@ namespace Code
         private void Update()
         {
             if (audioProcessor == null) return;
-            irLeft.floatBuffer = audioProcessor.impulseResponseRight;
+            irLeft.floatBuffer = audioProcessor.impulseResponseLeft;
             irRight.floatBuffer = audioProcessor.impulseResponseRight;
             Task.Run(() =>
                 spectreLeft.floatBuffer = ComputeLogEqBands(audioProcessor.leftData, audioProcessor.sampleRate, 40));
