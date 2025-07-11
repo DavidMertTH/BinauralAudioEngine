@@ -136,6 +136,10 @@ namespace Code
 
         private void GetUserInput()
         {
+            if (Input.GetKeyDown(KeyCode.B))
+            {
+                bypass = !bypass;
+            }
             if (Input.GetKeyDown(KeyCode.H))
             {
                 _applyHann = !_applyHann;
