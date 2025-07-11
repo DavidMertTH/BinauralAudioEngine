@@ -16,6 +16,7 @@ This project implements a high-performance binaural audio engine capable of rend
 | **F1–F4**               | Switch between predefined scenarios   |
 | **Numeric Keypad 1–4**  | Select different HRTF profiles        |
 | **Spacebar**            | Toggle HRTF processing on/off         |
+| **H**            | Toggle Hann Windowing         |
 
 ## Limitations
 
