@@ -7,6 +7,15 @@ This project implements a high-performance binaural audio engine capable of rend
 - **Dynamic HRTFs** for individualized headphone filtering  
 - **Partitioned Overlap-Add (OLA) Convolution** for efficient real-time processing  
 
+## Install 
+
+Clone the repository:
+
+```bash
+git clone https://github.com/DavidMertTH/BinauralAudioEngine.git
+```
+Then open the AudioProjectURP folder in Unity.## Controls
+
 ## Controls
 
 | Input                   | Function                              |
@@ -17,6 +26,7 @@ This project implements a high-performance binaural audio engine capable of rend
 | **Numeric Keypad 1–4**  | Select different HRTF profiles        |
 | **Spacebar**            | Toggle HRTF processing on/off         |
 | **H**            | Toggle Hann Windowing         |
+| **B**            | Bypass Audio Engine         |
 
 ## Limitations
 
