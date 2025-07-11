@@ -24156,7 +24156,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 808951037279083622, guid: 49f576a03ece56a4e9c640ed081f6a68, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 808951037656818317, guid: 49f576a03ece56a4e9c640ed081f6a68, type: 3}
       propertyPath: m_LocalPosition.x
@@ -33715,6 +33715,8 @@ MonoBehaviour:
   - {fileID: 1058524860}
   - {fileID: 496462558}
   listener: {fileID: 330585551}
+  livingRoom: {fileID: 1113141551}
+  space: {fileID: 1304986974}
 --- !u!4 &1730637160
 Transform:
   m_ObjectHideFlags: 0
@@ -40275,7 +40277,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0.65563065, g: 0.84013253, b: 0.9433962, a: 0.9411765}
+  m_Color: {r: 1, g: 1, b: 1, a: 0.9411765}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1

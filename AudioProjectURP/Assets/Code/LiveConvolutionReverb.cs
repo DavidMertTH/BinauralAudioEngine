@@ -21,7 +21,7 @@ namespace Code
 
         private void Awake()
         {
-            fullIrLength = 1024 * 5;
+            fullIrLength = 1024 *6;
         }
 
         private void Start()
