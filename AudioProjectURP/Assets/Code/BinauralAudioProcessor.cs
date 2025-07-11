@@ -82,6 +82,7 @@ namespace Code
         private int _irLength;
         private float[][] _leftBlocks;
         private float[][] _rightBlocks;
+        private bool _applyHann = false;
 
         private void Awake()
         {
@@ -135,6 +136,10 @@ namespace Code
 
         private void GetUserInput()
         {
+            if (Input.GetKeyDown(KeyCode.H))
+            {
+                _applyHann = !_applyHann;
+            }
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 useHRTFs = !useHRTFs;
@@ -315,7 +320,7 @@ namespace Code
                 }
             }
         }
-        
+
         void OnAudioFilterRead(float[] data, int channels)
         {
             if (bypass || channels < 2 || !_isSetup) return;
@@ -334,11 +339,16 @@ namespace Code
 
             for (int i = 0, j = 0; i < data.Length; i += 2, j++)
             {
-                dataLeft[j] =  data[i] * Gain;
+                dataLeft[j] = data[i] * Gain;
                 dataRight[j] = data[i + 1] * Gain;
             }
-            // Hann.ApplyHann(dataLeft);
-            // Hann.ApplyHann(dataRight);
+
+            if (_applyHann)
+            {
+                Hann.ApplyHann(dataLeft);
+                Hann.ApplyHann(dataRight);
+            }
+
 
             if (leftTask != null)
             {
@@ -375,7 +385,7 @@ namespace Code
                 }
             }
         }
-        
+
         private List<AudioRay> GetAllSelectedRays()
         {
             List<AudioRay> rays = new List<AudioRay> { };
