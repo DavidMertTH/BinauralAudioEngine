@@ -6,6 +6,7 @@ This project implements a high-performance binaural audio engine capable of rend
 - **Ray-traced Audio** for precise modeling of complex reflections  
 - **Dynamic HRTFs** for individualized headphone filtering  
 - **Partitioned Overlap-Add (OLA) Convolution** for efficient real-time processing  
+![WhatsApp Bild 2025-07-11 um 22 46 27_70e25fef](https://github.com/user-attachments/assets/fd46984e-f914-4ff1-a350-6eebc4067a8d)
 
 ## Install 
 
@@ -34,4 +35,5 @@ Then open the AudioProjectURP folder in Unity.
 - The current Implementation only works on Windows
 
 - When the impulse response changes—for example, when moving through the environment or rotating the head—strong artifacts may occur. These artifacts are very likely caused, among other factors, by spectral leakage. One way to mitigate these artifacts is to apply a Hann window to each audio input block. The user can toggle this feature by pressing **H**. However, applying the window significantly alters the audio signal and attenuates high frequencies; therefore, it is disabled by default.
+![WhatsApp Bild 2025-07-11 um 22 47 07_3be9a72e](https://github.com/user-attachments/assets/a6cf54aa-28c4-42a4-9c4f-91221c5f5a29)
 
