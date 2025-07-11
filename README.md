@@ -1,5 +1,22 @@
-# BinauralAudioEngine
+# README – Echo Head Audio Engine
 
-git clone --recurse-submodules https://github.com/DavidMertTH/BinauralAudioEngine.git
+This project implements a high-performance binaural audio engine capable of rendering realistic spatial sound in real time. The engine integrates the following techniques:
 
-Falls schon geclont: git submodule update --init --recursive
+- **Image Source Method** for early reflections  
+- **Ray-traced Audio** for precise modeling of complex reflections  
+- **Dynamic HRTFs** for individualized headphone filtering  
+- **Partitioned Overlap-Add (OLA) Convolution** for efficient real-time processing  
+
+## Controls
+
+| Input                   | Function                              |
+|-------------------------|---------------------------------------|
+| **W, A, S, D**          | Navigate through the virtual space    |
+| **Mouse**               | Look around                           |
+| **F1–F4**               | Switch between predefined scenarios   |
+| **Numeric Keypad 1–4**  | Select different HRTF profiles        |
+| **Spacebar**            | Toggle HRTF processing on/off         |
+
+## Limitations
+
+When the impulse response changes—for example, when moving through the environment or rotating the head—strong artifacts may occur. These artifacts are very likely caused, among other factors, by spectral leakage. One way to mitigate these artifacts is to apply a Hann window to each audio input block. The user can toggle this feature by pressing **H**. However, applying the window significantly alters the audio signal and attenuates high frequencies; therefore, it is disabled by default.
