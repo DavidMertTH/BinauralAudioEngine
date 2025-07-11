@@ -1,19 +1,22 @@
-# README - ECHO HEAD AUDIO ENGINE
+# README – Echo Head Audio Engine
 
-Dieses Projekt implementiert eine leistungsfähige binaurale Audio-Engine, die realistische räumliche Klangwiedergabe in Echtzeit ermöglicht. Die Engine verbindet mehrere fortschrittliche Verfahren:
+This project implements a high-performance binaural audio engine capable of rendering realistic spatial sound in real time. The engine integrates the following techniques:
 
-- Image Source Method für frühe Reflexionen
+- **Image Source Method** for early reflections  
+- **Ray-traced Audio** for precise modeling of complex reflections  
+- **Dynamic HRTFs** for individualized headphone filtering  
+- **Partitioned Overlap-Add (OLA) Convolution** for efficient real-time processing  
 
-- Raytraced Audio zur genauen Modellierung komplexer Reflexionen
+## Controls
 
-- Dynamische HRTFs für individuelle Kopfhörerfilterung
+| Input                   | Function                              |
+|-------------------------|---------------------------------------|
+| **W, A, S, D**          | Navigate through the virtual space    |
+| **Mouse**               | Look around                           |
+| **F1–F4**               | Switch between predefined scenarios   |
+| **Numeric Keypad 1–4**  | Select different HRTF profiles        |
+| **Spacebar**            | Toggle HRTF processing on/off         |
 
-- Partitionierte Overlap-Add (OLA) Convolution zur effizienten Echtzeitverarbeitung
+## Limitations
 
-Controls:
-
-W,A,S,D - Bewegung im Raum
-Maus - Umherblicken
-F1-F4 - Wechsel zwischen verschiedenen Szenarien
-Keypad 1-4 - Wechseln der HRTF
-Space - HRTF an/aus
+When the impulse response changes—for example, when moving through the environment or rotating the head—strong artifacts may occur. These artifacts are very likely caused, among other factors, by spectral leakage. One way to mitigate these artifacts is to apply a Hann window to each audio input block. The user can toggle this feature by pressing **H**. However, applying the window significantly alters the audio signal and attenuates high frequencies; therefore, it is disabled by default.
