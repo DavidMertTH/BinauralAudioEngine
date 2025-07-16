@@ -179,7 +179,7 @@ namespace Code
 
                 if (ray.Absorbtion <= 0.000001f)
                 {
-                    ray.Absorbtion = 0.5f;
+                    ray.Absorbtion = 0.9f;
                 }
                 else
                 {

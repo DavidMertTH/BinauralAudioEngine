@@ -140,10 +140,12 @@ namespace Code
             {
                 bypass = !bypass;
             }
+
             if (Input.GetKeyDown(KeyCode.H))
             {
                 _applyHann = !_applyHann;
             }
+
             if (Input.GetKeyDown(KeyCode.Space))
             {
                 useHRTFs = !useHRTFs;
@@ -302,8 +304,8 @@ namespace Code
                     Vector3.Dot(Vector3.Cross(listenerUp, listenerForward), vecSourceListener.normalized),
                     Vector3.Dot(listenerForward, vecSourceListener)) * Mathf.Rad2Deg;
                 float elevation = Mathf.Asin(Vector3.Dot(vecSourceListener, listenerUp)) * Mathf.Rad2Deg;
-
-                (float[] leftEarResponse, float[] rightEarResponse) = sofaHRIR.FindBestHRIR(azimuth, elevation);
+                azimuth += 180;
+                (float[] rightEarResponse, float[] leftEarResponse) = sofaHRIR.FindBestHRIR(azimuth, elevation);
 
                 if (leftEarResponse != null && rightEarResponse != null)
                 {
