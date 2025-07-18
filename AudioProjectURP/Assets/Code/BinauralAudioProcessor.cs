@@ -55,8 +55,6 @@ namespace Code
 
         private bool _isSetup;
 
-        private float[] _overlapBufferLeft;
-        private float[] _overlapBufferRight;
 
         private Complex[] _freqDomainIrLeft;
         private Complex[] _freqDomainIrRight;
@@ -101,8 +99,7 @@ namespace Code
             _lastData = new float[bufferLength * numBuffers];
             _jobIsRunning = false;
             _irLength = reverb.fullIrLength - bufferLength;
-            _overlapBufferLeft = new float[_irLength * 2];
-            _overlapBufferRight = new float[_irLength * 2];
+            
 
             string filePath = Application.streamingAssetsPath + "/sofafiles/hrtf0.sofa";
             int errorCode;
@@ -202,12 +199,7 @@ namespace Code
 
             int lengthSum = (_dataBufferLength / 2) + _irLength;
             int requiredLength = LiveConvolutionReverb.GetMaxZweierPotenz(lengthSum);
-
-            if (_overlapBufferLeft == null || _overlapBufferRight == null)
-            {
-                _overlapBufferLeft = new float[requiredLength];
-                _overlapBufferRight = new float[requiredLength];
-            }
+            
 
             Task.Run(() => { _freqDomainIrLeft = reverb.ToFreqDomain(impulseResponseLeft, requiredLength); });
             Task.Run(() => { _freqDomainIrRight = reverb.ToFreqDomain(impulseResponseRight, requiredLength); });
@@ -364,7 +356,8 @@ namespace Code
 
             leftTask = Task.Run(() =>
             {
-                dataLeft = reverb.ProgressiveConvolve(impulseResponseLeft, dataLeft, dataLeft, ref _overlapBufferLeft,
+                dataLeft = reverb.ProgressiveConvolve(impulseResponseLeft, dataLeft, dataLeft,
+                    LiveConvolutionReverb.Side.Left,
                     dataLeft.Length);
                 for (int i = 0, j = 0; i < data.Length; i += 2, j++)
                 {
@@ -376,7 +369,7 @@ namespace Code
             rightTask = Task.Run(() =>
             {
                 dataRight = reverb.ProgressiveConvolve(impulseResponseRight, dataRight, dataRight,
-                    ref _overlapBufferRight,
+                    LiveConvolutionReverb.Side.Right,
                     dataRight.Length);
                 for (int i = 0, j = 0; i < data.Length; i += 2, j++)
                 {

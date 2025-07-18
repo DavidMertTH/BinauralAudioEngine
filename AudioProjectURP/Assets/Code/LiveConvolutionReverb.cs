@@ -1,10 +1,12 @@
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
+using MathNet.Numerics;
 using MathNet.Numerics.IntegralTransforms;
 using MathNet.Numerics.Providers.FourierTransform;
-
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Code
@@ -19,9 +21,25 @@ namespace Code
         private Complex[] _reverbLayerFreq;
         public static readonly Stopwatch Clock = Stopwatch.StartNew();
 
+        private Complex[][] _lastIrLeft;
+        private Complex[][] _lastIrRight;
+
+        private float[] _overlapBufferLeft;
+        private float[] _overlapBufferRight;
+
+
+        public enum Side
+        {
+            Left,
+            Right
+        }
+
         private void Awake()
         {
-            fullIrLength = 1024 *6;
+            fullIrLength = 1024 * 6;
+
+            _overlapBufferLeft = new float[fullIrLength * 2];
+            _overlapBufferRight = new float[fullIrLength * 2];
         }
 
         private void Start()
@@ -83,25 +101,35 @@ namespace Code
         }
 
         public float[] ProgressiveConvolve(float[] irTimeDomain, float[] audioData,
-            float[] dry, ref float[] overlapBuffer, int blockLength)
+            float[] dry, Side side, int blockLength)
         {
-            
             if (audioData.Length % blockLength != 0 || irTimeDomain.Length % blockLength != 0)
             {
                 print("FAULTY BLOCKLENGTH");
                 return null;
             }
 
+            float[] overlapBuffer = Array.Empty<float>();
+            Complex[][] lastIr = Array.Empty<Complex[]>();
+            if (side == Side.Left)
+            {
+                overlapBuffer = _overlapBufferLeft;
+            }
+
+            if (side == Side.Right)
+            {
+                overlapBuffer = _overlapBufferRight;
+            }
             int paddedLength = blockLength * 2;
-            
+
             int irBlockAmount = irTimeDomain.Length / blockLength;
-            int audioBlockAmount = audioData.Length / blockLength;
 
             Complex[] audioDataFreq = ToFreqDomain(audioData, paddedLength);
-            
+
             float[][] irBlocks = new float[irBlockAmount][];
             Complex[][] irFreqBlocks = new Complex[irBlockAmount][];
-            Complex[][] audioBlocksConvolved = new Complex[irBlockAmount][];
+            Complex[][] audioBlocksConvolvedNew = new Complex[irBlockAmount][];
+
             Parallel.For(0, irBlockAmount, j =>
             {
                 float[] block = new float[paddedLength];
@@ -110,27 +138,27 @@ namespace Code
                     block[i] = irTimeDomain[offset + i];
                 irBlocks[j] = block;
 
-                var irFreq = ToFreqDomain(block, paddedLength);
-                irFreqBlocks[j] = irFreq;
+                irFreqBlocks[j] = ToFreqDomain(block, paddedLength);
 
-                var convFreq = ConvolveFreqDomain(irFreq, audioDataFreq);
-                Fourier.Inverse(convFreq, FourierOptions.Matlab);
-
-                audioBlocksConvolved[j] = convFreq;
+                var convNew = ConvolveFreqDomain(irFreqBlocks[j], audioDataFreq);
+                Fourier.Inverse(convNew, FourierOptions.Matlab);
+                audioBlocksConvolvedNew[j] = convNew;
             });
-            Complex[] fullAudioFreq =  AddOverlappingData(audioBlocksConvolved);
-
+            Complex[] fullAudioFreqNew = AddOverlappingData(audioBlocksConvolvedNew);
             overlapBuffer = PullOverlapBuffer(overlapBuffer, dry.Length);
-            for (int i = 0; i < fullAudioFreq.Length; i++)
+
+            for (int i = 0; i < fullAudioFreqNew.Length; i++)
             {
-                overlapBuffer[i] += (float)fullAudioFreq[i].Real;
+                overlapBuffer[i] += (float)fullAudioFreqNew[i].Real;
             }
+
             return Mix(dry, overlapBuffer);
         }
 
         private Complex[] AddOverlappingData(Complex[][] audioBlocks)
         {
-             int oneBlockWithoutPadding = audioBlocks[0].Length / 2;
+            if (audioBlocks == null || audioBlocks.Length == 0) return null;
+            int oneBlockWithoutPadding = audioBlocks[0].Length / 2;
             int fullLength = audioBlocks.Length * oneBlockWithoutPadding + oneBlockWithoutPadding;
             Complex[] result = new Complex[fullLength];
 
@@ -142,6 +170,7 @@ namespace Code
                     result[offset + j] += audioBlocks[i][j];
                 }
             }
+
             return result;
         }
 
