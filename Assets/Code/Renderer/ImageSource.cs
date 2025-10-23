@@ -12,7 +12,7 @@ namespace Code.Renderer
 {
     public class ImageSource : MonoBehaviour
     {
-        public Camera target;
+        public GameObject target;
         public AudioSource source;
         [FormerlySerializedAs("audioTest")] public BinauralAudioProcessor binauralAudioProcessor;
         public bool calculateAcoustics;

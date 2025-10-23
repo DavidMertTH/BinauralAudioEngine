@@ -29,7 +29,6 @@ namespace Code.Renderer
         public bool usePrimaryReflections = false;
         public bool useSecondaryReflections = false;
         public bool useHigherOrderReflections = false;
-        public float alpha;
         public float Gain;
         public int blockSize = 128;
         public LiveConvolutionReverb reverb;
@@ -38,7 +37,6 @@ namespace Code.Renderer
         public List<AudioRay> PrimaryReflections;
         public List<AudioRay> SecundaryReflections;
         public List<AudioRay> HigherOrderReflections;
-        public ImpulseGraphUI impulseGraphUI;
         public float[] impulseResponseLeft;
         public float[] impulseResponseRight;
         [HideInInspector] public float[] leftData;
@@ -106,8 +104,7 @@ namespace Code.Renderer
             IntPtr hrtfPtr = DllDemoIntegration.mysofa_load(filePath, out errorCode);
             impulseResponseLeft = new float[_irLength];
             sofaHRIR = new MySofaHRIR(hrtfPtr);
-            Debug.Log(sofaHRIR.radius);
-            print(_dataBufferLength);
+
             int blockAmount = _dataBufferLength / blockSize;
             _leftBlocks = new float[blockAmount][];
             _rightBlocks = new float[blockAmount][];
@@ -116,6 +113,7 @@ namespace Code.Renderer
 
         private void Update()
         {
+            if(bypass)return;
             GetUserInput();
             if (useHRTFs)
             {
