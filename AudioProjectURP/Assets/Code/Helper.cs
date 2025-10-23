@@ -2,7 +2,7 @@
 using Unity.Mathematics;
 using UnityEngine;
 
-namespace DefaultNamespace
+namespace Code
 {
     public static class Helper
     {
