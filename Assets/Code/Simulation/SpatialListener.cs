@@ -139,18 +139,20 @@ namespace Code.Simulation
             Vector3 direction = localTarget - localSource;
             AudioRay directHit = new AudioRay();
             directHit.Absorbtion = 1;
-            if (Physics.Raycast(localSource, direction, out hit, direction.magnitude))
+            LayerMask mask = LayerMask.GetMask("Wall");
+          
+            if ( ! Physics.Raycast(localSource, direction, out hit, direction.magnitude, mask))
             {
-                directHit.IsValid = false;
-                //Debug.DrawRay(localSource, direction.normalized * direction.magnitude, Color.red);
-            }
-            else
-            {
-                //Debug.DrawRay(localSource, direction.normalized * direction.magnitude, Color.green);
                 directHit.DistanceToImage = 0;
                 directHit.IsValid = true;
                 directHit.ImagePosition = localSource;
                 directHit.DistanceToImage = Vector3.Distance(localSource, localTarget);
+                Debug.DrawRay(localSource, direction.normalized * direction.magnitude, Color.green);
+            }
+            else
+            {
+                directHit.IsValid = false;
+                Debug.DrawRay(localSource, direction.normalized * direction.magnitude, Color.red);
             }
 
             return directHit;

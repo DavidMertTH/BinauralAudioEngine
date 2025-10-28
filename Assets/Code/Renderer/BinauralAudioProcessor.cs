@@ -383,7 +383,7 @@ namespace Code.Renderer
             }
         }
 
-        private List<AudioRay> GetAllSelectedRays()
+        public List<AudioRay> GetAllSelectedRays()
         {
             List<AudioRay> rays = new List<AudioRay> { };
             if (useDirect && DirectHit.IsValid)

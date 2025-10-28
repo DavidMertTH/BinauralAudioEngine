@@ -28,11 +28,9 @@ namespace Code.EditorControlls
 
         void Update()
         {
-            if (!isActive) return;
-            HandleInput();
         }
 
-        private void HandleInput()
+        public void ListenForInputs()
         {
             Vector3 clickedPosition = GetClickedPosition();
             if (_wallPositionA != Vector3.zero)
@@ -43,12 +41,36 @@ namespace Code.EditorControlls
             if (Input.GetMouseButtonDown(1))
             {
                 ResetSelection();
+                if (!IsPositioningWall())
+                {
+                    DeleteWallAtMousePosition();
+                }
             }
 
             if (Input.GetMouseButtonDown(0))
             {
                 AddNewWallPosition(clickedPosition);
             }
+        }
+
+        private void DeleteWallAtMousePosition()
+        {
+            Ray ray = new Ray(GetClickedPosition() + Vector3.up * 100, Vector3.down);
+            RaycastHit hit;
+            LayerMask mask = LayerMask.GetMask("Wall");
+            if (!Physics.Raycast(ray, out hit, 200, mask)) return;
+            
+            GameObject goToDelete = hit.collider.gameObject;
+            Wall wallToDelete = goToDelete.GetComponent<Wall>();
+            
+            if(wallToDelete == null)return;
+
+            walls.Remove(wallToDelete);
+            Destroy(goToDelete);
+        }
+        private bool IsPositioningWall()
+        {
+            return (_wallPositionA != Vector3.zero);
         }
 
         private Vector3 GetClickedPosition()
@@ -112,6 +134,7 @@ namespace Code.EditorControlls
             wall.end = posB;
             wall.CreateMesh();
             wall.SetMaterial(wallMaterial);
+            wall.gameObject.layer = LayerMask.NameToLayer("Wall");
             return wall;
         }
 
