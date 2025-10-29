@@ -33,7 +33,7 @@ namespace Code.Renderer
 
         private void Awake()
         {
-            fullIrLength = 1024 * 6;
+            fullIrLength = 1024 * 2;
 
             _overlapBufferLeft = new float[fullIrLength * 2];
             _overlapBufferRight = new float[fullIrLength * 2];

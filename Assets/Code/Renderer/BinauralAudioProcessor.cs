@@ -37,6 +37,7 @@ namespace Code.Renderer
         public List<AudioRay> PrimaryReflections;
         public List<AudioRay> SecundaryReflections;
         public List<AudioRay> HigherOrderReflections;
+        
         public float[] impulseResponseLeft;
         public float[] impulseResponseRight;
         [HideInInspector] public float[] leftData;
@@ -344,8 +345,7 @@ namespace Code.Renderer
                 Hann.ApplyHann(dataLeft);
                 Hann.ApplyHann(dataRight);
             }
-
-
+            
             if (leftTask != null)
             {
                 Task.WaitAll(leftTask);

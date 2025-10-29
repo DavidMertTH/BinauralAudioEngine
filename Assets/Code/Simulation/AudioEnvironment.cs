@@ -16,7 +16,6 @@ namespace Code.Simulation
 
         private void Start()
         {
-
             if (Instance != null) Destroy(this);
             else Instance = this;
             _surroundingPoints = Helper.GetFibonacciPoints(resolution);
