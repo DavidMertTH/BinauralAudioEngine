@@ -1,0 +1,9 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <engine:VisualElement style="flex-grow: 1; flex-direction: column; width: 15%; flex-wrap: nowrap; align-items: stretch; justify-content: flex-start; align-self: flex-end; visibility: visible; -unity-background-image-tint-color: rgb(255, 255, 255); opacity: 1; overflow: visible; background-image: none; align-content: flex-start; background-color: rgb(180, 180, 180);">
+        <engine:Label text="Quelle&#10;" name="DEMO" style="opacity: 1; flex-direction: column; align-items: auto; align-content: auto; font-size: 30px; -unity-text-align: upper-center;" />
+        <engine:VisualElement name="VisualElement" style="flex-grow: 1; flex-direction: column; justify-content: flex-start; flex-wrap: nowrap; align-items: stretch; align-self: stretch; align-content: auto; width: 100%;">
+            <engine:Slider value="42" high-value="77.4" fill="true" inverted="false" />
+            <engine:Label text="02:05 min&#10;" style="-unity-text-align: upper-right;" />
+        </engine:VisualElement>
+    </engine:VisualElement>
+</engine:UXML>

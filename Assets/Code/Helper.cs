@@ -25,5 +25,11 @@ namespace Code
 
             return arr;
         }
+        public static Vector3 GetMouseWorldPosition(Camera camera)
+        {
+            float z = -camera.transform.position.z;
+            Vector3 mouseScreenPos = new Vector3(Input.mousePosition.x, Input.mousePosition.y, z);
+            return camera.ScreenToWorldPoint(mouseScreenPos);
+        }
     }
 }
