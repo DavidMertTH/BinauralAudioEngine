@@ -40,11 +40,12 @@ namespace Code.EditorControlls
 
             if (Input.GetMouseButtonDown(1))
             {
-                ResetSelection();
                 if (!IsPositioningWall())
                 {
                     DeleteWallAtMousePosition();
                 }
+                ResetSelection();
+
             }
 
             if (Input.GetMouseButtonDown(0))
