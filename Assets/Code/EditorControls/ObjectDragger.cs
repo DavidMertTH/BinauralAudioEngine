@@ -30,7 +30,6 @@ namespace Code.EditorControlls
                 RaycastHit hit;
                 LayerMask mask = LayerMask.GetMask("TargetLayer", "Source");
                 if (!Physics.Raycast(ray, out hit, 200, mask)) return;
-                print(hit.collider.gameObject.name);
                 _currentlyDragging = hit.collider.gameObject;
             }
         }
