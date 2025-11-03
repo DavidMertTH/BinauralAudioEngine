@@ -101,10 +101,13 @@ namespace Code.Simulation
             if (_reflectionCommands.IsCreated) _reflectionCommands.Dispose();
             if (_previousHits.IsCreated) _previousHits.Dispose();
             if (_targetHits.IsCreated) _targetHits.Dispose();
-            for (int i = 0; i < _audioRaysToTarget.Length; i++)
+            if (_audioRaysToTarget != null)
             {
-                if (_audioRaysToTarget[i].IsCreated) _audioRaysToTarget[i].Dispose();
-                if (_audioRaysToTarget[i].IsCreated) _previousCommands[i].Dispose();
+                for (int i = 0; i < _audioRaysToTarget.Length; i++)
+                {
+                    if (_audioRaysToTarget[i].IsCreated) _audioRaysToTarget[i].Dispose();
+                    if (_audioRaysToTarget[i].IsCreated) _previousCommands[i].Dispose();
+                }
             }
         }
 
