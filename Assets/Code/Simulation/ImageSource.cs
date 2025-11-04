@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Code.Simulation;
+using Code.Renderer;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
@@ -8,7 +8,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-namespace Code.Renderer
+namespace Code.Simulation
 {
     public class ImageSource : MonoBehaviour
     {
