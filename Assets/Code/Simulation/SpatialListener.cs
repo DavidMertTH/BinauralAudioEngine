@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Code.Renderer;
+using Code.Simulation.Raycasting;
 using Unity.Collections;
 using UnityEngine;
 
@@ -7,7 +8,7 @@ namespace Code.Simulation
 {
     public class SpatialListener : MonoBehaviour
     {
-        public ImageSource imageSource;
+        public ImageSourceOld imageSourceOld;
         public RaycastAudio raycastAudio;
         public BinauralAudioProcessor binauralAudioProcessor;
         public AudioSource source;
@@ -49,9 +50,9 @@ namespace Code.Simulation
             float t2 = Time.realtimeSinceStartup;
 
             _directRay = GetDirectRay(source.transform.position, _target.transform.position);
-            _primaryRays = imageSource.GetPrimaryReflections(_surroundingHitsSource, absorbtion);
+            _primaryRays = imageSourceOld.GetPrimaryReflections(_surroundingHitsSource, absorbtion);
             _secondaryRays =
-                imageSource.GetSecundaryReflections(_surroundingHitsSource, _surroundingHitsTarget, absorbtion);
+                imageSourceOld.GetSecundaryReflections(_surroundingHitsSource, _surroundingHitsTarget, absorbtion);
             _higherOrderRays = raycastAudio.GetHighOrderRays(
                 _target.transform.position, bounces,
                 AudioEnvironment.Instance.GetRaycastsAroundPosition(source.transform.position), absorbtion);

@@ -1,6 +1,6 @@
 ﻿namespace Code.Simulation
 {
-    public class ImageSource
+    public class IndirectRaycast
     {
         
     }

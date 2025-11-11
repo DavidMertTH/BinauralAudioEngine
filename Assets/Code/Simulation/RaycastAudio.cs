@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Code.Simulation.Raycasting;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;

@@ -1,7 +1,7 @@
 using Unity.Collections;
 using Unity.Mathematics;
 
-namespace Code.Simulation
+namespace Code.Simulation.Raycasting
 {
     /// <summary>
     /// Documents the path taken by an audio 'particle' so that direction and frequency absorption can be

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
-using Code.Simulation;
+﻿using Code.Simulation;
 using UnityEngine;
 
 namespace Code.Renderer
@@ -9,19 +6,14 @@ namespace Code.Renderer
     [RequireComponent(typeof(AudioSource))]
     public class BinauralAudioFilter : MonoBehaviour
     {
-        private BinauralImpulseResponse _impulseResponse;
+        public AudioSourceSimulationData SimulationData { get; } = new();
         private BinauralAudioEngine _audioEngine;
 
-        private void Init(BinauralAudioEngine audioEngine)
-        {
-            _audioEngine = audioEngine;
-        }
-        
-        private void OnEnable()
-        {
-                
-        }
-        
+        private void Init(BinauralAudioEngine audioEngine) => _audioEngine = audioEngine;
+        private void OnEnable() => _audioEngine.RegisterAudioFilter(this);
+        private void OnDisable() => _audioEngine.UnregisterAudioFilter(this);
+        private void OnDestroy() => SimulationData.Dispose();
+
         /// <summary>
         /// Convolves Unity audio output with our impulse response to create the final result.
         /// Called by Unity on the audio thread.
@@ -31,7 +23,6 @@ namespace Code.Renderer
         /// <param name="channels">The number of audio channels encoded in the <c>data</c> parameter.</param>
         private void OnAudioFilterRead(float[] data, int channels)
         {
-            
         }
     }
 }

@@ -1,9 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using Code.Simulation;
 using Code.Renderer;
-using UnityEngine.Serialization;
 
 namespace Code
 {
@@ -17,9 +17,18 @@ namespace Code
         /// </summary>
         public async Awaitable UpdateImpulseResponses(CancellationToken ct)
         {
-            // Go from main thread to background thread
-            await Awaitable.BackgroundThreadAsync();
-            var untargetedRays = await AudioRaycast.CastUntargetedRays(listener.position, ct);
+            await ComputeAudioRays(ct);
+            await ComputeImpulseResponses(ct);
+        }
+
+        private async Awaitable ComputeAudioRays(CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        private async Awaitable ComputeImpulseResponses(CancellationToken ct)
+        {
+            throw new NotImplementedException();
         }
 
         public void RegisterAudioFilter(BinauralAudioFilter filter)
