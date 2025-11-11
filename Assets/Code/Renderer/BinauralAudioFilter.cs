@@ -21,17 +21,6 @@ namespace Code.Renderer
         {
                 
         }
-
-
-        public async Awaitable<List<AudioRay>> SimulateTargetedRays(CancellationToken ct)
-        {
-            
-        }
-        
-        public async Awaitable UpdateImpulseResponse(List<AudioRay> rays, CancellationToken ct)
-        {
-            
-        }
         
         /// <summary>
         /// Convolves Unity audio output with our impulse response to create the final result.

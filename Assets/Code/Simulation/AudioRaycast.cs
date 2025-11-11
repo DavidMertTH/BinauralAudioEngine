@@ -5,9 +5,7 @@ using UnityEngine;
 namespace Code.Simulation
 {
     /// <summary>
-    /// Casts audio rays into the scene without aiming for any particular audio source.
-    /// Documents the path taken by each ray so that direction, volume, and frequency absorption can be modeled in
-    /// the impulse response.
+    /// Casts audio rays into the scene using three methods.
     /// </summary>
     public class AudioRaycast
     {

@@ -3,6 +3,10 @@ using Unity.Mathematics;
 
 namespace Code.Simulation
 {
+    /// <summary>
+    /// Documents the path taken by an audio 'particle' so that direction and frequency absorption can be
+    /// modeled in the impulse response.
+    /// </summary>
     public struct AudioRay
     {
         public int Reflections;
