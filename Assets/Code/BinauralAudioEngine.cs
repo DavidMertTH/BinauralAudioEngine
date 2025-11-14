@@ -15,10 +15,15 @@ namespace Code
         /// <summary>
         /// To be called by the GUI whenever the user makes changes to the scene that affect the impulse response.
         /// </summary>
-        public async Awaitable UpdateImpulseResponses(CancellationToken ct)
+        public async Awaitable UpdateAllImpulseResponses(CancellationToken ct)
         {
             await ComputeAudioRays(ct);
             await ComputeImpulseResponses(ct);
+        }
+        
+        public void NotifyAudioSourceMoved(BinauralAudioFilter audioFilter)
+        {
+            
         }
 
         private async Awaitable ComputeAudioRays(CancellationToken ct)
@@ -33,8 +38,7 @@ namespace Code
 
         public void RegisterAudioFilter(BinauralAudioFilter filter)
         {
-            if (_audioFilters == null)
-                _audioFilters = new List<BinauralAudioFilter>();
+            _audioFilters ??= new List<BinauralAudioFilter>();
 
             if (!_audioFilters.Contains(filter))
                 _audioFilters.Add(filter);

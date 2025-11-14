@@ -24,7 +24,7 @@ namespace Code.Renderer
 
         public Transform targetObject;
         public AudioFileLoader audioFileLoader;
-
+ 
         public bool bypass = false;
         public bool useDirect = false;
         public bool usePrimaryReflections = false;

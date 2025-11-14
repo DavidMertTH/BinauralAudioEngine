@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Threading;
 using Code.Simulation.Raycasting;
-using UnityEngine;
+using Unity.Collections;
+using Unity.Mathematics;
+using UnityEngine; 
 
 namespace Code.Simulation
 {
@@ -11,20 +13,23 @@ namespace Code.Simulation
     /// </summary>
     public class AudioRaycast
     {
-        public static Awaitable<List<AudioRay>> CastDirectRay(Vector3 origin, Vector3 target)
+        public static Awaitable CastDirectRays(float4 origin, NativeArray<float4> targets,
+            out NativeArray<AudioRay> rays, CancellationToken ct)
         {
             throw new NotImplementedException();
         }
 
-        public static Awaitable<List<AudioRay>> CastImageSourceRays(Vector3 origin, Vector3 target)
+        public static Awaitable CastImageSourceRays(float4 origin, NativeArray<float4> targets,
+            out NativeArray<AudioRay> rays, CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static Awaitable CastIndirectRays(float4 origin, out NativeArray<float4> targets,
+            out NativeArray<AudioRay> rays, CancellationToken ct)
         {
             throw new NotImplementedException();
             
-        }
-
-        public static Awaitable<List<AudioRay>> CastUntargetedRays(Vector3 origin, CancellationToken ct)
-        {
-            throw new NotImplementedException();
         }
     }
 }
