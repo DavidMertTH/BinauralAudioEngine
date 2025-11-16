@@ -85,8 +85,6 @@ namespace Code.Renderer
             for (int i = 0; i < newAudioFolded.Length; i++)
             {
                 float crossover = i / (float)newAudioFolded.Length;
-
-
                 float toAddAudioPart = (float)(crossover * (float)newAudioFolded[i].Real +
                                                (1 - crossover) * oldAudioFolded[i].Real);
 
