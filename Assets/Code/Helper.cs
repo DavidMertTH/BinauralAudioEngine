@@ -31,5 +31,30 @@ namespace Code
             Vector3 mouseScreenPos = new Vector3(Input.mousePosition.x, Input.mousePosition.y, z);
             return camera.ScreenToWorldPoint(mouseScreenPos);
         }
+
+        public static float[] ReallocateIfNeeded(float[] arr, int desiredSize)
+        {
+            if (arr == null || arr.Length != desiredSize)
+                return new float[desiredSize];
+            return arr;
+        }
+        
+        public static void DeinterlaceChannels(float[] interleaved, float[] left, float[] right)
+        {
+            for (int i = 0, j = 0; i < interleaved.Length; i += 2, j++)
+            {
+                left[j] = interleaved[i];
+                right[j] = interleaved[i + 1];
+            }
+        }
+
+        public static void InterlaceChannels(float[] interleaved, float[] left, float[] right)
+        {
+            for (int i = 0, j = 0; i < interleaved.Length; i += 2, j++)
+            {
+                interleaved[i] = left[j];
+                interleaved[i + 1] = right[j];
+            }
+        }
     }
 }

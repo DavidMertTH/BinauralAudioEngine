@@ -2,13 +2,15 @@
 using System.Collections.Generic;
 using System.Threading;
 using ArthurKehrwald.Singleton;
-using UnityEngine;
 using Code.Renderer;
+using UnityEngine;
 
-namespace Code
+namespace Code.Core
 {
     public class BinauralAudioEngine : Singleton<BinauralAudioEngine, DoAutoCreate<BinauralAudioEngine>>
     {
+        [SerializeField] private BinauralAudioSettings settings;
+        public BinauralAudioSettings Settings => settings;
         private Transform _listener;
 
         private Transform Listener
