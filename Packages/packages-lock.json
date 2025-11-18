@@ -1,5 +1,12 @@
 {
   "dependencies": {
+    "com.arthurkehrwald.singleton": {
+      "version": "https://github.com/arthurkehrwald/Singleton.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "658df5ec2b1eb7ee4171855342c8d8631eadd51b"
+    },
     "com.unity.ai.navigation": {
       "version": "2.0.9",
       "depth": 0,

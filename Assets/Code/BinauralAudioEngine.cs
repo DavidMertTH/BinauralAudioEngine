@@ -1,15 +1,27 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading;
+using ArthurKehrwald.Singleton;
 using UnityEngine;
-using Code.Simulation;
 using Code.Renderer;
 
 namespace Code
 {
-    public class BinauralAudioEngine : MonoBehaviour
+    public class BinauralAudioEngine : Singleton<BinauralAudioEngine, DoAutoCreate<BinauralAudioEngine>>
     {
-        [SerializeField] private Transform listener;
+        private Transform _listener;
+
+        private Transform Listener
+        {
+            get
+            {
+                _listener ??= FindFirstObjectByType<AudioListener>().transform;
+                if (_listener == null)
+                    throw new NullReferenceException("No AudioListener was found in the scene.");
+                return _listener;
+            }
+        }
+
         private List<BinauralAudioFilter> _audioFilters;
 
         /// <summary>
@@ -20,10 +32,9 @@ namespace Code
             await ComputeAudioRays(ct);
             await ComputeImpulseResponses(ct);
         }
-        
+
         public void NotifyAudioSourceMoved(BinauralAudioFilter audioFilter)
         {
-            
         }
 
         private async Awaitable ComputeAudioRays(CancellationToken ct)
