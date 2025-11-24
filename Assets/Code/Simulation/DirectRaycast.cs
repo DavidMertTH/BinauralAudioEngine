@@ -2,17 +2,22 @@
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
+using Unity.Mathematics;
+using UnityEngine;
 
 namespace Code.Simulation
 {
     [BurstCompile]
-    public struct DirectRaycast : IJobParallelFor
+    public struct CreateDirectRaycastCommands : IJobParallelFor
     {
-        [ReadOnly] public BinauralAudioFilter filter;
+        public NativeArray<RaycastCommand> Commands;
+        
+        [ReadOnly] public NativeArray<float3> Sources;
+        [ReadOnly] public float3 Listener;
         
         public void Execute(int index)
         {
-            throw new System.NotImplementedException();
+            Commands[index] = new RaycastCommand(Sources[index], Listener, QueryParameters.Default);
         }
     }
 }
