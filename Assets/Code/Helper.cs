@@ -35,9 +35,25 @@ namespace Code
 
         public static float[] ReallocateIfNeeded(float[] arr, int desiredSize)
         {
+            return ReallocateIfNeeded(arr, desiredSize, out _);
+        }
+        
+        public static float[] ReallocateIfNeeded(float[] arr, int desiredSize, out bool didReallocate)
+        {
             if (arr == null || arr.Length != desiredSize)
+            {
+                didReallocate = true;
                 return new float[desiredSize];
+            }
+
+            didReallocate = false;
             return arr;
+        }
+
+        public static NativeArray<T> ReallocateIfNeeded<T>(NativeArray<T> arr, int desiredSize, Allocator allocator)
+            where T : struct
+        {
+            return ReallocateIfNeeded(arr, desiredSize, allocator, out _);
         }
 
         public static NativeArray<T> ReallocateIfNeeded<T>(NativeArray<T> arr, int desiredSize, Allocator allocator,
