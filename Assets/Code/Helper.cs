@@ -25,6 +25,7 @@ namespace Code
 
             return arr;
         }
+
         public static Vector3 GetMouseWorldPosition(Camera camera)
         {
             float z = -camera.transform.position.z;
@@ -38,22 +39,32 @@ namespace Code
                 return new float[desiredSize];
             return arr;
         }
-        
-        public static void DeinterlaceChannels(float[] interleaved, float[] left, float[] right)
+
+        public static NativeArray<T> ReallocateIfNeeded<T>(NativeArray<T> arr, int desiredSize, Allocator allocator,
+            out bool didReallocate) where T : struct
         {
-            for (int i = 0, j = 0; i < interleaved.Length; i += 2, j++)
+            didReallocate = false;
+            if (arr.IsCreated && arr.Length == desiredSize) return arr;
+            if (arr.IsCreated) arr.Dispose();
+            didReallocate = true;
+            return new NativeArray<T>(arr, allocator);
+        }
+
+        public static void DeinterlaceChannels(float[] interlaced, float[] channelA, float[] channelB)
+        {
+            for (int i = 0, j = 0; i < interlaced.Length; i += 2, j++)
             {
-                left[j] = interleaved[i];
-                right[j] = interleaved[i + 1];
+                channelA[j] = interlaced[i];
+                channelB[j] = interlaced[i + 1];
             }
         }
 
-        public static void InterlaceChannels(float[] interleaved, float[] left, float[] right)
+        public static void InterlaceChannels(float[] interlaced, float[] channelA, float[] channelB)
         {
-            for (int i = 0, j = 0; i < interleaved.Length; i += 2, j++)
+            for (int i = 0, j = 0; i < interlaced.Length; i += 2, j++)
             {
-                interleaved[i] = left[j];
-                interleaved[i + 1] = right[j];
+                interlaced[i] = channelA[j];
+                interlaced[i + 1] = channelB[j];
             }
         }
     }

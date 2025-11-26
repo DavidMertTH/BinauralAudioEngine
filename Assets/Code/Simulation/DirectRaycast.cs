@@ -11,13 +11,24 @@ namespace Code.Simulation
     public struct CreateDirectRaycastCommands : IJobParallelFor
     {
         public NativeArray<RaycastCommand> Commands;
-        
+
         [ReadOnly] public NativeArray<float3> Sources;
         [ReadOnly] public float3 Listener;
-        
+
         public void Execute(int index)
         {
             Commands[index] = new RaycastCommand(Sources[index], Listener, QueryParameters.Default);
+        }
+    }
+
+    [BurstCompile]
+    public struct EvaluateDirectRaycasts : IJobParallelFor
+    {
+        public NativeArray<RaycastHit> Hits;
+        
+        public void Execute(int index)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

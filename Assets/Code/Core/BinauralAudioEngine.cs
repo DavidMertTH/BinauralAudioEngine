@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.Threading;
 using ArthurKehrwald.Singleton;
 using Code.Renderer;
+using Code.Simulation.Raycasting;
+using Unity.Collections;
+using Unity.Jobs;
 using UnityEngine;
 
 namespace Code.Core
@@ -12,6 +15,7 @@ namespace Code.Core
         [SerializeField] private BinauralAudioSettings settings;
         public BinauralAudioSettings Settings => settings;
         private Transform _listener;
+        private NativeArray<AudioRay> _audioRays;
 
         private Transform Listener
         {
@@ -31,20 +35,23 @@ namespace Code.Core
         /// </summary>
         public async Awaitable UpdateAllImpulseResponses(CancellationToken ct)
         {
-            await ComputeAudioRays(ct);
-            await ComputeImpulseResponses(ct);
+            var rayJob = ComputeAudioRays(ct);
+            var impulseResponseJob = ComputeImpulseResponses(rayJob, ct);
+            var combinedJob = JobHandle.CombineDependencies(impulseResponseJob, rayJob);
+            while (!combinedJob.IsCompleted)
+                await Awaitable.NextFrameAsync(ct);
         }
 
         public void NotifyAudioSourceMoved(BinauralAudioFilter audioFilter)
         {
         }
 
-        private async Awaitable ComputeAudioRays(CancellationToken ct)
+        private JobHandle ComputeAudioRays(CancellationToken ct)
         {
             throw new NotImplementedException();
         }
 
-        private async Awaitable ComputeImpulseResponses(CancellationToken ct)
+        private JobHandle ComputeImpulseResponses(JobHandle rayJob, CancellationToken ct)
         {
             throw new NotImplementedException();
         }
