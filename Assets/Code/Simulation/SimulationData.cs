@@ -35,7 +35,15 @@ namespace Code.Simulation
         /// </summary>
         private NativeArray<float3> _listenerAndSourcePositions;
 
-        public NativeArray<float3> GetRaycastOrigins(Transform listener, List<BinauralAudioFilter> sources)
+        public NativeArray<float3> ListenerAndSourcePositions => _listenerAndSourcePositions;
+
+        public NativeArray<float3> SourcePositions =>
+            _listenerAndSourcePositions.GetSubArray(1, _listenerAndSourcePositions.Length - 1);
+        
+        public float3 ListenerPosition => _listenerAndSourcePositions[0];
+
+        public NativeArray<float3> UpdateListenerAndSourcePositions(Transform listener,
+            List<BinauralAudioFilter> sources)
         {
             var originCount = sources.Count + 1;
             _listenerAndSourcePositions = Helper.ReallocateIfNeeded(_listenerAndSourcePositions, originCount,

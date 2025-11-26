@@ -6,7 +6,6 @@ using Code.Renderer;
 using Code.Simulation;
 using Unity.Collections;
 using Unity.Jobs;
-using Unity.Mathematics;
 using UnityEngine;
 
 namespace Code.Core
@@ -19,6 +18,7 @@ namespace Code.Core
         private NativeArray<AudioRay> _audioRays;
         private readonly SurroundRaycast _surroundRaycast = new();
         private readonly GlobalSimulationData _globalSimulationData = new();
+        private readonly DirectRaycast _directRaycast = new();
 
         private Transform Listener
         {
@@ -45,17 +45,15 @@ namespace Code.Core
                 await Awaitable.NextFrameAsync(ct);
         }
 
-        public void NotifyAudioSourceMoved(BinauralAudioFilter audioFilter)
-        {
-        }
-
         private JobHandle ComputeAudioRays(CancellationToken ct)
         {
-            var origins = _globalSimulationData.GetRaycastOrigins(Listener, _audioFilters);
+            var origins = _globalSimulationData.UpdateListenerAndSourcePositions(Listener, _audioFilters);
             var rayCounts = Settings.GetRayCounts(_audioFilters.Count);
+            var directHitHandle = _directRaycast.GetDirectRays(_globalSimulationData.ListenerPosition,
+                _globalSimulationData.SourcePositions, out var directHits);
             var surroundRaycastHandle =
                 _surroundRaycast.CastRaysAroundOrigins(origins, rayCounts.AroundListenerAndSources, out var hits);
-            return surroundRaycastHandle;
+            throw new NotImplementedException();
         }
 
         private JobHandle ComputeImpulseResponses(JobHandle rayJob, CancellationToken ct)
@@ -79,6 +77,7 @@ namespace Code.Core
         {
             _surroundRaycast.Dispose();
             _globalSimulationData.Dispose();
+            _directRaycast.Dispose();
         }
     }
 }
