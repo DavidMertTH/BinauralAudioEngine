@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using ArthurKehrwald.Singleton;
 using Code.Renderer;
-using Code.Simulation.Raycasting;
+using Code.Simulation;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
@@ -16,6 +16,7 @@ namespace Code.Core
         public BinauralAudioSettings Settings => settings;
         private Transform _listener;
         private NativeArray<AudioRay> _audioRays;
+        private SurroundRaycast _surroundRaycast;
 
         private Transform Listener
         {

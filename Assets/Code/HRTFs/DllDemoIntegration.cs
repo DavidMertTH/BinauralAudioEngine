@@ -2,7 +2,6 @@
 using UnityEngine;
 using System;
 using Code.Simulation;
-using Code.Simulation.Raycasting;
 
 namespace Code
 {

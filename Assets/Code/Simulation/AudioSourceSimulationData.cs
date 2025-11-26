@@ -1,5 +1,4 @@
 ﻿using System;
-using Code.Simulation.Raycasting;
 using Unity.Collections;
 
 namespace Code.Simulation
