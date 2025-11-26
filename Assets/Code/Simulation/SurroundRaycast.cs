@@ -62,7 +62,7 @@ namespace Code.Simulation
             out NativeArray<RaycastCommand> commands)
         {
             var raycastCount = origins.Length * directions.Length;
-            _commands = Helper.ReallocateIfNeeded(_commands, raycastCount, Allocator.Persistent, out _);
+            _commands = Helper.ReallocateIfNeeded(_commands, raycastCount, Allocator.Persistent);
             commands = _commands;
             var job = new GetCommandsJob
             {
@@ -92,7 +92,7 @@ namespace Code.Simulation
         private JobHandle GetHits(JobHandle getCommandsHandle, NativeArray<RaycastCommand> commands,
             out NativeArray<RaycastHit> hits)
         {
-            _hits = Helper.ReallocateIfNeeded(_hits, commands.Length, Allocator.Persistent, out _);
+            _hits = Helper.ReallocateIfNeeded(_hits, commands.Length, Allocator.Persistent);
             hits = _hits;
             return RaycastCommand.ScheduleBatch(commands, hits, 1, getCommandsHandle);
         }

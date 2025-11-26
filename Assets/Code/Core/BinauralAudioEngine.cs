@@ -6,6 +6,7 @@ using Code.Renderer;
 using Code.Simulation;
 using Unity.Collections;
 using Unity.Jobs;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Code.Core
@@ -16,7 +17,8 @@ namespace Code.Core
         public BinauralAudioSettings Settings => settings;
         private Transform _listener;
         private NativeArray<AudioRay> _audioRays;
-        private SurroundRaycast _surroundRaycast;
+        private readonly SurroundRaycast _surroundRaycast = new();
+        private readonly GlobalSimulationData _globalSimulationData = new();
 
         private Transform Listener
         {
@@ -29,7 +31,7 @@ namespace Code.Core
             }
         }
 
-        private List<BinauralAudioFilter> _audioFilters;
+        private List<BinauralAudioFilter> _audioFilters = new();
 
         /// <summary>
         /// To be called by the GUI whenever the user makes changes to the scene that affect the impulse response.
@@ -49,7 +51,11 @@ namespace Code.Core
 
         private JobHandle ComputeAudioRays(CancellationToken ct)
         {
-            throw new NotImplementedException();
+            var origins = _globalSimulationData.GetRaycastOrigins(Listener, _audioFilters);
+            var rayCounts = Settings.GetRayCounts(_audioFilters.Count);
+            var surroundRaycastHandle =
+                _surroundRaycast.CastRaysAroundOrigins(origins, rayCounts.AroundListenerAndSources, out var hits);
+            return surroundRaycastHandle;
         }
 
         private JobHandle ComputeImpulseResponses(JobHandle rayJob, CancellationToken ct)
@@ -59,16 +65,20 @@ namespace Code.Core
 
         public void RegisterAudioFilter(BinauralAudioFilter filter)
         {
-            _audioFilters ??= new List<BinauralAudioFilter>();
-
             if (!_audioFilters.Contains(filter))
                 _audioFilters.Add(filter);
         }
 
         public void UnregisterAudioFilter(BinauralAudioFilter filter)
         {
-            if (_audioFilters != null && _audioFilters.Contains(filter))
+            if (_audioFilters.Contains(filter))
                 _audioFilters.Remove(filter);
+        }
+
+        private void OnDestroy()
+        {
+            _surroundRaycast.Dispose();
+            _globalSimulationData.Dispose();
         }
     }
 }
