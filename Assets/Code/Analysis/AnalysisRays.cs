@@ -64,8 +64,8 @@ namespace Code.Analysis
                     positions[1 + j] = currentRay.Positions[j];
                 }
                 
-                lines[lineCount].startColor = new Color(1, 1, 1, currentRay.Absorbtion);
-                lines[lineCount].endColor = new Color(1, 1, 1, currentRay.Absorbtion);
+                lines[lineCount].startColor = new Color(1, 1, 1, currentRay.Energy);
+                lines[lineCount].endColor = new Color(1, 1, 1, currentRay.Energy);
 
                 lines[lineCount].SetPositions(positions);
                 lineCount++;

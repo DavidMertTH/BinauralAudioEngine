@@ -235,7 +235,7 @@ namespace Code.Simulation
             jobHandle.Complete();
             List<AudioRay> reflections = SavePrimaryReflections(_primaryReflections);
 
-            reflections.ForEach(ray => ray.Absorbtion = absorbtion);
+            reflections.ForEach(ray => ray.Energy = absorbtion);
             _primaryReflections.Dispose();
             commands.Dispose();
             primaryHit.Dispose();
@@ -284,7 +284,7 @@ namespace Code.Simulation
 
                 AudioRay ray = new AudioRay
                 {
-                    Absorbtion = (Absorbtion * Absorbtion),
+                    Energy = (Absorbtion * Absorbtion),
                     DistanceToImage = distanceToSource + distanceImageToImage + distanceToTarget,
                     ImagePosition = ToTargetHit[index].point + ToTargetHit[index].normal * 0.001f,
                     IsValid = true,
@@ -315,7 +315,7 @@ namespace Code.Simulation
 
                 AudioRay ray = new AudioRay
                 {
-                    Absorbtion = 0.8f,
+                    Energy = 0.8f,
                     DistanceToImage = distanceToSource + distanceToTarget,
                     ImagePosition = PrimaryHit[index].point + PrimaryHit[index].normal * 0.001f,
                     IsValid = true,

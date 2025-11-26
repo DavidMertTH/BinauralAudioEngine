@@ -119,7 +119,7 @@ namespace Code.Simulation
                 {
                     if (ray.Positions.Length == 0) continue;
                     if (!ray.IsValid) continue;
-                    color = new Color(0, 0, 0, ray.Absorbtion/2);
+                    color = new Color(0, 0, 0, ray.Energy/2);
                     Gizmos.color = color;
 
                     Gizmos.DrawRay(ray.Positions[0], source.transform.position - (Vector3)ray.Positions[0]);
@@ -138,7 +138,7 @@ namespace Code.Simulation
             RaycastHit hit;
             Vector3 direction = localTarget - localSource;
             AudioRay directHit = new AudioRay();
-            directHit.Absorbtion = 1;
+            directHit.Energy = 1;
             LayerMask mask = LayerMask.GetMask("Wall");
           
             if ( ! Physics.Raycast(localSource, direction, out hit, direction.magnitude, mask))

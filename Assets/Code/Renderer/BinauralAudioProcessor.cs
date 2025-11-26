@@ -303,7 +303,7 @@ namespace Code.Renderer
                     float distanceToSource = ray.DistanceToImage + (sofaHRIR.radius);
                     float propagationDelaySec = distanceToSource / 343f; // Schallgeschwindigkeit: 343 m/s
                     float propagationDelaySamples = sampleRate * propagationDelaySec;
-                    float distanceAmplitudeTwo = ray.Absorbtion * (8 / distanceToSource) * Gain;
+                    float distanceAmplitudeTwo = ray.Energy * (8 / distanceToSource) * Gain;
 
                     for (int i = 0; i < sofaHRIR.hrtfData.N; i++)
                     {
@@ -456,8 +456,8 @@ namespace Code.Renderer
                 float averageDistance = (leftDistance + rightDistance) / 2;
                 float distanceAmplitude = 3 / (averageDistance);
 
-                float leftAmplitude = distanceAmplitude * (1 - binauralFactor) * ray.Absorbtion * Gain;
-                float rightAmplitude = distanceAmplitude * (1 + binauralFactor) * ray.Absorbtion * Gain;
+                float leftAmplitude = distanceAmplitude * (1 - binauralFactor) * ray.Energy * Gain;
+                float rightAmplitude = distanceAmplitude * (1 + binauralFactor) * ray.Energy * Gain;
 
                 leftAmplitude = Mathf.Min(leftAmplitude, 1);
                 rightAmplitude = Mathf.Min(rightAmplitude, 1);

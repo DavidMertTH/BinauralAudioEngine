@@ -13,7 +13,7 @@ namespace Code.Simulation
         public float3 ImagePosition;
         public float DistanceToImage;
         public bool IsValid;
-        public float Absorbtion;
+        public float Energy;
         public float ScatteringDivergence;
         public FixedList512Bytes<float3> Positions;
     }

@@ -148,7 +148,7 @@ namespace Code.Simulation
 
                     
                     ray.DistanceToImage += math.distance(Target, ToTarget[index].point);
-                    ray.Absorbtion *= contribution;
+                    ray.Energy *= contribution;
                     AudioRays[index] = ray;
                     if (ray.DistanceToImage < 9.28f)
                     {
@@ -179,13 +179,13 @@ namespace Code.Simulation
                 if (PreviousHit[index].distance < 0.0001f) return;
                 var ray = AudioRays[index];
 
-                if (ray.Absorbtion <= 0.000001f)
+                if (ray.Energy <= 0.000001f)
                 {
-                    ray.Absorbtion = 0.9f;
+                    ray.Energy = 0.9f;
                 }
                 else
                 {
-                    ray.Absorbtion = AudioRays[index].Absorbtion * Absorbtion;
+                    ray.Energy = AudioRays[index].Energy * Absorbtion;
                 }
 
                 ray.Reflections = AudioRays[index].Reflections + 1;
