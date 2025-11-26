@@ -3,17 +3,23 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
+using static Unity.Mathematics.math;
 using UnityEngine;
 
 namespace Code.Simulation
 {
+    /// <summary>
+    /// Direct rays from audio sources to listener
+    /// </summary>
     public class DirectRaycast : IDisposable
     {
         private NativeArray<RaycastCommand> _commands;
         private NativeArray<RaycastHit> _hits;
+        private NativeArray<AudioRay> _rays;
 
-        public JobHandle GetDirectRays(float3 listener, NativeArray<float3> sources, out NativeArray<RaycastHit> hits)
+        public JobHandle GetDirectRays(float3 listener, NativeArray<float3> sources, out NativeArray<AudioRay> rays)
         {
+            // Create raycast commands
             _commands = Helper.ReallocateIfNeeded(_commands, sources.Length, Allocator.Persistent);
             var createCommands = new CreateDirectRaycastCommands()
             {
@@ -22,13 +28,26 @@ namespace Code.Simulation
                 Listener = listener,
             };
             var createCommandsHandle = createCommands.Schedule(_commands.Length, 32);
+
+            // Perform raycasts
             _hits = Helper.ReallocateIfNeeded(_hits, sources.Length, Allocator.Persistent);
-            hits = _hits;
-            return RaycastCommand.ScheduleBatch(_commands, _hits, 1, dependsOn: createCommandsHandle);
+            var execRaycastsHandle = RaycastCommand.ScheduleBatch(_commands, _hits, 1, dependsOn: createCommandsHandle);
+
+            // Evaluate raycasts -> audio rays
+            _rays = Helper.ReallocateIfNeeded(_rays, sources.Length, Allocator.Persistent);
+            rays = _rays;
+            var evaluateRaycastsJob = new EvaluateRaycasts()
+            {
+                Rays = _rays,
+                Hits = _hits,
+                Commands = _commands,
+            };
+            var evaluateRaycastsHandle = evaluateRaycastsJob.Schedule(_rays.Length, 32, dependsOn: execRaycastsHandle);
+            return evaluateRaycastsHandle;
         }
 
         [BurstCompile]
-        public struct CreateDirectRaycastCommands : IJobParallelFor
+        private struct CreateDirectRaycastCommands : IJobParallelFor
         {
             public NativeArray<RaycastCommand> Commands;
 
@@ -37,18 +56,28 @@ namespace Code.Simulation
 
             public void Execute(int index)
             {
-                Commands[index] = new RaycastCommand(Sources[index], Listener, QueryParameters.Default);
+                var direction = Listener - Sources[index];
+                var distance = length(direction);
+                Commands[index] = new RaycastCommand(Sources[index], direction, QueryParameters.Default, distance);
             }
         }
 
         [BurstCompile]
-        public struct EvaluateDirectRaycasts : IJobParallelFor
+        private struct EvaluateRaycasts : IJobParallelFor
         {
-            public NativeArray<RaycastHit> Hits;
+            public NativeArray<AudioRay> Rays;
+            [ReadOnly] public NativeArray<RaycastHit> Hits;
+            [ReadOnly] public NativeArray<RaycastCommand> Commands;
 
             public void Execute(int index)
             {
-                throw new System.NotImplementedException();
+                var didHit = Hits[index].distance != 0f;
+                var ray = Rays[index];
+                ray.Reflections = 0;
+                ray.DistanceToImage = Commands[index].distance;
+                ray.IsValid = didHit;
+                ray.Energy = 1f;
+                Rays[index] = ray;
             }
         }
 
@@ -56,6 +85,7 @@ namespace Code.Simulation
         {
             _commands.Dispose();
             _hits.Dispose();
+            _rays.Dispose();
         }
     }
 }

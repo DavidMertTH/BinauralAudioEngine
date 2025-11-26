@@ -19,6 +19,7 @@ namespace Code.Core
         private readonly SurroundRaycast _surroundRaycast = new();
         private readonly GlobalSimulationData _globalSimulationData = new();
         private readonly DirectRaycast _directRaycast = new();
+        private readonly List<BinauralAudioFilter> _audioFilters = new();
 
         private Transform Listener
         {
@@ -30,8 +31,6 @@ namespace Code.Core
                 return _listener;
             }
         }
-
-        private List<BinauralAudioFilter> _audioFilters = new();
 
         /// <summary>
         /// To be called by the GUI whenever the user makes changes to the scene that affect the impulse response.
@@ -49,8 +48,8 @@ namespace Code.Core
         {
             var origins = _globalSimulationData.UpdateListenerAndSourcePositions(Listener, _audioFilters);
             var rayCounts = Settings.GetRayCounts(_audioFilters.Count);
-            var directHitHandle = _directRaycast.GetDirectRays(_globalSimulationData.ListenerPosition,
-                _globalSimulationData.SourcePositions, out var directHits);
+            var directRaysHandle = _directRaycast.GetDirectRays(_globalSimulationData.ListenerPosition,
+                _globalSimulationData.SourcePositions, out var directRays);
             var surroundRaycastHandle =
                 _surroundRaycast.CastRaysAroundOrigins(origins, rayCounts.AroundListenerAndSources, out var hits);
             throw new NotImplementedException();
