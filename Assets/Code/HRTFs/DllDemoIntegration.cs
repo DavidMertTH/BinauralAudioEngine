@@ -60,7 +60,7 @@ namespace Code
             return 0;
         }
 
-        void ApplyHRIRFromSOFA(string sofaFilePath, AudioRay ray, float[] inputSignal)
+        void ApplyHRIRFromSOFA(string sofaFilePath, AudioPath path, float[] inputSignal)
         {
             int errorCode;
             Vector3 listenerPosition = new Vector3(0, 0, 0);
@@ -69,8 +69,8 @@ namespace Code
             IntPtr hrtfPtr = mysofa_load(sofaFilePath, out errorCode);
 
             // 2. Bestimmen des betreffenden Winkels
-            float azimuth = CalculateAzimuth(ray.ImagePosition, listenerPosition);
-            float elevation = CalculateElevation(ray.ImagePosition, listenerPosition);
+            float azimuth = CalculateAzimuth(path.ImagePosition, listenerPosition);
+            float elevation = CalculateElevation(path.ImagePosition, listenerPosition);
 
             // 3. Suchen der nächstliegenden HRIR
             //var hrtfData = sofaData.GetHRIRDataForAngle(azimuth, elevation);

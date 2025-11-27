@@ -16,11 +16,11 @@ namespace Code.Simulation
         public AudioSource source;
         [FormerlySerializedAs("audioTest")] public BinauralAudioProcessor binauralAudioProcessor;
         public bool calculateAcoustics;
-        private NativeArray<AudioRay> _primaryReflections;
-        private NativeArray<AudioRay> _secundaryReflections;
+        private NativeArray<AudioPath> _primaryReflections;
+        private NativeArray<AudioPath> _secundaryReflections;
 
-        private List<AudioRay> _primaryReflectionsList;
-        private List<AudioRay> _secundaryReflectionsList;
+        private List<AudioPath> _primaryReflectionsList;
+        private List<AudioPath> _secundaryReflectionsList;
 
 
         private void OnDestroy()
@@ -51,12 +51,12 @@ namespace Code.Simulation
             }
         }
 
-        private List<AudioRay> SaveSecundaryReflections(NativeArray<AudioRay> inputRays)
+        private List<AudioPath> SaveSecundaryReflections(NativeArray<AudioPath> inputPaths)
         {
-            var rays = new List<AudioRay>();
+            var paths = new List<AudioPath>();
             var seen = new HashSet<RayIdentifier>();
 
-            foreach (var ray in inputRays)
+            foreach (var ray in inputPaths)
             {
                 if (!ray.IsValid) continue;
 
@@ -79,15 +79,15 @@ namespace Code.Simulation
                 if (seen.Contains(id)) continue;
 
                 seen.Add(id);
-                rays.Add(ray);
+                paths.Add(ray);
             }
 
-            return rays;
+            return paths;
         }
 
-        private List<AudioRay> SavePrimaryReflections(NativeArray<AudioRay> primaryReflections)
+        private List<AudioPath> SavePrimaryReflections(NativeArray<AudioPath> primaryReflections)
         {
-            List<AudioRay> rays = new List<AudioRay>();
+            List<AudioPath> paths = new List<AudioPath>();
             var seenDistances = new HashSet<int>();
 
             foreach (var ray in primaryReflections)
@@ -108,15 +108,15 @@ namespace Code.Simulation
                 if (hit.collider == null)
                 {
                     seenDistances.Add(roundedDistance);
-                    rays.Add(ray);
+                    paths.Add(ray);
                 }
             }
 
-            return rays;
+            return paths;
         }
 
 
-        public List<AudioRay> GetSecundaryReflections(NativeArray<RaycastHit> sourroundingHitsSource,
+        public List<AudioPath> GetSecundaryReflections(NativeArray<RaycastHit> sourroundingHitsSource,
             NativeArray<RaycastHit> sourroundingHitsTarget, float absorbtion)
         {
             int maxLength = sourroundingHitsSource.Length * sourroundingHitsTarget.Length;
@@ -166,11 +166,11 @@ namespace Code.Simulation
             toTargetHandle.Complete();
             toImageHandle.Complete();
 
-            NativeArray<AudioRay> secRays = new NativeArray<AudioRay>(secundaryHits.Length, Allocator.TempJob);
+            NativeArray<AudioPath> secPaths = new NativeArray<AudioPath>(secundaryHits.Length, Allocator.TempJob);
 
             CheckSecundaryRays checkSecJob = new CheckSecundaryRays()
             {
-                AudioRays = secRays,
+                AudioRays = secPaths,
                 Source = source.transform.position,
                 Target = target.transform.position,
                 SecHits = secundaryHits,
@@ -183,7 +183,7 @@ namespace Code.Simulation
             checkHandel.Complete();
 
 
-            List<AudioRay> reflections = SaveSecundaryReflections(secRays);
+            List<AudioPath> reflections = SaveSecundaryReflections(secPaths);
 
             sourceHits.Dispose();
             targetHits.Dispose();
@@ -194,15 +194,15 @@ namespace Code.Simulation
             imageToImage.Dispose();
 
             secundaryHits.Dispose();
-            secRays.Dispose();
+            secPaths.Dispose();
 
             return reflections;
         }
 
-        public List<AudioRay> GetPrimaryReflections(NativeArray<RaycastHit> surroundingHitsSource, float absorbtion)
+        public List<AudioPath> GetPrimaryReflections(NativeArray<RaycastHit> surroundingHitsSource, float absorbtion)
         {
             if (_primaryReflections.IsCreated) _primaryReflections.Dispose();
-            _primaryReflections = new NativeArray<AudioRay>(surroundingHitsSource.Length, Allocator.Persistent);
+            _primaryReflections = new NativeArray<AudioPath>(surroundingHitsSource.Length, Allocator.Persistent);
 
             NativeArray<RaycastCommand> commands =
                 new NativeArray<RaycastCommand>(surroundingHitsSource.Length, Allocator.TempJob);
@@ -233,7 +233,7 @@ namespace Code.Simulation
             };
             jobHandle = checkJob.Schedule(surroundingHitsSource.Length, 8);
             jobHandle.Complete();
-            List<AudioRay> reflections = SavePrimaryReflections(_primaryReflections);
+            List<AudioPath> reflections = SavePrimaryReflections(_primaryReflections);
 
             reflections.ForEach(ray => ray.Energy = absorbtion);
             _primaryReflections.Dispose();
@@ -246,7 +246,7 @@ namespace Code.Simulation
         [BurstCompile]
         private struct CheckSecundaryRays : IJobParallelFor
         {
-            public NativeArray<AudioRay> AudioRays;
+            public NativeArray<AudioPath> AudioRays;
 
             [ReadOnly] public NativeList<SecundaryHit> SecHits;
             [ReadOnly] public NativeArray<RaycastHit> ToSourceHit;
@@ -262,12 +262,12 @@ namespace Code.Simulation
                 if (ToSourceHit[index].distance < 0.0001f || ToTargetHit[index].distance < 0.0001f ||
                     ImageToImageHit[index].distance < 0.0001)
                 {
-                    AudioRay falseRay = new AudioRay
+                    AudioPath falsePath = new AudioPath
                     {
                         IsValid = false,
                     };
 
-                    AudioRays[index] = falseRay;
+                    AudioRays[index] = falsePath;
                     return;
                 }
 
@@ -282,7 +282,7 @@ namespace Code.Simulation
                 float distanceToTarget = math.distance(Target, ToTargetHit[index].point);
                 float distanceImageToImage = math.distance(ToSourceHit[index].point, ToTargetHit[index].point);
 
-                AudioRay ray = new AudioRay
+                AudioPath path = new AudioPath
                 {
                     Energy = (Absorbtion * Absorbtion),
                     DistanceToImage = distanceToSource + distanceImageToImage + distanceToTarget,
@@ -290,16 +290,16 @@ namespace Code.Simulation
                     IsValid = true,
                 };
 
-                ray.Positions.Add(ToSourceHit[index].point);
-                ray.Positions.Add(ToTargetHit[index].point);
-                AudioRays[index] = ray;
+                path.Positions.Add(ToSourceHit[index].point);
+                path.Positions.Add(ToTargetHit[index].point);
+                AudioRays[index] = path;
             }
         }
 
         [BurstCompile]
         private struct CheckPrimaryRays : IJobParallelFor
         {
-            public NativeArray<AudioRay> AudioRays;
+            public NativeArray<AudioPath> AudioRays;
             [ReadOnly] public NativeArray<RaycastHit> InitHit;
             [ReadOnly] public NativeArray<RaycastHit> PrimaryHit;
             [ReadOnly] public Vector3 Origin;
@@ -313,15 +313,15 @@ namespace Code.Simulation
                 float distanceToSource = math.distance((float3)InitHit[index].point, Origin);
                 float distanceToTarget = math.distance((float3)InitHit[index].point, Target);
 
-                AudioRay ray = new AudioRay
+                AudioPath path = new AudioPath
                 {
                     Energy = 0.8f,
                     DistanceToImage = distanceToSource + distanceToTarget,
                     ImagePosition = PrimaryHit[index].point + PrimaryHit[index].normal * 0.001f,
                     IsValid = true,
                 };
-                ray.Positions.Add(PrimaryHit[index].point);
-                AudioRays[index] = ray;
+                path.Positions.Add(PrimaryHit[index].point);
+                AudioRays[index] = path;
             }
         }
 

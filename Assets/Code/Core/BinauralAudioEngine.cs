@@ -58,7 +58,7 @@ namespace Code.Core
             var rayCounts = Settings.GetRayCounts(_audioFilters.Count);
             _simulationData.Init(Listener, _audioFilters, rayCounts);
             var directRaysHandle = _directRaycast.GetDirectRays(_simulationData.ListenerPosition,
-                _simulationData.SourcePositions, _simulationData.DirectRays);
+                _simulationData.SourcePositions, _simulationData.DirectPaths);
             var surroundRaycastHandle =
                 _surroundRaycast.CastRaysAroundOrigins(_simulationData.ListenerAndSourcePositions,
                     rayCounts.AroundListenerAndSourcesCount, out var hits);

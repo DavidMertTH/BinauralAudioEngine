@@ -23,7 +23,7 @@ namespace Code.Core
         [Range(0f, 1f)]
         private float imageSourceToHigherOrderRayBudgetDistribution = 0.5f;
 
-        public RayCounts GetRayCounts(int numSources) =>
+        public PathCounts GetRayCounts(int numSources) =>
             new(rayCount, numSources, imageSourceToHigherOrderRayBudgetDistribution);
     }
 }

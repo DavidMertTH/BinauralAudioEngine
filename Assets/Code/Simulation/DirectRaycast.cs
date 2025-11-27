@@ -16,7 +16,7 @@ namespace Code.Simulation
         private NativeArray<RaycastCommand> _commands;
         private NativeArray<RaycastHit> _hits;
 
-        public JobHandle GetDirectRays(float3 listener, NativeArray<float3> sources, NativeArray<AudioRay> rays)
+        public JobHandle GetDirectRays(float3 listener, NativeArray<float3> sources, NativeArray<AudioPath> paths)
         {
             // Create raycast commands
             _commands = Helper.ReallocateIfNeeded(_commands, sources.Length, Allocator.Persistent);
@@ -35,11 +35,11 @@ namespace Code.Simulation
             // Evaluate raycasts -> audio rays
             var evaluateRaycastsJob = new EvaluateRaycasts()
             {
-                Rays = rays,
+                Paths = paths,
                 Hits = _hits,
                 Commands = _commands,
             };
-            var evaluateRaycastsHandle = evaluateRaycastsJob.Schedule(rays.Length, 32, dependsOn: execRaycastsHandle);
+            var evaluateRaycastsHandle = evaluateRaycastsJob.Schedule(paths.Length, 32, dependsOn: execRaycastsHandle);
             return evaluateRaycastsHandle;
         }
 
@@ -62,19 +62,19 @@ namespace Code.Simulation
         [BurstCompile]
         private struct EvaluateRaycasts : IJobParallelFor
         {
-            public NativeArray<AudioRay> Rays;
+            public NativeArray<AudioPath> Paths;
             [ReadOnly] public NativeArray<RaycastHit> Hits;
             [ReadOnly] public NativeArray<RaycastCommand> Commands;
 
             public void Execute(int index)
             {
                 var didHit = Hits[index].distance != 0f;
-                var ray = Rays[index];
+                var ray = Paths[index];
                 ray.Reflections = 0;
                 ray.DistanceToImage = Commands[index].distance;
                 ray.IsValid = didHit;
                 ray.Energy = 1f;
-                Rays[index] = ray;
+                Paths[index] = ray;
             }
         }
 

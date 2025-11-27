@@ -13,19 +13,19 @@ namespace Code.Simulation
     public class AudioRaycast
     {
         public static Awaitable CastDirectRays(float4 origin, NativeArray<float4> targets,
-            out NativeArray<AudioRay> rays, CancellationToken ct)
+            out NativeArray<AudioPath> paths, CancellationToken ct)
         {
             throw new NotImplementedException();
         }
 
         public static Awaitable CastImageSourceRays(float4 origin, NativeArray<float4> targets,
-            out NativeArray<AudioRay> rays, CancellationToken ct)
+            out NativeArray<AudioPath> paths, CancellationToken ct)
         {
             throw new NotImplementedException();
         }
 
         public static Awaitable CastIndirectRays(float4 origin, out NativeArray<float4> targets,
-            out NativeArray<AudioRay> rays, CancellationToken ct)
+            out NativeArray<AudioPath> paths, CancellationToken ct)
         {
             throw new NotImplementedException();
             

@@ -7,7 +7,7 @@ namespace Code.Simulation
     /// Documents the path taken by an audio 'particle' so that direction and frequency absorption can be
     /// modeled in the impulse response.
     /// </summary>
-    public struct AudioRay
+    public struct AudioPath
     {
         public int Reflections;
         public float3 ImagePosition;

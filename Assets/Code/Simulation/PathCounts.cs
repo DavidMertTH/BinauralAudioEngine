@@ -6,7 +6,7 @@ namespace Code.Simulation
     /// Splits the ray budget between various ray casting techniques based on the number of audio sources in the scene
     /// and additional parameters from <c>BinauralAudioSettings</c>.
     /// </summary>
-    public readonly struct RayCounts
+    public readonly struct PathCounts
     {
         public readonly int TotalCount;
         public readonly int DirectCount;
@@ -20,7 +20,7 @@ namespace Code.Simulation
         public int ImageSourceRaysStartIndex => DirectCount;
         public int HigherOrderStartIndex => ImageSourceRaysStartIndex + ImageSourceTotalCount;
 
-        public RayCounts(int totalCount, int directCount, int imageSourceTotalCount, int imageSourcePrimaryCount,
+        public PathCounts(int totalCount, int directCount, int imageSourceTotalCount, int imageSourcePrimaryCount,
             int imageSourceSecondaryCount, int aroundListenerAndSourcesCount,
             int higherOrderCount) : this()
         {
@@ -33,7 +33,7 @@ namespace Code.Simulation
             HigherOrderCount = higherOrderCount;
         }
 
-        public RayCounts(int totalCount, int numSources, float imageSourceToHigherOrderDistribution)
+        public PathCounts(int totalCount, int numSources, float imageSourceToHigherOrderDistribution)
         {
             TotalCount = totalCount;
             DirectCount = numSources;
