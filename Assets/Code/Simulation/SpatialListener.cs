@@ -19,7 +19,7 @@ namespace Code.Simulation
 
         [Range(0, 20)] [SerializeField] public int bounces;
 
-        [Range(0, 1)] [SerializeField] public float absorbtion;
+        [Range(0, 1)] [SerializeField] public float absorption;
 
         private SpatialListener _target;
 
@@ -49,16 +49,16 @@ namespace Code.Simulation
             float t2 = Time.realtimeSinceStartup;
 
             _directPath = GetDirectPath(source.transform.position, _target.transform.position);
-            _primaryPaths = imageSourceOld.GetPrimaryReflections(_surroundingHitsSource, absorbtion);
+            _primaryPaths = imageSourceOld.GetPrimaryReflections(_surroundingHitsSource, absorption);
             _secondaryPaths =
-                imageSourceOld.GetSecundaryReflections(_surroundingHitsSource, _surroundingHitsTarget, absorbtion);
+                imageSourceOld.GetSecondaryReflections(_surroundingHitsSource, _surroundingHitsTarget, absorption);
             _higherOrderPaths = raycastAudio.GetHighOrderRays(
                 _target.transform.position, bounces,
-                AudioEnvironment.Instance.GetRaycastsAroundPosition(source.transform.position), absorbtion);
+                AudioEnvironment.Instance.GetRaycastsAroundPosition(source.transform.position), absorption);
 
             binauralAudioProcessor.DirectPath = _directPath;
             binauralAudioProcessor.PrimaryReflections = _primaryPaths;
-            binauralAudioProcessor.SecundaryReflections = _secondaryPaths;
+            binauralAudioProcessor.SecondaryReflections = _secondaryPaths;
             binauralAudioProcessor.HigherOrderReflections = _higherOrderPaths;
 
             _surroundingHitsSource.Dispose();

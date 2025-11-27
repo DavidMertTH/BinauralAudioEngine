@@ -17,10 +17,10 @@ namespace Code.Simulation
         [FormerlySerializedAs("audioTest")] public BinauralAudioProcessor binauralAudioProcessor;
         public bool calculateAcoustics;
         private NativeArray<AudioPath> _primaryReflections;
-        private NativeArray<AudioPath> _secundaryReflections;
+        private NativeArray<AudioPath> _secondaryReflections;
 
         private List<AudioPath> _primaryReflectionsList;
-        private List<AudioPath> _secundaryReflectionsList;
+        private List<AudioPath> _secondaryReflectionsList;
 
 
         private void OnDestroy()
@@ -51,7 +51,7 @@ namespace Code.Simulation
             }
         }
 
-        private List<AudioPath> SaveSecundaryReflections(NativeArray<AudioPath> inputPaths)
+        private List<AudioPath> SaveSecondaryReflections(NativeArray<AudioPath> inputPaths)
         {
             var paths = new List<AudioPath>();
             var seen = new HashSet<RayIdentifier>();
@@ -116,45 +116,45 @@ namespace Code.Simulation
         }
 
 
-        public List<AudioPath> GetSecundaryReflections(NativeArray<RaycastHit> sourroundingHitsSource,
-            NativeArray<RaycastHit> sourroundingHitsTarget, float absorbtion)
+        public List<AudioPath> GetSecondaryReflections(NativeArray<RaycastHit> sourroundingHitsSource,
+            NativeArray<RaycastHit> sourroundingHitsTarget, float absorption)
         {
             int maxLength = sourroundingHitsSource.Length * sourroundingHitsTarget.Length;
-            NativeList<SecundaryHit> secundaryHits = new NativeList<SecundaryHit>(maxLength, Allocator.TempJob);
+            NativeList<SecondaryHit> secondaryHits = new NativeList<SecondaryHit>(maxLength, Allocator.TempJob);
 
-            GetPossibleSecundaryHits secJob = new GetPossibleSecundaryHits()
+            GetPossibleSecondaryHits secJob = new GetPossibleSecondaryHits()
             {
                 Source = source.transform.position,
                 Target = target.transform.position,
-                PossibleHits = secundaryHits.AsParallelWriter(),
+                PossibleHits = secondaryHits.AsParallelWriter(),
                 InitHitSource = sourroundingHitsSource,
                 InitHitTarget = sourroundingHitsTarget
             };
             JobHandle secFindHandle = secJob.Schedule(sourroundingHitsSource.Length, 16);
             secFindHandle.Complete();
 
-            NativeArray<RaycastCommand> toSource = new NativeArray<RaycastCommand>(secundaryHits.Length, Allocator.TempJob);
-            NativeArray<RaycastCommand> toTarget = new NativeArray<RaycastCommand>(secundaryHits.Length, Allocator.TempJob);
+            NativeArray<RaycastCommand> toSource = new NativeArray<RaycastCommand>(secondaryHits.Length, Allocator.TempJob);
+            NativeArray<RaycastCommand> toTarget = new NativeArray<RaycastCommand>(secondaryHits.Length, Allocator.TempJob);
             NativeArray<RaycastCommand> imageToImage =
-                new NativeArray<RaycastCommand>(secundaryHits.Length, Allocator.TempJob);
+                new NativeArray<RaycastCommand>(secondaryHits.Length, Allocator.TempJob);
 
-            FillSecundaryRaycastCommandsParallel secFill = new FillSecundaryRaycastCommandsParallel()
+            FillSecondaryRaycastCommandsParallel secFill = new FillSecondaryRaycastCommandsParallel()
             {
                 Source = source.transform.position,
                 Target = target.transform.position,
-                SecHits = secundaryHits,
+                SecHits = secondaryHits,
 
                 ToSource = toSource,
                 ToTarget = toTarget,
                 ImageToImage = imageToImage
             };
-            JobHandle secFillHandle = secFill.Schedule(secundaryHits.Length, 16);
+            JobHandle secFillHandle = secFill.Schedule(secondaryHits.Length, 16);
 
             secFillHandle.Complete();
 
-            NativeArray<RaycastHit> sourceHits = new NativeArray<RaycastHit>(secundaryHits.Length, Allocator.TempJob);
-            NativeArray<RaycastHit> targetHits = new NativeArray<RaycastHit>(secundaryHits.Length, Allocator.TempJob);
-            NativeArray<RaycastHit> imageHits = new NativeArray<RaycastHit>(secundaryHits.Length, Allocator.TempJob);
+            NativeArray<RaycastHit> sourceHits = new NativeArray<RaycastHit>(secondaryHits.Length, Allocator.TempJob);
+            NativeArray<RaycastHit> targetHits = new NativeArray<RaycastHit>(secondaryHits.Length, Allocator.TempJob);
+            NativeArray<RaycastHit> imageHits = new NativeArray<RaycastHit>(secondaryHits.Length, Allocator.TempJob);
 
             secFindHandle.Complete();
 
@@ -166,24 +166,24 @@ namespace Code.Simulation
             toTargetHandle.Complete();
             toImageHandle.Complete();
 
-            NativeArray<AudioPath> secPaths = new NativeArray<AudioPath>(secundaryHits.Length, Allocator.TempJob);
+            NativeArray<AudioPath> secPaths = new NativeArray<AudioPath>(secondaryHits.Length, Allocator.TempJob);
 
-            CheckSecundaryRays checkSecJob = new CheckSecundaryRays()
+            CheckSecondaryRays checkSecJob = new CheckSecondaryRays()
             {
                 AudioRays = secPaths,
                 Source = source.transform.position,
                 Target = target.transform.position,
-                SecHits = secundaryHits,
+                SecHits = secondaryHits,
                 ToTargetHit = targetHits,
                 ToSourceHit = sourceHits,
                 ImageToImageHit = imageHits,
-                Absorbtion = absorbtion
+                Absorption = absorption
             };
-            JobHandle checkHandel = checkSecJob.Schedule(secundaryHits.Length, 16);
+            JobHandle checkHandel = checkSecJob.Schedule(secondaryHits.Length, 16);
             checkHandel.Complete();
 
 
-            List<AudioPath> reflections = SaveSecundaryReflections(secPaths);
+            List<AudioPath> reflections = SaveSecondaryReflections(secPaths);
 
             sourceHits.Dispose();
             targetHits.Dispose();
@@ -193,13 +193,13 @@ namespace Code.Simulation
             toTarget.Dispose();
             imageToImage.Dispose();
 
-            secundaryHits.Dispose();
+            secondaryHits.Dispose();
             secPaths.Dispose();
 
             return reflections;
         }
 
-        public List<AudioPath> GetPrimaryReflections(NativeArray<RaycastHit> surroundingHitsSource, float absorbtion)
+        public List<AudioPath> GetPrimaryReflections(NativeArray<RaycastHit> surroundingHitsSource, float absorption)
         {
             if (_primaryReflections.IsCreated) _primaryReflections.Dispose();
             _primaryReflections = new NativeArray<AudioPath>(surroundingHitsSource.Length, Allocator.Persistent);
@@ -235,7 +235,7 @@ namespace Code.Simulation
             jobHandle.Complete();
             List<AudioPath> reflections = SavePrimaryReflections(_primaryReflections);
 
-            reflections.ForEach(ray => ray.Energy = absorbtion);
+            reflections.ForEach(ray => ray.Energy = absorption);
             _primaryReflections.Dispose();
             commands.Dispose();
             primaryHit.Dispose();
@@ -244,17 +244,17 @@ namespace Code.Simulation
 
 
         [BurstCompile]
-        private struct CheckSecundaryRays : IJobParallelFor
+        private struct CheckSecondaryRays : IJobParallelFor
         {
             public NativeArray<AudioPath> AudioRays;
 
-            [ReadOnly] public NativeList<SecundaryHit> SecHits;
+            [ReadOnly] public NativeList<SecondaryHit> SecHits;
             [ReadOnly] public NativeArray<RaycastHit> ToSourceHit;
             [ReadOnly] public NativeArray<RaycastHit> ToTargetHit;
             [ReadOnly] public NativeArray<RaycastHit> ImageToImageHit;
             [ReadOnly] public Vector3 Source;
             [ReadOnly] public Vector3 Target;
-            [ReadOnly] public float Absorbtion;
+            [ReadOnly] public float Absorption;
 
 
             public void Execute(int index)
@@ -284,7 +284,7 @@ namespace Code.Simulation
 
                 AudioPath path = new AudioPath
                 {
-                    Energy = (Absorbtion * Absorbtion),
+                    Energy = (Absorption * Absorption),
                     DistanceToImage = distanceToSource + distanceImageToImage + distanceToTarget,
                     ImagePosition = ToTargetHit[index].point + ToTargetHit[index].normal * 0.001f,
                     IsValid = true,
@@ -326,9 +326,9 @@ namespace Code.Simulation
         }
 
         [BurstCompile]
-        private struct GetPossibleSecundaryHits : IJobParallelFor
+        private struct GetPossibleSecondaryHits : IJobParallelFor
         {
-            public NativeList<SecundaryHit>.ParallelWriter PossibleHits;
+            public NativeList<SecondaryHit>.ParallelWriter PossibleHits;
 
             [ReadOnly] public Vector3 Source;
             [ReadOnly] public Vector3 Target;
@@ -373,7 +373,7 @@ namespace Code.Simulation
                     Vector3 intersectionPointTarget =
                         flippedSource + rayDirection * tTarget - InitHitTarget[index].normal * 0.001f;
 
-                    SecundaryHit hit = new SecundaryHit()
+                    SecondaryHit hit = new SecondaryHit()
                     {
                         SourcePlanePosition = intersectionPointSource,
                         SourcePlaneNormal = InitHitSource[i].normal,
@@ -387,7 +387,7 @@ namespace Code.Simulation
         }
 
         [BurstCompile]
-        private struct FillSecundaryRaycastCommandsParallel : IJobParallelFor
+        private struct FillSecondaryRaycastCommandsParallel : IJobParallelFor
         {
             public NativeArray<RaycastCommand> ToSource;
             public NativeArray<RaycastCommand> ToTarget;
@@ -396,7 +396,7 @@ namespace Code.Simulation
 
             [ReadOnly] public Vector3 Source;
             [ReadOnly] public Vector3 Target;
-            [ReadOnly] public NativeList<SecundaryHit> SecHits;
+            [ReadOnly] public NativeList<SecondaryHit> SecHits;
 
 
             public void Execute(int index)
@@ -433,7 +433,7 @@ namespace Code.Simulation
             }
         }
 
-        public struct SecundaryHit
+        public struct SecondaryHit
         {
             public Vector3 SourcePlanePosition;
             public Vector3 SourcePlaneNormal;

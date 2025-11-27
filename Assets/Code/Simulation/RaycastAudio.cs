@@ -20,7 +20,7 @@ namespace Code.Simulation
         private NativeArray<AudioPath> _audioRaysContinuous;
 
         public List<AudioPath> GetHighOrderRays(Vector3 target, int bounceAmount,
-            NativeArray<RaycastCommand> initialCommands, float absorbtion)
+            NativeArray<RaycastCommand> initialCommands, float absorption)
         {
             if (bounceAmount <= 0)
             {
@@ -62,7 +62,7 @@ namespace Code.Simulation
                     ReflectionRay = _reflectionCommands,
                     FromTarget = _fromTarget,
                     PreviousRay = _previousCommands[i],
-                    Absorbtion = absorbtion
+                    Absorption = absorption
                 };
                 JobHandle fillHandle = fillJob.Schedule(initialCommands.Length, 8);
                 JobHandle toTargetHandle = RaycastCommand.ScheduleBatch(_fromTarget, _targetHits, 1, 1, fillHandle);
@@ -172,7 +172,7 @@ namespace Code.Simulation
             [ReadOnly] public NativeArray<RaycastCommand> PreviousRay;
             [ReadOnly] public int WriteIndex;
             [ReadOnly] public Vector3 Target;
-            [ReadOnly] public float Absorbtion;
+            [ReadOnly] public float Absorption;
 
             public void Execute(int index)
             {
@@ -185,7 +185,7 @@ namespace Code.Simulation
                 }
                 else
                 {
-                    ray.Energy = AudioRays[index].Energy * Absorbtion;
+                    ray.Energy = AudioRays[index].Energy * Absorption;
                 }
 
                 ray.Reflections = AudioRays[index].Reflections + 1;

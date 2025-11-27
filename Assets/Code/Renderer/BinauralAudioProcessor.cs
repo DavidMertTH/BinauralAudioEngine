@@ -35,7 +35,7 @@ namespace Code.Renderer
 
         public AudioPath DirectPath;
         public List<AudioPath> PrimaryReflections;
-        public List<AudioPath> SecundaryReflections;
+        public List<AudioPath> SecondaryReflections;
         public List<AudioPath> HigherOrderReflections;
         
         public float[] impulseResponseLeft;
@@ -390,8 +390,8 @@ namespace Code.Renderer
                 paths.Add(DirectPath);
             if (usePrimaryReflections && PrimaryReflections != null && PrimaryReflections.Count > 0)
                 paths.AddRange(PrimaryReflections);
-            if (useSecondaryReflections && SecundaryReflections != null && SecundaryReflections.Count > 0)
-                paths.AddRange(SecundaryReflections);
+            if (useSecondaryReflections && SecondaryReflections != null && SecondaryReflections.Count > 0)
+                paths.AddRange(SecondaryReflections);
             if (useHigherOrderReflections && HigherOrderReflections != null && HigherOrderReflections.Count > 0)
                 paths.AddRange(HigherOrderReflections);
             return paths;
