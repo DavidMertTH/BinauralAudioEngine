@@ -4,7 +4,6 @@ using System.Threading;
 using ArthurKehrwald.Singleton;
 using Code.Renderer;
 using Code.Simulation;
-using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
 
@@ -15,11 +14,12 @@ namespace Code.Core
         [SerializeField] private BinauralAudioSettings settings;
         public BinauralAudioSettings Settings => settings;
         private Transform _listener;
-        private NativeArray<AudioRay> _audioRays;
-        private readonly SurroundRaycast _surroundRaycast = new();
-        private readonly GlobalSimulationData _globalSimulationData = new();
-        private readonly DirectRaycast _directRaycast = new();
         private readonly List<BinauralAudioFilter> _audioFilters = new();
+        private readonly GlobalSimulationData _globalSimulationData = new();
+        private readonly SurroundRaycast _surroundRaycast = new();
+        private readonly DirectRaycast _directRaycast = new();
+        private readonly SemaphoreSlim _semaphoreSlim = new(1);
+        private readonly CancellationTokenSource _onDestroyCts = new();
 
         private Transform Listener
         {
@@ -37,21 +37,31 @@ namespace Code.Core
         /// </summary>
         public async Awaitable UpdateAllImpulseResponses(CancellationToken ct)
         {
-            var rayJob = ComputeAudioRays(ct);
-            var impulseResponseJob = ComputeImpulseResponses(rayJob, ct);
-            var combinedJob = JobHandle.CombineDependencies(impulseResponseJob, rayJob);
-            while (!combinedJob.IsCompleted)
-                await Awaitable.NextFrameAsync(ct);
+            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, _onDestroyCts.Token);
+            await _semaphoreSlim.WaitAsync(linkedCts.Token);
+            try
+            {
+                var rayJob = ComputeAudioRays(linkedCts.Token);
+                var impulseResponseJob = ComputeImpulseResponses(rayJob, linkedCts.Token);
+                var combinedJob = JobHandle.CombineDependencies(impulseResponseJob, rayJob);
+                while (!combinedJob.IsCompleted)
+                    await Awaitable.NextFrameAsync(linkedCts.Token);
+            }
+            finally
+            {
+                _semaphoreSlim.Release();
+            }
         }
 
         private JobHandle ComputeAudioRays(CancellationToken ct)
         {
-            var origins = _globalSimulationData.UpdateListenerAndSourcePositions(Listener, _audioFilters);
+            _globalSimulationData.UpdateListenerAndSourcePositions(Listener, _audioFilters);
             var rayCounts = Settings.GetRayCounts(_audioFilters.Count);
             var directRaysHandle = _directRaycast.GetDirectRays(_globalSimulationData.ListenerPosition,
                 _globalSimulationData.SourcePositions, out var directRays);
             var surroundRaycastHandle =
-                _surroundRaycast.CastRaysAroundOrigins(origins, rayCounts.AroundListenerAndSources, out var hits);
+                _surroundRaycast.CastRaysAroundOrigins(_globalSimulationData.ListenerAndSourcePositions,
+                    rayCounts.AroundListenerAndSources, out var hits);
             throw new NotImplementedException();
         }
 
@@ -72,11 +82,28 @@ namespace Code.Core
                 _audioFilters.Remove(filter);
         }
 
-        private void OnDestroy()
+        private async void OnDestroy()
         {
-            _surroundRaycast.Dispose();
-            _globalSimulationData.Dispose();
-            _directRaycast.Dispose();
+            try
+            {
+                // Cancel ongoing processing...
+                _onDestroyCts.Cancel();
+                await _semaphoreSlim.WaitAsync(millisecondsTimeout: 500);
+            }
+            catch (Exception e)
+            {
+                // Log any exceptions because async void means they disappear otherwise
+                Debug.LogError(e);
+            }
+            finally
+            {
+                // ...then dispose unmanaged resources
+                _onDestroyCts.Dispose();
+                _semaphoreSlim.Dispose();
+                _surroundRaycast.Dispose();
+                _globalSimulationData.Dispose();
+                _directRaycast.Dispose();
+            }
         }
     }
 }
