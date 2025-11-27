@@ -4,6 +4,7 @@ using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
+using static Unity.Mathematics.math;
 
 namespace Code.Simulation
 {
@@ -16,13 +17,26 @@ namespace Code.Simulation
         private NativeArray<RaycastCommand> _commands;
         private NativeArray<RaycastHit> _hits;
 
-        public JobHandle CastRaysAroundOrigins(NativeArray<float3>.ReadOnly origins, int numRaysPerOrigin,
+        public JobHandle CastRaysAroundOrigins(NativeArray<float3>.ReadOnly origins, AudioPathArrayLayout layout,
             out NativeArray<RaycastHit> hits)
         {
+            var numRaysPerOrigin = GetNumRaysPerOrigin(layout);
             var getDirectionsHandle = GetDirections(numRaysPerOrigin, out var directions);
             var getCommandsHandle = GetCommands(getDirectionsHandle, origins, directions, out var commands);
             var raycastHandle = GetHits(getCommandsHandle, commands, out hits);
             return raycastHandle;
+        }
+
+        private int GetNumRaysPerOrigin(AudioPathArrayLayout layout)
+        {
+            var numSources = layout.DirectCount;
+            // The number or ray casts around each listener and each source needed for the requested
+            // number of paths with two bounces
+            var a = sqrt(layout.TwoBouncesCount / (float)numSources);
+            // The number of ray casts needed for the requested number of paths with one bounce
+            var b = layout.OneBounceCount / (float)(2 * numSources);
+            // The number used is the maximum of the two
+            return (int)ceil(max(a, b));
         }
 
         private JobHandle GetDirections(int num, out NativeArray<float3> directions)

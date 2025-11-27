@@ -54,24 +54,33 @@ namespace Code.Simulation
         public NativeArray<AudioPath> AllAudioPaths;
 
         /// <summary>
-        /// Sub-array containing direct rays between the listener and an audio source
+        /// Sub-array containing direct audio paths between the listener and an audio source
         /// </summary>
-        public NativeArray<AudioPath> DirectPaths => AllAudioPaths.GetSubArray(0, _pathCounts.DirectCount);
+        public NativeArray<AudioPath> DirectPaths =>
+            AllAudioPaths.GetSubArray(_audioPathArrayLayout.DirectPathsStartIndex, _audioPathArrayLayout.DirectCount);
 
         /// <summary>
-        /// Sub-array containing primary and secondary image source rays
+        /// Sub-array containing audio paths with one bounce
         /// </summary>
-        public NativeArray<AudioPath> ImageSourcePaths =>
-            AllAudioPaths.GetSubArray(_pathCounts.DirectCount, _pathCounts.ImageSourceTotalCount);
+        public NativeArray<AudioPath> OneBouncePaths =>
+            AllAudioPaths.GetSubArray(_audioPathArrayLayout.OneBouncePathsStartIndex,
+                _audioPathArrayLayout.OneBounceCount);
 
         /// <summary>
-        /// Sub-array containing rays with more than two reflections
+        /// Sub-array containing audio paths with two bounces
+        /// </summary>
+        public NativeArray<AudioPath> TwoBouncePaths =>
+            AllAudioPaths.GetSubArray(_audioPathArrayLayout.TwoBouncesPathsStartIndex,
+                _audioPathArrayLayout.TwoBouncesCount);
+
+        /// <summary>
+        /// Sub-array containing audio paths with more than two bounces
         /// </summary>
         public NativeArray<AudioPath> HigherOrderPaths =>
-            AllAudioPaths.GetSubArray(_pathCounts.DirectCount + _pathCounts.ImageSourceTotalCount,
-                _pathCounts.HigherOrderCount);
+            AllAudioPaths.GetSubArray(_audioPathArrayLayout.ManyBouncePathsStartIndex,
+                _audioPathArrayLayout.ManyBouncesCount);
 
-        private PathCounts _pathCounts;
+        private AudioPathArrayLayout _audioPathArrayLayout;
         private NativeArray<float3> _listenerAndSourcePositions;
 
         /// <summary>
@@ -79,7 +88,7 @@ namespace Code.Simulation
         /// simulation, never while simulating.
         /// </summary>
         public void Init(Transform listener, List<BinauralAudioFilter> sources,
-            PathCounts pathCounts)
+            AudioPathArrayLayout layout)
         {
             var originCount = sources.Count + 1;
             _listenerAndSourcePositions = Helper.ReallocateIfNeeded(_listenerAndSourcePositions, originCount,
@@ -87,8 +96,8 @@ namespace Code.Simulation
             _listenerAndSourcePositions[0] = listener.position;
             Parallel.For(0, sources.Count,
                 i => { _listenerAndSourcePositions[i + 1] = sources[i].transform.position; });
-            _pathCounts = pathCounts;
-            AllAudioPaths = Helper.ReallocateIfNeeded(AllAudioPaths, pathCounts.TotalCount, Allocator.Persistent);
+            _audioPathArrayLayout = layout;
+            AllAudioPaths = Helper.ReallocateIfNeeded(AllAudioPaths, layout.TotalCount, Allocator.Persistent);
         }
 
         public void Dispose()

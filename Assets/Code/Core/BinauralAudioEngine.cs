@@ -55,13 +55,13 @@ namespace Code.Core
 
         private JobHandle ComputeAudioRays(CancellationToken ct)
         {
-            var rayCounts = Settings.GetRayCounts(_audioFilters.Count);
-            _simulationData.Init(Listener, _audioFilters, rayCounts);
+            var layout = Settings.GetAudioPathArrayLayout(_audioFilters.Count);
+            _simulationData.Init(Listener, _audioFilters, layout);
             var directRaysHandle = _directRaycast.GetDirectRays(_simulationData.ListenerPosition,
                 _simulationData.SourcePositions, _simulationData.DirectPaths);
             var surroundRaycastHandle =
                 _surroundRaycast.CastRaysAroundOrigins(_simulationData.ListenerAndSourcePositions,
-                    rayCounts.AroundListenerAndSourcesCount, out var hits);
+                    layout, out var hits);
             throw new NotImplementedException();
         }
 
