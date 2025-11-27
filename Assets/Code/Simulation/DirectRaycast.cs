@@ -15,9 +15,8 @@ namespace Code.Simulation
     {
         private NativeArray<RaycastCommand> _commands;
         private NativeArray<RaycastHit> _hits;
-        private NativeArray<AudioRay> _rays;
 
-        public JobHandle GetDirectRays(float3 listener, NativeArray<float3> sources, out NativeArray<AudioRay> rays)
+        public JobHandle GetDirectRays(float3 listener, NativeArray<float3> sources, NativeArray<AudioRay> rays)
         {
             // Create raycast commands
             _commands = Helper.ReallocateIfNeeded(_commands, sources.Length, Allocator.Persistent);
@@ -34,15 +33,13 @@ namespace Code.Simulation
             var execRaycastsHandle = RaycastCommand.ScheduleBatch(_commands, _hits, 1, dependsOn: createCommandsHandle);
 
             // Evaluate raycasts -> audio rays
-            _rays = Helper.ReallocateIfNeeded(_rays, sources.Length, Allocator.Persistent);
-            rays = _rays;
             var evaluateRaycastsJob = new EvaluateRaycasts()
             {
-                Rays = _rays,
+                Rays = rays,
                 Hits = _hits,
                 Commands = _commands,
             };
-            var evaluateRaycastsHandle = evaluateRaycastsJob.Schedule(_rays.Length, 32, dependsOn: execRaycastsHandle);
+            var evaluateRaycastsHandle = evaluateRaycastsJob.Schedule(rays.Length, 32, dependsOn: execRaycastsHandle);
             return evaluateRaycastsHandle;
         }
 
@@ -85,7 +82,6 @@ namespace Code.Simulation
         {
             _commands.Dispose();
             _hits.Dispose();
-            _rays.Dispose();
         }
     }
 }

@@ -15,7 +15,7 @@ namespace Code.Core
         public BinauralAudioSettings Settings => settings;
         private Transform _listener;
         private readonly List<BinauralAudioFilter> _audioFilters = new();
-        private readonly GlobalSimulationData _globalSimulationData = new();
+        private readonly GlobalSimulationData _simulationData = new();
         private readonly SurroundRaycast _surroundRaycast = new();
         private readonly DirectRaycast _directRaycast = new();
         private readonly SemaphoreSlim _semaphoreSlim = new(1);
@@ -55,13 +55,13 @@ namespace Code.Core
 
         private JobHandle ComputeAudioRays(CancellationToken ct)
         {
-            _globalSimulationData.UpdateListenerAndSourcePositions(Listener, _audioFilters);
             var rayCounts = Settings.GetRayCounts(_audioFilters.Count);
-            var directRaysHandle = _directRaycast.GetDirectRays(_globalSimulationData.ListenerPosition,
-                _globalSimulationData.SourcePositions, out var directRays);
+            _simulationData.Init(Listener, _audioFilters, rayCounts);
+            var directRaysHandle = _directRaycast.GetDirectRays(_simulationData.ListenerPosition,
+                _simulationData.SourcePositions, _simulationData.DirectRays);
             var surroundRaycastHandle =
-                _surroundRaycast.CastRaysAroundOrigins(_globalSimulationData.ListenerAndSourcePositions,
-                    rayCounts.AroundListenerAndSources, out var hits);
+                _surroundRaycast.CastRaysAroundOrigins(_simulationData.ListenerAndSourcePositions,
+                    rayCounts.AroundListenerAndSourcesCount, out var hits);
             throw new NotImplementedException();
         }
 
@@ -101,7 +101,7 @@ namespace Code.Core
                 _onDestroyCts.Dispose();
                 _semaphoreSlim.Dispose();
                 _surroundRaycast.Dispose();
-                _globalSimulationData.Dispose();
+                _simulationData.Dispose();
                 _directRaycast.Dispose();
             }
         }

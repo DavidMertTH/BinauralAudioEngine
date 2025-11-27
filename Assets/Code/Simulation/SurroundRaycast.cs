@@ -16,7 +16,7 @@ namespace Code.Simulation
         private NativeArray<RaycastCommand> _commands;
         private NativeArray<RaycastHit> _hits;
 
-        public JobHandle CastRaysAroundOrigins(NativeArray<float3> origins, int numRaysPerOrigin,
+        public JobHandle CastRaysAroundOrigins(NativeArray<float3>.ReadOnly origins, int numRaysPerOrigin,
             out NativeArray<RaycastHit> hits)
         {
             var getDirectionsHandle = GetDirections(numRaysPerOrigin, out var directions);
@@ -57,7 +57,7 @@ namespace Code.Simulation
             }
         }
 
-        private JobHandle GetCommands(JobHandle getDirectionsHandle, NativeArray<float3> origins,
+        private JobHandle GetCommands(JobHandle getDirectionsHandle, NativeArray<float3>.ReadOnly origins,
             NativeArray<float3> directions,
             out NativeArray<RaycastCommand> commands)
         {
@@ -77,7 +77,7 @@ namespace Code.Simulation
         private struct GetCommandsJob : IJobParallelFor
         {
             public NativeArray<RaycastCommand> RaycastCommands;
-            [ReadOnly] public NativeArray<float3> Origins;
+            [ReadOnly] public NativeArray<float3>.ReadOnly Origins;
             [ReadOnly] public NativeArray<float3> Directions;
 
             public void Execute(int index)
