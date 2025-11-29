@@ -16,17 +16,18 @@ namespace Code.Simulation
         private NativeArray<float3> _directions;
         private NativeArray<RaycastCommand> _commands;
         private NativeArray<RaycastHit> _hits;
-        private readonly SortRaycastHits _sortRaycastHits = new();
+        private readonly CoplanarHits _coplanarHits = new();
         
         public JobHandle CastRaysAroundOrigins(NativeArray<float3>.ReadOnly origins, AudioPathArrayLayout layout,
-            out NativeArray<RaycastHit> hits, out int hitsStride)
+            out NativeArray<RaycastHit> hits, out int hitsStride, out NativeArray<bool> isHitCoplanar)
         {
             var numRaysPerOrigin = GetNumRaysPerOrigin(layout);
             hitsStride = numRaysPerOrigin;
             var getDirectionsHandle = GetDirections(numRaysPerOrigin, out var directions);
             var getCommandsHandle = GetCommands(getDirectionsHandle, origins, directions, out var commands);
             var raycastHandle = GetHits(getCommandsHandle, commands, out hits);
-            return raycastHandle;
+            var checkCoplanarHandle = _coplanarHits.FindCoplanarHits(raycastHandle, hits, out isHitCoplanar);
+            return checkCoplanarHandle;
         }
 
         private int GetNumRaysPerOrigin(AudioPathArrayLayout layout)
@@ -119,7 +120,7 @@ namespace Code.Simulation
             _directions.Dispose();
             _commands.Dispose();
             _hits.Dispose();
-            _sortRaycastHits.Dispose();
+            _coplanarHits.Dispose();
         }
     }
 }
