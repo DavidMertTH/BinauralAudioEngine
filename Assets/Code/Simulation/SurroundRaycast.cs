@@ -16,11 +16,13 @@ namespace Code.Simulation
         private NativeArray<float3> _directions;
         private NativeArray<RaycastCommand> _commands;
         private NativeArray<RaycastHit> _hits;
-
+        private readonly SortRaycastHits _sortRaycastHits = new();
+        
         public JobHandle CastRaysAroundOrigins(NativeArray<float3>.ReadOnly origins, AudioPathArrayLayout layout,
-            out NativeArray<RaycastHit> hits)
+            out NativeArray<RaycastHit> hits, out int hitsStride)
         {
             var numRaysPerOrigin = GetNumRaysPerOrigin(layout);
+            hitsStride = numRaysPerOrigin;
             var getDirectionsHandle = GetDirections(numRaysPerOrigin, out var directions);
             var getCommandsHandle = GetCommands(getDirectionsHandle, origins, directions, out var commands);
             var raycastHandle = GetHits(getCommandsHandle, commands, out hits);
@@ -45,7 +47,7 @@ namespace Code.Simulation
                 Helper.ReallocateIfNeeded(_directions, num, Allocator.Persistent, out var canUseCache);
             directions = _directions;
             if (!canUseCache)
-                return new JobHandle(); // This handle is already completed
+                return new JobHandle(); // Return an already completed handle
             var job = new GetRaycastDirectionsJob
             {
                 Directions = _directions,
@@ -111,11 +113,13 @@ namespace Code.Simulation
             return RaycastCommand.ScheduleBatch(commands, hits, 1, getCommandsHandle);
         }
 
+
         public void Dispose()
         {
             _directions.Dispose();
             _commands.Dispose();
             _hits.Dispose();
+            _sortRaycastHits.Dispose();
         }
     }
 }

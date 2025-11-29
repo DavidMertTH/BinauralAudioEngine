@@ -1,7 +1,0 @@
-﻿namespace Code.Simulation
-{
-    public class ImageSource
-    {
-        
-    }
-}

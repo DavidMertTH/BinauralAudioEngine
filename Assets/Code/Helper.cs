@@ -1,4 +1,5 @@
-﻿using Unity.Collections;
+﻿using Unity.Burst;
+using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -82,6 +83,13 @@ namespace Code
                 interlaced[i] = channelA[j];
                 interlaced[i + 1] = channelB[j];
             }
+        }
+
+        [BurstCompile]
+        public static float3 MirrorPointAcrossPlane(float3 point, float3 planePoint, float3 planeNormal)
+        {
+            var distancePointToPlane = math.dot(point - planePoint, planeNormal);
+            return point - 2 * distancePointToPlane * planeNormal;
         }
     }
 }

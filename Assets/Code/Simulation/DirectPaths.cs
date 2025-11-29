@@ -11,12 +11,12 @@ namespace Code.Simulation
     /// <summary>
     /// Direct rays from audio sources to listener
     /// </summary>
-    public class DirectRaycast : IDisposable
+    public class DirectPaths : IDisposable
     {
         private NativeArray<RaycastCommand> _commands;
         private NativeArray<RaycastHit> _hits;
 
-        public JobHandle GetDirectRays(float3 listener, NativeArray<float3> sources, NativeArray<AudioPath> paths)
+        public JobHandle GetDirectPaths(float3 listener, NativeArray<float3> sources, NativeArray<AudioPath> paths)
         {
             // Create raycast commands
             _commands = Helper.ReallocateIfNeeded(_commands, sources.Length, Allocator.Persistent);
@@ -26,7 +26,7 @@ namespace Code.Simulation
                 Sources = sources,
                 Listener = listener,
             };
-            var createCommandsHandle = createCommands.Schedule(_commands.Length, 32);
+            var createCommandsHandle = createCommands.ScheduleParallel(_commands.Length, 32, default);
 
             // Perform raycasts
             _hits = Helper.ReallocateIfNeeded(_hits, sources.Length, Allocator.Persistent);
@@ -39,12 +39,12 @@ namespace Code.Simulation
                 Hits = _hits,
                 Commands = _commands,
             };
-            var evaluateRaycastsHandle = evaluateRaycastsJob.Schedule(paths.Length, 32, dependsOn: execRaycastsHandle);
+            var evaluateRaycastsHandle = evaluateRaycastsJob.ScheduleParallel(paths.Length, 32, dependency: execRaycastsHandle);
             return evaluateRaycastsHandle;
         }
 
         [BurstCompile]
-        private struct CreateDirectRaycastCommands : IJobParallelFor
+        private struct CreateDirectRaycastCommands : IJobFor
         {
             public NativeArray<RaycastCommand> Commands;
 
@@ -60,7 +60,7 @@ namespace Code.Simulation
         }
 
         [BurstCompile]
-        private struct EvaluateRaycasts : IJobParallelFor
+        private struct EvaluateRaycasts : IJobFor
         {
             public NativeArray<AudioPath> Paths;
             [ReadOnly] public NativeArray<RaycastHit> Hits;

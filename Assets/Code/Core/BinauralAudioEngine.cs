@@ -17,7 +17,8 @@ namespace Code.Core
         private readonly List<BinauralAudioFilter> _audioFilters = new();
         private readonly GlobalSimulationData _simulationData = new();
         private readonly SurroundRaycast _surroundRaycast = new();
-        private readonly DirectRaycast _directRaycast = new();
+        private readonly DirectPaths _directPaths = new();
+        private readonly OneBouncePaths _oneBouncePaths = new();
         private readonly SemaphoreSlim _semaphoreSlim = new(1);
         private readonly CancellationTokenSource _onDestroyCts = new();
 
@@ -57,11 +58,14 @@ namespace Code.Core
         {
             var layout = Settings.GetAudioPathArrayLayout(_audioFilters.Count);
             _simulationData.Init(Listener, _audioFilters, layout);
-            var directRaysHandle = _directRaycast.GetDirectRays(_simulationData.ListenerPosition,
+            var directPathsHandle = _directPaths.GetDirectPaths(_simulationData.ListenerPosition,
                 _simulationData.SourcePositions, _simulationData.DirectPaths);
             var surroundRaycastHandle =
                 _surroundRaycast.CastRaysAroundOrigins(_simulationData.ListenerAndSourcePositions,
-                    layout, out var hits);
+                    layout, out var hits, out var hitsStride);
+            var oneBouncePathsHandle = _oneBouncePaths.GetOneBouncePaths(_simulationData.ListenerPosition,
+                _simulationData.SourcePositions, hits, hitsStride, surroundRaycastHandle,
+                _simulationData.OneBouncePaths);
             throw new NotImplementedException();
         }
 
@@ -102,7 +106,7 @@ namespace Code.Core
                 _semaphoreSlim.Dispose();
                 _surroundRaycast.Dispose();
                 _simulationData.Dispose();
-                _directRaycast.Dispose();
+                _directPaths.Dispose();
             }
         }
     }
