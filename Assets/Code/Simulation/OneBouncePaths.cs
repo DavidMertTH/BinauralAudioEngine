@@ -10,34 +10,135 @@ namespace Code.Simulation
     /// <summary>
     /// Simulate audio paths with one bounce using the image source method
     /// </summary>
-    public class OneBouncePaths
+    public class OneBouncePaths : IDisposable
     {
         private NativeArray<RaycastCommand> _commands;
+        private NativeArray<float3> _reflectionPoints;
+        private NativeArray<RaycastHit> _visibilityHits;
+        private NativeArray<AudioPath> _paths;
 
         public JobHandle GetOneBouncePaths(float3 listener, NativeArray<float3> sources,
-            NativeArray<RaycastHit> surroundingHits, int hitsPerListenerOrSource,
+            NativeArray<RaycastHit> surroundingHits, int hitsPerListenerOrSource, NativeArray<bool> isCoplanar,
             JobHandle hitsReadyHandle, NativeArray<AudioPath> result)
         {
-            var numRaycasts = result.Length * 2; // One bounce means two ray casts
+            // One ray to the reflection point from the listener, one from the source
+            var numRaycasts = surroundingHits.Length * 2;
             _commands = Helper.ReallocateIfNeeded(_commands, numRaycasts, Allocator.Persistent);
-            throw new NotImplementedException();
+            _reflectionPoints =
+                Helper.ReallocateIfNeeded(_reflectionPoints, surroundingHits.Length, Allocator.Persistent);
+            var findReflectionsHandle = new FindReflectionPoints()
+            {
+                Commands = _commands,
+                ReflectionPoints = _reflectionPoints,
+                Sources = sources,
+                Listener = listener,
+                SurroundingHits = surroundingHits,
+                SurroundingHitsStride = hitsPerListenerOrSource,
+                IsCoplanar = isCoplanar
+            }.ScheduleParallel(surroundingHits.Length, 32, hitsReadyHandle);
+            _visibilityHits = Helper.ReallocateIfNeeded(_visibilityHits, numRaycasts, Allocator.Persistent);
+            var doRaycastsHandle = RaycastCommand.ScheduleBatch(
+                _commands, _visibilityHits, 1, findReflectionsHandle);
+            _paths = Helper.ReallocateIfNeeded(_paths, surroundingHits.Length, Allocator.Persistent);
+            var createPathsHandle = new CreatePathsJob()
+            {
+                Paths = _paths,
+                ReflectionPoints = _reflectionPoints,
+                SurroundingHits = surroundingHits,
+                VisibilityHits = _visibilityHits,
+            }.ScheduleParallel(surroundingHits.Length, 32, doRaycastsHandle);
+            return createPathsHandle;
         }
 
         [BurstCompile]
-        private struct CreateOneBounceRaycastCommands : IJobFor
+        private struct FindReflectionPoints : IJobFor
         {
             public NativeArray<RaycastCommand> Commands;
+            public NativeArray<float3> ReflectionPoints;
 
             [ReadOnly] public NativeArray<float3> Sources;
             [ReadOnly] public float3 Listener;
             [ReadOnly] public NativeArray<RaycastHit> SurroundingHits;
             [ReadOnly] public int SurroundingHitsStride;
+            [ReadOnly] public NativeArray<bool> IsCoplanar;
+
+            public void Execute(int hitIndex)
+            {
+                // Coplanar surfaces would produce duplicate reflection points
+                if (IsCoplanar[hitIndex])
+                    return;
+                var sourceIndex = hitIndex / SurroundingHitsStride;
+                ReflectionPoints[hitIndex] = FindSpecularReflection(Sources[sourceIndex], Listener,
+                    SurroundingHits[hitIndex].normal, SurroundingHits[hitIndex].point);
+                Commands[hitIndex] = new RaycastCommand(
+                    from: Listener,
+                    direction: ReflectionPoints[hitIndex] - Listener,
+                    QueryParameters.Default);
+                Commands[hitIndex + 1] = new RaycastCommand(
+                    from: Sources[sourceIndex],
+                    direction: ReflectionPoints[hitIndex] - Sources[sourceIndex],
+                    QueryParameters.Default);
+            }
+
+            private float3 FindSpecularReflection(float3 a, float3 b, float3 planeNormal, float3 planePoint)
+            {
+                var aToPlaneDist = Helper.DistanceFronPlane(a, planeNormal, planePoint);
+                var bToPlaneDist = Helper.DistanceFronPlane(b, planeNormal, planePoint);
+                var aProj = a - planeNormal * aToPlaneDist;
+                var bProj = b - planeNormal * bToPlaneDist;
+                var t = aToPlaneDist / (aToPlaneDist + bToPlaneDist);
+                return math.lerp(aProj, bProj, t);
+            }
+        }
+
+        [BurstCompile]
+        private struct CreatePathsJob : IJobFor
+        {
+            public NativeArray<AudioPath> Paths;
+            [ReadOnly] public NativeArray<RaycastHit> VisibilityHits;
+            [ReadOnly] public NativeArray<RaycastHit> SurroundingHits;
+            [ReadOnly] public NativeArray<float3> ReflectionPoints;
 
             public void Execute(int index)
             {
-                throw new NotImplementedException();
-                //Commands[index] = new RaycastCommand(Sources[index], direction, QueryParameters.Default, distance);
+                var reflectionPointIsVisibleFromListener = DidRayHitReflectionPoint(
+                    VisibilityHits[index * 2], SurroundingHits[index].normal, ReflectionPoints[index]);
+                var reflectionPointIsVisibleFromSource = DidRayHitReflectionPoint(
+                    VisibilityHits[index * 2 + 1], SurroundingHits[index].normal, ReflectionPoints[index]);
+                if (reflectionPointIsVisibleFromListener && reflectionPointIsVisibleFromSource)
+                {
+                    Paths[index] = new AudioPath()
+                    {
+                        Reflections = 1,
+                        ImagePosition = ReflectionPoints[index],
+                        DistanceToImage = VisibilityHits[index * 2 + 1].distance,
+                        IsValid = true,
+                        Energy = 1f, // TODO: Calc energy
+                    };
+                }
+                else
+                {
+                    Paths[index] = new AudioPath() { IsValid = false };
+                }
             }
+
+            private bool DidRayHitReflectionPoint(RaycastHit hit, float3 reflectionNormal, float3 reflectionPoint)
+            {
+                var normalMatches = math.dot(hit.normal, reflectionNormal) > 0.99f;
+                var hitPointMatches =
+                    math.abs(hit.point.x - reflectionPoint.x) +
+                    math.abs(hit.point.y - reflectionPoint.y) +
+                    math.abs(hit.point.z - reflectionPoint.z) > 0.01f;
+                return normalMatches && hitPointMatches;
+            }
+        }
+
+        public void Dispose()
+        {
+            _commands.Dispose();
+            _reflectionPoints.Dispose();
+            _visibilityHits.Dispose();
+            _paths.Dispose();
         }
     }
 }

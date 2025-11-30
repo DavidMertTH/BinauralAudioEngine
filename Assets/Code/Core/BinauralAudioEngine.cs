@@ -64,7 +64,7 @@ namespace Code.Core
                 _simulationData.ListenerAndSourcePositions,
                 layout, out var hits, out var hitsStride, out var isHitCoplanar);
             var oneBouncePathsHandle = _oneBouncePaths.GetOneBouncePaths(_simulationData.ListenerPosition,
-                _simulationData.SourcePositions, hits, hitsStride, surroundRaycastHandle,
+                _simulationData.SourcePositions, hits, hitsStride, isHitCoplanar, surroundRaycastHandle,
                 _simulationData.OneBouncePaths);
             throw new NotImplementedException();
         }

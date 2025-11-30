@@ -9,7 +9,8 @@ using UnityEngine;
 namespace Code.Simulation
 {
     /// <summary>
-    /// Finds coplanar duplicates in a <c>RaycastHit</c> array.
+    /// Finds coplanar duplicates in a <c>RaycastHit</c> array. The array contains hits from multiple origins.
+    /// Each set of hits separated by <c>hitsStride</c> is checked separately.
     /// </summary>
     public class CoplanarHits : IDisposable
     {

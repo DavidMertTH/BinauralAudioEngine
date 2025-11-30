@@ -38,7 +38,7 @@ namespace Code
         {
             return ReallocateIfNeeded(arr, desiredSize, out _);
         }
-        
+
         public static float[] ReallocateIfNeeded(float[] arr, int desiredSize, out bool didReallocate)
         {
             if (arr == null || arr.Length != desiredSize)
@@ -90,6 +90,12 @@ namespace Code
         {
             var distancePointToPlane = math.dot(point - planePoint, planeNormal);
             return point - 2 * distancePointToPlane * planeNormal;
+        }
+
+        [BurstCompile]
+        public static float DistanceFronPlane(float3 point, float3 planePoint, float3 planeNormal)
+        {
+            return math.dot(planeNormal, point - planePoint);
         }
     }
 }
