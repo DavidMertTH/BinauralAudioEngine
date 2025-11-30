@@ -60,9 +60,9 @@ namespace Code.Core
             _simulationData.Init(Listener, _audioFilters, layout);
             var directPathsHandle = _directPaths.GetDirectPaths(_simulationData.ListenerPosition,
                 _simulationData.SourcePositions, _simulationData.DirectPaths);
-            var surroundRaycastHandle =
-                _surroundRaycast.CastRaysAroundOrigins(_simulationData.ListenerAndSourcePositions,
-                    layout, out var hits, out var hitsStride, out var isHitCoplanar);
+            var surroundRaycastHandle = _surroundRaycast.CastRaysAroundOrigins(
+                _simulationData.ListenerAndSourcePositions,
+                layout, out var hits, out var hitsStride, out var isHitCoplanar);
             var oneBouncePathsHandle = _oneBouncePaths.GetOneBouncePaths(_simulationData.ListenerPosition,
                 _simulationData.SourcePositions, hits, hitsStride, surroundRaycastHandle,
                 _simulationData.OneBouncePaths);

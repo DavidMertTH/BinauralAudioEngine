@@ -26,7 +26,7 @@ namespace Code.Simulation
             var getDirectionsHandle = GetDirections(numRaysPerOrigin, out var directions);
             var getCommandsHandle = GetCommands(getDirectionsHandle, origins, directions, out var commands);
             var raycastHandle = GetHits(getCommandsHandle, commands, out hits);
-            var checkCoplanarHandle = _coplanarHits.FindCoplanarHits(raycastHandle, hits, out isHitCoplanar);
+            var checkCoplanarHandle = _coplanarHits.FindCoplanarHits(raycastHandle, hits, hitsStride, out isHitCoplanar);
             return checkCoplanarHandle;
         }
 

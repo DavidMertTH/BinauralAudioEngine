@@ -14,18 +14,33 @@ namespace Code.Simulation
     public class CoplanarHits : IDisposable
     {
         private NativeArray<bool> _isCoplanar;
+        private NativeArray<JobHandle> _coplanarHitsHandles;
 
-        public JobHandle FindCoplanarHits(JobHandle computeHitsHandle, NativeArray<RaycastHit> hits,
+        public JobHandle FindCoplanarHits(JobHandle computeHitsHandle, NativeArray<RaycastHit> hits, int hitsStride,
             out NativeArray<bool> isCoplanar)
         {
             _isCoplanar = Helper.ReallocateIfNeeded(_isCoplanar, hits.Length, Allocator.Persistent);
             isCoplanar = _isCoplanar;
-            var numComparisons = hits.Length * (hits.Length - 1) / 2;
-            var findCoplanarHitsJob = new FindCoplanarHitsJob()
+            var numJobs = hits.Length / hitsStride;
+            _coplanarHitsHandles =
+                Helper.ReallocateIfNeeded(_coplanarHitsHandles, numJobs, Allocator.Persistent);
+            var numComparisonsPerOrigin = hits.Length * (hits.Length - 1) / 2;
+
+            // Start one job for each ray origin (listener and sources) instead of one
+            // big job for less congestion when writing to the IsCoplanar array.
+            // I have not tested which version is faster.
+            for (var i = 0; i < numJobs; i++)
             {
-                Hits = hits
-            };
-            return findCoplanarHitsJob.ScheduleParallel(numComparisons, 32, computeHitsHandle);
+                var findCoplanarHitsJob = new FindCoplanarHitsJob()
+                {
+                    IsCoplanar = _isCoplanar.GetSubArray(i * hitsStride, hitsStride),
+                    Hits = hits.GetSubArray(i * hitsStride, hitsStride),
+                };
+                _coplanarHitsHandles[i] =
+                    findCoplanarHitsJob.ScheduleParallel(numComparisonsPerOrigin, 32, computeHitsHandle);
+            }
+
+            return JobHandle.CombineDependencies(_coplanarHitsHandles);
         }
 
         [BurstCompile]
@@ -76,6 +91,7 @@ namespace Code.Simulation
 
         public void Dispose()
         {
+            _coplanarHitsHandles.Dispose();
             _isCoplanar.Dispose();
         }
     }
