@@ -1,5 +1,8 @@
-﻿using Unity.Burst;
+﻿using System.Threading;
+using System.Threading.Tasks;
+using Unity.Burst;
 using Unity.Collections;
+using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -64,7 +67,7 @@ namespace Code
             if (arr.IsCreated && arr.Length == desiredSize) return arr;
             if (arr.IsCreated) arr.Dispose();
             didReallocate = true;
-            return new NativeArray<T>(arr, allocator);
+            return new NativeArray<T>(desiredSize, allocator);
         }
 
         public static void DeinterlaceChannels(float[] interlaced, float[] channelA, float[] channelB)
@@ -96,6 +99,28 @@ namespace Code
         public static float DistanceFronPlane(float3 point, float3 planePoint, float3 planeNormal)
         {
             return math.dot(planeNormal, point - planePoint);
+        }
+
+        public static async Task ToTask(this JobHandle jobHandle, CancellationToken ct = default)
+        {
+            while (!jobHandle.IsCompleted)
+                await Awaitable.NextFrameAsync(ct);
+            jobHandle.Complete();
+        }
+
+        /// <summary>
+        /// Gets all possible pairs of two indices in an array of length <c>n</c> for every <c>k</c> between 0
+        /// (inclusive) and <c>n * (n - 1) / 2</c> (exclusive)
+        /// </summary>
+        /// <param name="n">The total number of elements</param>
+        /// <param name="k">The index of the pair</param>
+        /// <param name="i">The row index</param>
+        /// <param name="j">The column index</param>
+        public static void GetIndexPair(int n, int k, out int i, out int j)
+        {
+            i = (int)math.floor((2 * n - 1 - math.sqrt(math.square(2 * n - 1) - 8 * k)) / 2);
+            var rowStart = math.floor(i * n - i * (i + 1) / 2f);
+            j = (int)(k - rowStart + i + 1);
         }
     }
 }

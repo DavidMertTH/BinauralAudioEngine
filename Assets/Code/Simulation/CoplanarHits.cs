@@ -1,5 +1,4 @@
 using System;
-using System.Threading;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
@@ -14,69 +13,44 @@ namespace Code.Simulation
     /// </summary>
     public class CoplanarHits : IDisposable
     {
-        private NativeArray<bool> _isCoplanar;
-        private NativeArray<JobHandle> _coplanarHitsHandles;
+        private NativeArray<bool> _coplanarComparisonResults;
+        private NativeArray<bool> _isHitCoplanar;
 
         public JobHandle FindCoplanarHits(JobHandle computeHitsHandle, NativeArray<RaycastHit> hits, int hitsStride,
             out NativeArray<bool> isCoplanar)
         {
-            _isCoplanar = Helper.ReallocateIfNeeded(_isCoplanar, hits.Length, Allocator.Persistent);
-            isCoplanar = _isCoplanar;
-            var numJobs = hits.Length / hitsStride;
-            _coplanarHitsHandles =
-                Helper.ReallocateIfNeeded(_coplanarHitsHandles, numJobs, Allocator.Persistent);
-            var numComparisonsPerOrigin = hits.Length * (hits.Length - 1) / 2;
+            var numComparisonsPerOrigin = hitsStride * (hitsStride - 1) / 2;
+            var numOrigins = hits.Length / hitsStride;
+            var numComparisonsTotal = numComparisonsPerOrigin * numOrigins;
+            _coplanarComparisonResults =
+                Helper.ReallocateIfNeeded(_coplanarComparisonResults, numComparisonsTotal, Allocator.Persistent);
+            isCoplanar = _coplanarComparisonResults;
 
-            // Start one job for each ray origin (listener and sources) instead of one
-            // big job for less congestion when writing to the IsCoplanar array.
-            // I have not tested which version is faster.
-            for (var i = 0; i < numJobs; i++)
+            var findCoplanarHitsHandle = new FindCoplanarHitsJob()
             {
-                var findCoplanarHitsJob = new FindCoplanarHitsJob()
-                {
-                    IsCoplanar = _isCoplanar.GetSubArray(i * hitsStride, hitsStride),
-                    Hits = hits.GetSubArray(i * hitsStride, hitsStride),
-                };
-                _coplanarHitsHandles[i] =
-                    findCoplanarHitsJob.ScheduleParallel(numComparisonsPerOrigin, 32, computeHitsHandle);
-            }
-
-            return JobHandle.CombineDependencies(_coplanarHitsHandles);
+                IsCoplanar = _coplanarComparisonResults,
+                Hits = hits,
+                HitsPerOrigin = hitsStride,
+            }.ScheduleParallel(numComparisonsTotal, 32, computeHitsHandle);
+            _isHitCoplanar = Helper.ReallocateIfNeeded(_isHitCoplanar, hits.Length, Allocator.Persistent);
         }
 
         [BurstCompile]
         private struct FindCoplanarHitsJob : IJobFor
         {
-            private int _lock;
             public NativeArray<bool> IsCoplanar;
             [ReadOnly] public NativeArray<RaycastHit> Hits;
+            [ReadOnly] public int HitsPerOrigin;
+            [ReadOnly] public int ComparisonsPerOrigin;
 
             public void Execute(int index)
             {
-                GetIndices(index, out var i, out var j);
-                var isCoplanar = CheckCoplanar(Hits[i], Hits[j]);
-                if (!isCoplanar) return;
-
-                while (0 != Interlocked.Exchange(ref _lock, 1))
-                {
-                }
-
-                IsCoplanar[j] = true;
-                Interlocked.Exchange(ref _lock, 0);
-            }
-
-            /// <summary>
-            /// Determines which pair of array elements should be compared.
-            /// </summary>
-            /// <param name="k">The index of the comparison</param>
-            /// <param name="i">One of the two indices to compare</param>
-            /// <param name="j">One of the two indices to compare</param>
-            private void GetIndices(int k, out int i, out int j)
-            {
-                var n = Hits.Length;
-                i = (int)math.floor((2 * n - 1 - math.sqrt(math.square(2 * n - 1) - 8 * k)) / 2);
-                var rowStart = math.floor(i * n - i * (i + 1) / 2f);
-                j = (int)(k - rowStart + i + 1);
+                var comparisonIndex = index % ComparisonsPerOrigin;
+                Helper.GetIndexPair(HitsPerOrigin, comparisonIndex, out var i, out var j);
+                var firstHitIndex = Hits.Length - index % ComparisonsPerOrigin;
+                i += firstHitIndex;
+                j += firstHitIndex;
+                IsCoplanar[index] = CheckCoplanar(Hits[i], Hits[j]);
             }
 
             /// <summary>
@@ -90,10 +64,22 @@ namespace Code.Simulation
             }
         }
 
+        [BurstCompile]
+        private struct StoreCoplanarHitsJob : IJobFor
+        {
+            public NativeArray<bool> IsHitCoplanar;
+            [ReadOnly] public NativeArray<bool> ComparisonResults;
+
+            public void Execute(int index)
+            {
+                IsHitCoplanar[index] = 
+            }
+        }
+
         public void Dispose()
         {
-            _coplanarHitsHandles.Dispose();
-            _isCoplanar.Dispose();
+            _coplanarComparisonResults.Dispose();
+            _isHitCoplanar.Dispose();
         }
     }
 }

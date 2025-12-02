@@ -11,17 +11,16 @@ namespace Code.Renderer
     public class BinauralAudioFilter : MonoBehaviour
     {
         public AudioSourceSimulationData SimulationData { get; } = new();
-        private readonly BinauralAudioEngine _audioEngine = BinauralAudioEngine.Instance;
         private float[] _leftData;
         private float[] _rightData;
         private float[] _swapBuffer;
         private Task _leftConvolution = Task.CompletedTask;
         private Task _rightConvolution = Task.CompletedTask;
         private LiveConvolutionReverb _reverb;
-        private LiveConvolutionReverb Reverb => _reverb ??= GetComponent<LiveConvolutionReverb>();
 
-        private void OnEnable() => _audioEngine.RegisterAudioFilter(this);
-        private void OnDisable() => _audioEngine.UnregisterAudioFilter(this);
+        private void Awake() => _reverb = GetComponent<LiveConvolutionReverb>();
+        private void OnEnable() => BinauralAudioEngine.Instance.RegisterAudioFilter(this);
+        private void OnDisable() => BinauralAudioEngine.Instance?.UnregisterAudioFilter(this);
         private void OnDestroy() => SimulationData.Dispose();
         
         /// <summary>
@@ -34,7 +33,7 @@ namespace Code.Renderer
         /// <param name="channels">The number of audio channels encoded in the <c>data</c> parameter.</param>
         private void OnAudioFilterRead(float[] data, int channels)
         {
-            if (!_audioEngine.enabled || channels != 2) return;
+            if (channels != 2 || !SimulationData.HasValidImpulseResponse) return;
             
             // Make sure buffers are allocated correctly
             var channelLength = data.Length / 2;
@@ -48,7 +47,7 @@ namespace Code.Renderer
             Helper.InterlaceChannels(data, _rightData, _leftData);
             Helper.DeinterlaceChannels(_swapBuffer, _leftData, _rightData);
 
-            if (_audioEngine.Settings.EnableHannFiltering)
+            if (BinauralAudioEngine.Instance.Settings.EnableHannFiltering)
             {
                 Hann.ApplyHann(_leftData);
                 Hann.ApplyHann(_rightData);
@@ -57,7 +56,7 @@ namespace Code.Renderer
             // Convolve result for next method call
             _leftConvolution = Task.Run(() =>
             {
-                _leftData = Reverb.ProgressiveConvolve(
+                _leftData = _reverb.ProgressiveConvolve(
                     SimulationData.leftImpulseResponse.ToArray(),
                     _leftData,
                     _leftData,
@@ -67,7 +66,7 @@ namespace Code.Renderer
 
             _rightConvolution = Task.Run(() =>
             {
-                _rightData = Reverb.ProgressiveConvolve(
+                _rightData = _reverb.ProgressiveConvolve(
                     SimulationData.rightImpulseResponse.ToArray(),
                     _rightData,
                     _rightData,

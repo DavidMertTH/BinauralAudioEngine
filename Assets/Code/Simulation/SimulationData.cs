@@ -16,6 +16,7 @@ namespace Code.Simulation
         public NativeArray<AudioPath> audioPaths;
         public NativeArray<float> leftImpulseResponse;
         public NativeArray<float> rightImpulseResponse;
+        public bool HasValidImpulseResponse => leftImpulseResponse.IsCreated && rightImpulseResponse.IsCreated;
 
         public void Dispose()
         {
@@ -94,8 +95,8 @@ namespace Code.Simulation
             _listenerAndSourcePositions = Helper.ReallocateIfNeeded(_listenerAndSourcePositions, originCount,
                 Allocator.Persistent);
             _listenerAndSourcePositions[0] = listener.position;
-            Parallel.For(0, sources.Count,
-                i => { _listenerAndSourcePositions[i + 1] = sources[i].transform.position; });
+            for(var i = 0; i < sources.Count; i++)
+                _listenerAndSourcePositions[i + 1] = sources[i].transform.position;
             _audioPathArrayLayout = layout;
             AllAudioPaths = Helper.ReallocateIfNeeded(AllAudioPaths, layout.TotalCount, Allocator.Persistent);
         }

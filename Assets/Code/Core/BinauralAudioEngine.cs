@@ -4,6 +4,7 @@ using System.Threading;
 using ArthurKehrwald.Singleton;
 using Code.Renderer;
 using Code.Simulation;
+using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
 
@@ -12,7 +13,8 @@ namespace Code.Core
     public class BinauralAudioEngine : Singleton<BinauralAudioEngine, DoAutoCreate<BinauralAudioEngine>>
     {
         [SerializeField] private BinauralAudioSettings settings;
-        public BinauralAudioSettings Settings => settings;
+        public BinauralAudioSettings Settings => settings ??= new BinauralAudioSettings();
+        public NativeArray<AudioPath>.ReadOnly AudioPaths => _simulationData.AllAudioPaths.AsReadOnly();
         private Transform _listener;
         private readonly List<BinauralAudioFilter> _audioFilters = new();
         private readonly GlobalSimulationData _simulationData = new();
@@ -26,17 +28,29 @@ namespace Code.Core
         {
             get
             {
-                _listener ??= FindFirstObjectByType<AudioListener>().transform;
+                _listener ??= FindAnyObjectByType<AudioListener>(FindObjectsInactive.Include).transform;
                 if (_listener == null)
                     throw new NullReferenceException("No AudioListener was found in the scene.");
                 return _listener;
             }
         }
 
+        private async void Start()
+        {
+            try
+            {
+                await UpdateAllImpulseResponses();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e);
+            }
+        }
+
         /// <summary>
         /// To be called by the GUI whenever the user makes changes to the scene that affect the impulse response.
         /// </summary>
-        public async Awaitable UpdateAllImpulseResponses(CancellationToken ct)
+        public async Awaitable UpdateAllImpulseResponses(CancellationToken ct = default)
         {
             using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, _onDestroyCts.Token);
             await _semaphoreSlim.WaitAsync(linkedCts.Token);
@@ -45,8 +59,7 @@ namespace Code.Core
                 var rayJob = ComputeAudioRays(linkedCts.Token);
                 var impulseResponseJob = ComputeImpulseResponses(rayJob, linkedCts.Token);
                 var combinedJob = JobHandle.CombineDependencies(impulseResponseJob, rayJob);
-                while (!combinedJob.IsCompleted)
-                    await Awaitable.NextFrameAsync(linkedCts.Token);
+                await combinedJob.ToTask(linkedCts.Token);
             }
             finally
             {
@@ -66,7 +79,7 @@ namespace Code.Core
             var oneBouncePathsHandle = _oneBouncePaths.GetOneBouncePaths(_simulationData.ListenerPosition,
                 _simulationData.SourcePositions, hits, hitsStride, isHitCoplanar, surroundRaycastHandle,
                 _simulationData.OneBouncePaths);
-            throw new NotImplementedException();
+            return JobHandle.CombineDependencies(directPathsHandle, oneBouncePathsHandle);
         }
 
         private JobHandle ComputeImpulseResponses(JobHandle rayJob, CancellationToken ct)
@@ -107,6 +120,16 @@ namespace Code.Core
                 _surroundRaycast.Dispose();
                 _simulationData.Dispose();
                 _directPaths.Dispose();
+            }
+        }
+
+        public class AudioPathEventArgs : EventArgs
+        {
+            public readonly NativeArray<AudioPath>.ReadOnly Paths;
+
+            public AudioPathEventArgs(NativeArray<AudioPath>.ReadOnly paths)
+            {
+                Paths = paths;
             }
         }
     }
