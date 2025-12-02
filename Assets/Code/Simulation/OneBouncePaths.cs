@@ -15,7 +15,6 @@ namespace Code.Simulation
         private NativeArray<RaycastCommand> _commands;
         private NativeArray<float3> _reflectionPoints;
         private NativeArray<RaycastHit> _visibilityHits;
-        private NativeArray<AudioPath> _paths;
 
         public JobHandle GetOneBouncePaths(float3 listener, NativeArray<float3> sources,
             NativeArray<RaycastHit> surroundingHits, int hitsPerListenerOrSource, NativeArray<bool> isCoplanar,
@@ -33,19 +32,21 @@ namespace Code.Simulation
                 Sources = sources,
                 Listener = listener,
                 SurroundingHits = surroundingHits,
-                SurroundingHitsStride = hitsPerListenerOrSource,
+                HitsPerListenerOrSource = hitsPerListenerOrSource,
                 IsCoplanar = isCoplanar
             }.ScheduleParallel(surroundingHits.Length, 32, hitsReadyHandle);
             _visibilityHits = Helper.ReallocateIfNeeded(_visibilityHits, numRaycasts, Allocator.Persistent);
             var doRaycastsHandle = RaycastCommand.ScheduleBatch(
                 _commands, _visibilityHits, 1, findReflectionsHandle);
-            _paths = Helper.ReallocateIfNeeded(_paths, surroundingHits.Length, Allocator.Persistent);
             var createPathsHandle = new CreatePathsJob()
             {
-                Paths = _paths,
+                Paths = result,
                 ReflectionPoints = _reflectionPoints,
                 SurroundingHits = surroundingHits,
+                HitsPerListenerOrSource = hitsPerListenerOrSource,
                 VisibilityHits = _visibilityHits,
+                SourcePositions = sources,
+                ListenerPosition = listener,
             }.ScheduleParallel(surroundingHits.Length, 32, doRaycastsHandle);
             return createPathsHandle;
         }
@@ -59,7 +60,7 @@ namespace Code.Simulation
             [ReadOnly] public NativeArray<float3> Sources;
             [ReadOnly] public float3 Listener;
             [ReadOnly] public NativeArray<RaycastHit> SurroundingHits;
-            [ReadOnly] public int SurroundingHitsStride;
+            [ReadOnly] public int HitsPerListenerOrSource;
             [ReadOnly] public NativeArray<bool> IsCoplanar;
 
             public void Execute(int hitIndex)
@@ -67,7 +68,7 @@ namespace Code.Simulation
                 // Coplanar surfaces would produce duplicate reflection points
                 if (IsCoplanar[hitIndex])
                     return;
-                var sourceIndex = hitIndex / SurroundingHitsStride;
+                var sourceIndex = hitIndex / HitsPerListenerOrSource;
                 ReflectionPoints[hitIndex] = FindSpecularReflection(Sources[sourceIndex], Listener,
                     SurroundingHits[hitIndex].normal, SurroundingHits[hitIndex].point);
                 Commands[hitIndex] = new RaycastCommand(
@@ -97,7 +98,10 @@ namespace Code.Simulation
             public NativeArray<AudioPath> Paths;
             [ReadOnly] public NativeArray<RaycastHit> VisibilityHits;
             [ReadOnly] public NativeArray<RaycastHit> SurroundingHits;
+            [ReadOnly] public int HitsPerListenerOrSource;
             [ReadOnly] public NativeArray<float3> ReflectionPoints;
+            [ReadOnly] public NativeArray<float3> SourcePositions;
+            [ReadOnly] public float3 ListenerPosition;
 
             public void Execute(int index)
             {
@@ -115,6 +119,9 @@ namespace Code.Simulation
                         IsValid = true,
                         Energy = 1f, // TODO: Calc energy
                     };
+                    Paths[index].Positions.Add(ListenerPosition);
+                    Paths[index].Positions.Add(ReflectionPoints[index]);
+                    Paths[index].Positions.Add(SourcePositions[index / HitsPerListenerOrSource]);
                 }
                 else
                 {
@@ -138,7 +145,6 @@ namespace Code.Simulation
             _commands.Dispose();
             _reflectionPoints.Dispose();
             _visibilityHits.Dispose();
-            _paths.Dispose();
         }
     }
 }
