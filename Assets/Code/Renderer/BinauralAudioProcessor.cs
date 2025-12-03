@@ -317,71 +317,71 @@ namespace Code.Renderer
             }
         }
 
-        void OnAudioFilterRead(float[] data, int channels)
-        {
-            if (bypass || channels < 2 || !_isSetup) return;
-            if (impulseResponseLeft == null || impulseResponseRight == null || impulseResponseRight.Length == 0 ||
-                impulseResponseLeft.Length == 0) return;
-            int blockAmount = _dataBufferLength / blockSize;
-
-            if (data.Length % blockSize != 0)
-            {
-                print("FAULTY BLOCKLENGTH (AUDIO)");
-                return;
-            }
-
-            float[] dataLeft = new float[data.Length / 2];
-            float[] dataRight = new float[data.Length / 2];
-
-            for (int i = 0, j = 0; i < data.Length; i += 2, j++)
-            {
-                dataLeft[j] = data[i] * Gain;
-                dataRight[j] = data[i + 1] * Gain;
-            }
-
-            if (_applyHann)
-            {
-                Hann.ApplyHann(dataLeft);
-                Hann.ApplyHann(dataRight);
-            }
-
-
-            if (leftTask != null)
-            {
-                Task.WaitAll(leftTask);
-                Task.WaitAll(rightTask);
-            }
-
-            leftTask = Task.Run(() =>
-            {
-                dataLeft = reverb.ProgressiveConvolve(impulseResponseLeft, dataLeft, dataLeft,
-                    LiveConvolutionReverb.Side.Left,
-                    dataLeft.Length);
-                for (int i = 0, j = 0; i < data.Length; i += 2, j++)
-                {
-                    _lastData[i] = dataLeft[j];
-                }
-
-                leftData = dataLeft;
-            });
-            rightTask = Task.Run(() =>
-            {
-                dataRight = reverb.ProgressiveConvolve(impulseResponseRight, dataRight, dataRight,
-                    LiveConvolutionReverb.Side.Right,
-                    dataRight.Length);
-                for (int i = 0, j = 0; i < data.Length; i += 2, j++)
-                {
-                    _lastData[i + 1] = dataRight[j];
-                }
-            });
-            if (_lastData != null)
-            {
-                for (int i = 0; i < data.Length; i++)
-                {
-                    data[i] = _lastData[i];
-                }
-            }
-        }
+        // void OnAudioFilterRead(float[] data, int channels)
+        // {
+        //     if (bypass || channels < 2 || !_isSetup) return;
+        //     if (impulseResponseLeft == null || impulseResponseRight == null || impulseResponseRight.Length == 0 ||
+        //         impulseResponseLeft.Length == 0) return;
+        //     int blockAmount = _dataBufferLength / blockSize;
+        //
+        //     if (data.Length % blockSize != 0)
+        //     {
+        //         print("FAULTY BLOCKLENGTH (AUDIO)");
+        //         return;
+        //     }
+        //
+        //     float[] dataLeft = new float[data.Length / 2];
+        //     float[] dataRight = new float[data.Length / 2];
+        //
+        //     for (int i = 0, j = 0; i < data.Length; i += 2, j++)
+        //     {
+        //         dataLeft[j] = data[i] * Gain;
+        //         dataRight[j] = data[i + 1] * Gain;
+        //     }
+        //
+        //     if (_applyHann)
+        //     {
+        //         Hann.ApplyHann(dataLeft);
+        //         Hann.ApplyHann(dataRight);
+        //     }
+        //
+        //
+        //     if (leftTask != null)
+        //     {
+        //         Task.WaitAll(leftTask);
+        //         Task.WaitAll(rightTask);
+        //     }
+        //
+        //     leftTask = Task.Run(() =>
+        //     {
+        //         dataLeft = reverb.ProgressiveConvolve(impulseResponseLeft, dataLeft, dataLeft,
+        //             LiveConvolutionReverb.Side.Left,
+        //             dataLeft.Length);
+        //         for (int i = 0, j = 0; i < data.Length; i += 2, j++)
+        //         {
+        //             _lastData[i] = dataLeft[j];
+        //         }
+        //
+        //         leftData = dataLeft;
+        //     });
+        //     rightTask = Task.Run(() =>
+        //     {
+        //         dataRight = reverb.ProgressiveConvolve(impulseResponseRight, dataRight, dataRight,
+        //             LiveConvolutionReverb.Side.Right,
+        //             dataRight.Length);
+        //         for (int i = 0, j = 0; i < data.Length; i += 2, j++)
+        //         {
+        //             _lastData[i + 1] = dataRight[j];
+        //         }
+        //     });
+        //     if (_lastData != null)
+        //     {
+        //         for (int i = 0; i < data.Length; i++)
+        //         {
+        //             data[i] = _lastData[i];
+        //         }
+        //     }
+        // }
 
         public List<AudioRay> GetAllSelectedRays()
         {

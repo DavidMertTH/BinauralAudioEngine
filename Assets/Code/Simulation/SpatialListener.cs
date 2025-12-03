@@ -17,7 +17,7 @@ namespace Code.Simulation
         public bool renderSecondaryRay;
         public bool renderHigherOrderRays;
 
-        [Range(0, 20)] [SerializeField] public int bounces;
+        [Range(0, 100)] [SerializeField] public int bounces;
 
         [Range(0, 1)] [SerializeField] public float absorbtion;
 
@@ -26,10 +26,10 @@ namespace Code.Simulation
         private NativeArray<RaycastHit> _surroundingHitsSource;
         private NativeArray<RaycastHit> _surroundingHitsTarget;
 
-        private AudioRay _directRay;
-        private List<AudioRay> _primaryRays;
-        private List<AudioRay> _secondaryRays;
-        private List<AudioRay> _higherOrderRays;
+        public AudioRay DirectRay;
+        public List<AudioRay> PrimaryRays;
+        public List<AudioRay> SecondaryRays;
+        public List<AudioRay> HigherOrderRays;
 
         private void Awake()
         {
@@ -38,28 +38,28 @@ namespace Code.Simulation
 
         private void Update()
         {
-            UpdateAudioProcessor();
+            // UpdateAudioProcessor();
         }
 
-        private void UpdateAudioProcessor()
+        public void UpdateAudioProcessor()
         {
             float t1 = Time.realtimeSinceStartup;
             _surroundingHitsSource = AudioEnvironment.Instance.GetSurfacesAroundPosition(source.transform.position);
             _surroundingHitsTarget = AudioEnvironment.Instance.GetSurfacesAroundPosition(source.transform.position);
             float t2 = Time.realtimeSinceStartup;
 
-            _directRay = GetDirectRay(source.transform.position, _target.transform.position);
-            _primaryRays = imageSource.GetPrimaryReflections(_surroundingHitsSource, absorbtion);
-            _secondaryRays =
+            DirectRay = GetDirectRay(source.transform.position, _target.transform.position);
+            PrimaryRays = imageSource.GetPrimaryReflections(_surroundingHitsSource, absorbtion);
+            SecondaryRays =
                 imageSource.GetSecundaryReflections(_surroundingHitsSource, _surroundingHitsTarget, absorbtion);
-            _higherOrderRays = raycastAudio.GetHighOrderRays(
+            HigherOrderRays = raycastAudio.GetHighOrderRays(
                 _target.transform.position, bounces,
                 AudioEnvironment.Instance.GetRaycastsAroundPosition(source.transform.position), absorbtion);
 
-            binauralAudioProcessor.DirectHit = _directRay;
-            binauralAudioProcessor.PrimaryReflections = _primaryRays;
-            binauralAudioProcessor.SecundaryReflections = _secondaryRays;
-            binauralAudioProcessor.HigherOrderReflections = _higherOrderRays;
+            binauralAudioProcessor.DirectHit = DirectRay;
+            binauralAudioProcessor.PrimaryReflections = PrimaryRays;
+            binauralAudioProcessor.SecundaryReflections = SecondaryRays;
+            binauralAudioProcessor.HigherOrderReflections = HigherOrderRays;
 
             _surroundingHitsSource.Dispose();
             _surroundingHitsTarget.Dispose();
@@ -69,22 +69,22 @@ namespace Code.Simulation
 
         private void OnDrawGizmos()
         {
-            if (_primaryRays == null) return;
-            Color color = new Color(0.5f, (10 - _directRay.DistanceToImage) / 10, 0.5f, 1f);
+            if (PrimaryRays == null) return;
+            Color color = new Color(0.5f, (10 - DirectRay.DistanceToImage) / 10, 0.5f, 1f);
             Gizmos.color = color;
 
             if (renderDirectRay)
             {
-                if (_directRay.IsValid)
+                if (DirectRay.IsValid)
                 {
-                    Gizmos.DrawRay(_directRay.ImagePosition,
-                        (_target.transform.position - (Vector3)_directRay.ImagePosition));
+                    Gizmos.DrawRay(DirectRay.ImagePosition,
+                        (_target.transform.position - (Vector3)DirectRay.ImagePosition));
                 }
             }
 
             if (renderPrimaryRay)
             {
-                foreach (AudioRay ray in _primaryRays)
+                foreach (AudioRay ray in PrimaryRays)
                 {
                     if (ray.Positions.Length == 0) continue;
                     if (!ray.IsValid) return;
@@ -99,7 +99,7 @@ namespace Code.Simulation
 
             if (renderSecondaryRay)
             {
-                foreach (AudioRay ray in _secondaryRays)
+                foreach (AudioRay ray in SecondaryRays)
                 {
                     if (ray.Positions.Length == 0) continue;
                     if (!ray.IsValid) return;
@@ -115,7 +115,7 @@ namespace Code.Simulation
 
             if (renderHigherOrderRays)
             {
-                foreach (AudioRay ray in _higherOrderRays)
+                foreach (AudioRay ray in HigherOrderRays)
                 {
                     if (ray.Positions.Length == 0) continue;
                     if (!ray.IsValid) continue;

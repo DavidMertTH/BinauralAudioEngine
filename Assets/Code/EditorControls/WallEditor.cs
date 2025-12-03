@@ -26,9 +26,7 @@ namespace Code.EditorControlls
             _demoWall.gameObject.SetActive(false);
         }
 
-        void Update()
-        {
-        }
+
 
         public void ListenForInputs()
         {
