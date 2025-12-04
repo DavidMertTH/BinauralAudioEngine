@@ -17,7 +17,7 @@ namespace Code.Simulation
         private NativeArray<RaycastCommand> _commands;
         private NativeArray<RaycastHit> _hits;
         private readonly CoplanarHits _coplanarHits = new();
-        
+
         public JobHandle CastRaysAroundOrigins(NativeArray<float3>.ReadOnly origins, AudioPathArrayLayout layout,
             out NativeArray<RaycastHit> hits, out int hitsStride, out NativeArray<bool> isHitCoplanar)
         {
@@ -26,7 +26,8 @@ namespace Code.Simulation
             var getDirectionsHandle = GetDirections(numRaysPerOrigin, out var directions);
             var getCommandsHandle = GetCommands(getDirectionsHandle, origins, directions, out var commands);
             var raycastHandle = GetHits(getCommandsHandle, commands, out hits);
-            var checkCoplanarHandle = _coplanarHits.FindCoplanarHits(raycastHandle, hits, hitsStride, out isHitCoplanar);
+            var checkCoplanarHandle =
+                _coplanarHits.FindCoplanarHits(raycastHandle, hits, hitsStride, out isHitCoplanar);
             return checkCoplanarHandle;
         }
 
@@ -100,7 +101,7 @@ namespace Code.Simulation
             public void Execute(int index)
             {
                 // Create one raycast command for every direction and every origin
-                RaycastCommands[index] = new RaycastCommand(Origins[index / Origins.Length],
+                RaycastCommands[index] = new RaycastCommand(Origins[index / Directions.Length],
                     Directions[index % Directions.Length],
                     QueryParameters.Default);
             }

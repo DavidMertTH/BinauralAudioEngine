@@ -4,6 +4,7 @@ using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace Code.Simulation
 {
@@ -92,10 +93,15 @@ namespace Code.Simulation
             }
         }
 
+        /// <summary>
+        /// Create audio paths based on the raycasts results.
+        /// </summary>
         [BurstCompile]
         private struct CreatePathsJob : IJobFor
         {
+            [NativeDisableContainerSafetyRestriction]
             public NativeArray<AudioPath> Paths;
+
             [ReadOnly] public NativeArray<RaycastHit> VisibilityHits;
             [ReadOnly] public NativeArray<RaycastHit> SurroundingHits;
             [ReadOnly] public int HitsPerListenerOrSource;

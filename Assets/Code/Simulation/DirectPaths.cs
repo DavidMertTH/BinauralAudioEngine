@@ -5,6 +5,7 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using static Unity.Mathematics.math;
 using UnityEngine;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace Code.Simulation
 {
@@ -39,7 +40,8 @@ namespace Code.Simulation
                 Hits = _hits,
                 Commands = _commands,
             };
-            var evaluateRaycastsHandle = evaluateRaycastsJob.ScheduleParallel(paths.Length, 32, dependency: execRaycastsHandle);
+            var evaluateRaycastsHandle =
+                evaluateRaycastsJob.ScheduleParallel(paths.Length, 32, dependency: execRaycastsHandle);
             return evaluateRaycastsHandle;
         }
 
@@ -59,10 +61,16 @@ namespace Code.Simulation
             }
         }
 
+        /// <summary>
+        /// Create audio paths from the raycast results. Disable safety checks to write to the <c>Paths</c> sub-array
+        /// while other jobs are writing to different sub-arrays of the same array.
+        /// </summary>
         [BurstCompile]
         private struct EvaluateRaycasts : IJobFor
         {
+            [NativeDisableContainerSafetyRestriction]
             public NativeArray<AudioPath> Paths;
+
             [ReadOnly] public NativeArray<RaycastHit> Hits;
             [ReadOnly] public NativeArray<RaycastCommand> Commands;
 

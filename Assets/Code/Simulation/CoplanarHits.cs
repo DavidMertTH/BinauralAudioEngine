@@ -24,15 +24,24 @@ namespace Code.Simulation
             var numComparisonsTotal = numComparisonsPerOrigin * numOrigins;
             _coplanarComparisonResults =
                 Helper.ReallocateIfNeeded(_coplanarComparisonResults, numComparisonsTotal, Allocator.Persistent);
-            isCoplanar = _coplanarComparisonResults;
 
             var findCoplanarHitsHandle = new FindCoplanarHitsJob()
             {
                 IsCoplanar = _coplanarComparisonResults,
                 Hits = hits,
                 HitsPerOrigin = hitsStride,
+                ComparisonsPerOrigin = numComparisonsPerOrigin
             }.ScheduleParallel(numComparisonsTotal, 32, computeHitsHandle);
             _isHitCoplanar = Helper.ReallocateIfNeeded(_isHitCoplanar, hits.Length, Allocator.Persistent);
+            isCoplanar = _isHitCoplanar;
+
+            var storeCoplanarHitsHandle = new StoreCoplanarHitsJob()
+            {
+                IsHitCoplanar = _isHitCoplanar,
+                ComparisonResults = _coplanarComparisonResults,
+            }.ScheduleParallel(_isHitCoplanar.Length, 32, findCoplanarHitsHandle);
+
+            return storeCoplanarHitsHandle;
         }
 
         [BurstCompile]
@@ -47,7 +56,8 @@ namespace Code.Simulation
             {
                 var comparisonIndex = index % ComparisonsPerOrigin;
                 Helper.GetIndexPair(HitsPerOrigin, comparisonIndex, out var i, out var j);
-                var firstHitIndex = Hits.Length - index % ComparisonsPerOrigin;
+                var originIndex = index / ComparisonsPerOrigin;
+                var firstHitIndex = originIndex * HitsPerOrigin;
                 i += firstHitIndex;
                 j += firstHitIndex;
                 IsCoplanar[index] = CheckCoplanar(Hits[i], Hits[j]);
@@ -72,7 +82,17 @@ namespace Code.Simulation
 
             public void Execute(int index)
             {
-                IsHitCoplanar[index] = 
+                var n = IsHitCoplanar.Length - index;
+                for (var i = (n - 1) * (n - 2) / 2; i < n * (n - 1) / 2; i++)
+                {
+                    if (ComparisonResults[i])
+                    {
+                        IsHitCoplanar[index] = true;
+                        return;
+                    }
+                }
+
+                IsHitCoplanar[index] = false;
             }
         }
 
