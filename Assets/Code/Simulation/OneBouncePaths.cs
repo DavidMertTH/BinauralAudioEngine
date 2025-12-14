@@ -5,7 +5,6 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using Unity.Collections.LowLevel.Unsafe;
-using System.Runtime.InteropServices;
 
 namespace Code.Simulation
 {
@@ -22,16 +21,15 @@ namespace Code.Simulation
             NativeArray<RaycastHit> hitsAroundListener, NativeArray<bool> isHitAroundListenerCoplanar,
             JobHandle hitsReadyHandle, NativeArray<AudioPath> result)
         {
-            // Every hit around every source is possible reflection point
-            var numReflectionPoints = hitsAroundListener.Length * sources.Length;
+            // Every hit around the listener is a surface with a possible reflection point
+            var numReflectionPoints = hitsAroundListener.Length;
             var numRaycasts = numReflectionPoints * 2; // Need to check visibility from listener and from source
             _commands = Helper.ReallocateIfNeeded(_commands, numRaycasts, Allocator.Persistent);
             _reflectionPoints =
                 Helper.ReallocateIfNeeded(_reflectionPoints, numReflectionPoints, Allocator.Persistent);
             var findReflectionsHandle = new FindReflectionPoints()
             {
-                CommandsA = _commands.Slice().SliceWithStride<RaycastCommand>(2 * Marshal.SizeOf<RaycastCommand>()),
-                CommandsB = _commands.Slice(1).SliceWithStride<RaycastCommand>(2 * Marshal.SizeOf<RaycastCommand>()),
+                Commands = _commands,
                 ReflectionPoints = _reflectionPoints,
                 Sources = sources,
                 Listener = listener,
@@ -45,20 +43,20 @@ namespace Code.Simulation
             {
                 Paths = result,
                 ReflectionPoints = _reflectionPoints,
-                SurroundingHits = surroundingHits,
-                HitsPerListenerOrSource = hitsPerListenerOrSource,
+                HitsAroundListener = hitsAroundListener,
+                IsHitAroundListenerCoplanar = isHitAroundListenerCoplanar,
                 VisibilityHits = _visibilityHits,
                 SourcePositions = sources,
                 ListenerPosition = listener,
-            }.ScheduleParallel(surroundingHits.Length, 32, doRaycastsHandle);
+            }.ScheduleParallel(numReflectionPoints, 32, doRaycastsHandle);
             return createPathsHandle;
         }
 
         [BurstCompile]
         private struct FindReflectionPoints : IJobFor
         {
-            public NativeSlice<RaycastCommand> CommandsA;
-            public NativeSlice<RaycastCommand> CommandsB;
+            [NativeDisableContainerSafetyRestriction]
+            public NativeArray<RaycastCommand> Commands;
             public NativeArray<float3> ReflectionPoints;
 
             [ReadOnly] public NativeArray<float3> Sources;
@@ -72,14 +70,14 @@ namespace Code.Simulation
                 // Coplanar surfaces would produce duplicate reflection points
                 if (IsHitAroundListenerCoplanar[hitIndex])
                     return;
-                var sourceIndex = hitIndex / Sources.Length;
+                var sourceIndex = hitIndex / HitsAroundListener.Length;
                 ReflectionPoints[index] = FindSpecularReflection(Sources[sourceIndex], Listener,
                     HitsAroundListener[hitIndex].normal, HitsAroundListener[hitIndex].point);
-                CommandsA[index] = new RaycastCommand(
+                Commands[index] = new RaycastCommand(
                     from: Listener,
                     direction: ReflectionPoints[index] - Listener,
                     QueryParameters.Default);
-                CommandsB[index] = new RaycastCommand(
+                Commands[index + 1] = new RaycastCommand(
                     from: Sources[sourceIndex],
                     direction: ReflectionPoints[index] - Sources[sourceIndex],
                     QueryParameters.Default);
@@ -106,19 +104,21 @@ namespace Code.Simulation
             public NativeArray<AudioPath> Paths;
 
             [ReadOnly] public NativeArray<RaycastHit> VisibilityHits;
-            [ReadOnly] public NativeArray<RaycastHit> SurroundingHits;
-            [ReadOnly] public int HitsPerListenerOrSource;
+            [ReadOnly] public NativeArray<RaycastHit> HitsAroundListener;
+            [ReadOnly] public NativeArray<bool> IsHitAroundListenerCoplanar;
             [ReadOnly] public NativeArray<float3> ReflectionPoints;
             [ReadOnly] public NativeArray<float3> SourcePositions;
             [ReadOnly] public float3 ListenerPosition;
 
             public void Execute(int index)
             {
-                var reflectionPointIsVisibleFromListener = DidRayHitReflectionPoint(
-                    VisibilityHits[index * 2], SurroundingHits[index].normal, ReflectionPoints[index]);
-                var reflectionPointIsVisibleFromSource = DidRayHitReflectionPoint(
-                    VisibilityHits[index * 2 + 1], SurroundingHits[index].normal, ReflectionPoints[index]);
-                if (reflectionPointIsVisibleFromListener && reflectionPointIsVisibleFromSource)
+                var isReflectionPointIsVisibleFromListener = DidRayHitReflectionPoint(
+                    VisibilityHits[index * 2], HitsAroundListener[index].normal, ReflectionPoints[index]);
+                var isReflectionPointIsVisibleFromSource = DidRayHitReflectionPoint(
+                    VisibilityHits[index * 2 + 1], HitsAroundListener[index].normal, ReflectionPoints[index]);
+                if (!IsHitAroundListenerCoplanar[index % HitsAroundListener.Length] && 
+                    isReflectionPointIsVisibleFromListener &&
+                    isReflectionPointIsVisibleFromSource)
                 {
                     Paths[index] = new AudioPath()
                     {
@@ -130,7 +130,7 @@ namespace Code.Simulation
                     };
                     Paths[index].Positions.Add(ListenerPosition);
                     Paths[index].Positions.Add(ReflectionPoints[index]);
-                    Paths[index].Positions.Add(SourcePositions[index / HitsPerListenerOrSource]);
+                    Paths[index].Positions.Add(SourcePositions[index / HitsAroundListener.Length]);
                 }
                 else
                 {

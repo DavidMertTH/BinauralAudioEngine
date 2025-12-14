@@ -34,11 +34,11 @@ namespace Code.Simulation
         private int GetNumRaysPerOrigin(AudioPathArrayLayout layout)
         {
             var numSources = layout.DirectCount;
-            // The number or ray casts around each listener and each source needed for the requested
+            // The number or ray casts around the listener and each source needed for the requested
             // number of paths with two bounces
             var a = sqrt(layout.TwoBouncesCount / (float)numSources);
             // The number of ray casts needed for the requested number of paths with one bounce
-            var b = layout.OneBounceCount / (float)(2 * numSources);
+            var b = layout.OneBounceCount / (float)numSources;
             // The number used is the maximum of the two
             return (int)ceil(max(a, b));
         }
