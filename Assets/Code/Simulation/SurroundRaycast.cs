@@ -15,8 +15,8 @@ namespace Code.Simulation
     {
         private NativeArray<float3> _directions;
         private NativeArray<RaycastCommand> _commands;
-        private NativeArray<RaycastHit> _hits;
-        private readonly CoplanarHits _coplanarHits = new();
+        public NativeArray<RaycastHit> _hits; // TODO: make private
+        public readonly CoplanarHits _coplanarHits = new(); // TODO: make private
 
         public JobHandle CastRaysAroundOrigins(NativeArray<float3>.ReadOnly origins, AudioPathArrayLayout layout,
             out NativeArray<RaycastHit> hits, out int hitsStride, out NativeArray<bool> isHitCoplanar)

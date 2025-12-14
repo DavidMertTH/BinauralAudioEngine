@@ -10,7 +10,7 @@ namespace Code.Simulation
     public class CoplanarHits : IDisposable
     {
         private NativeArray<bool> _coplanarComparisonResults;
-        private NativeArray<bool> _isHitCoplanar;
+        public NativeArray<bool> _isHitCoplanar; // TODO: make private
 
         /// <summary>
         /// Finds raycast hits from the same origin that hit the same surface. This is important for the image source
@@ -22,7 +22,7 @@ namespace Code.Simulation
         /// <param name="isCoplanar">Each element corresponds to the hit in <c>hits</c> with the same index.
         /// Within each group of coplanar hits, one will be <c>false</c>, the others <c>true</c>, such that they can
         /// be skipped when coplanar hits are not relevant.</param>
-        /// <returns></returns>
+        /// <returns>A <c>JobHandle</c> that completes when the <c>isCoplanar</c> array is ready.</returns>
         public JobHandle FindCoplanarHits(JobHandle computeHitsHandle, NativeArray<RaycastHit> hits, int hitsStride,
             out NativeArray<bool> isCoplanar)
         {
@@ -46,6 +46,7 @@ namespace Code.Simulation
             {
                 IsHitCoplanar = _isHitCoplanar,
                 ComparisonResults = _coplanarComparisonResults,
+                Hits = hits,
                 HitsPerOrigin = hitsStride,
                 ComparisonsPerOrigin = numComparisonsPerOrigin
             }.ScheduleParallel(_isHitCoplanar.Length, 32, findCoplanarHitsHandle);
@@ -95,6 +96,12 @@ namespace Code.Simulation
             /// </summary>
             private bool CheckCoplanar(RaycastHit a, RaycastHit b)
             {
+                var bothMissed = a.distance == 0f && b.distance == 0f;
+                if (bothMissed)
+                    return true;
+                var oneHitOneMissed = a.distance == 0f != (b.distance == 0f);
+                if (oneHitOneMissed)
+                    return false;
                 var sameNormal = math.dot(a.normal, b.normal) > 0.99;
                 var distToPlane = math.abs(math.dot(a.point - b.point, b.normal));
                 return sameNormal && distToPlane < 0.01f;
@@ -108,12 +115,30 @@ namespace Code.Simulation
         private struct StoreCoplanarHitsJob : IJobFor
         {
             public NativeArray<bool> IsHitCoplanar;
+
             [ReadOnly] public NativeArray<bool> ComparisonResults;
+
+            /// <summary>
+            /// <c>Hits</c> is divided by a stride of <c>HitsPerOrigin</c> into groups of raycast hits from a common
+            /// origin.
+            /// </summary>
+            [ReadOnly] public NativeArray<RaycastHit> Hits;
+
+            /// <summary>
+            /// The number of raycasts done per origin and subsequently the number of raycast hits per origin.
+            /// </summary>
             [ReadOnly] public int HitsPerOrigin;
+
             [ReadOnly] public int ComparisonsPerOrigin;
 
             public void Execute(int index)
             {
+                if (Hits[index].distance == 0f)
+                {
+                    IsHitCoplanar[index] = true;
+                    return;
+                }
+
                 var originsBeforeThis = index / HitsPerOrigin;
                 var comparisonsBeforeThis = originsBeforeThis * ComparisonsPerOrigin;
                 var indexPerOrigin = index % HitsPerOrigin; // The first hit from each origin will be 0

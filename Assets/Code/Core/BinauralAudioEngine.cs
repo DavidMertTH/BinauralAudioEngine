@@ -15,6 +15,11 @@ namespace Code.Core
         [SerializeField] private BinauralAudioSettings settings;
         public BinauralAudioSettings Settings => settings ??= new BinauralAudioSettings();
         public NativeArray<AudioPath>.ReadOnly AudioPaths => _simulationData.AllAudioPaths.AsReadOnly();
+        
+        // TODO: Remove
+        public NativeArray<RaycastHit>.ReadOnly SurroundingHits => _surroundRaycast._hits.AsReadOnly();
+        public NativeArray<bool>.ReadOnly IsCoplanar => _surroundRaycast._coplanarHits._isHitCoplanar.AsReadOnly();
+        
         private Transform _listener;
         private readonly List<BinauralAudioFilter> _audioFilters = new();
         private readonly GlobalSimulationData _simulationData = new();

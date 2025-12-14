@@ -57,6 +57,7 @@ namespace Code.Simulation
         {
             [NativeDisableContainerSafetyRestriction]
             public NativeArray<RaycastCommand> Commands;
+
             public NativeArray<float3> ReflectionPoints;
 
             [ReadOnly] public NativeArray<float3> Sources;
@@ -73,14 +74,18 @@ namespace Code.Simulation
                 var sourceIndex = hitIndex / HitsAroundListener.Length;
                 ReflectionPoints[index] = FindSpecularReflection(Sources[sourceIndex], Listener,
                     HitsAroundListener[hitIndex].normal, HitsAroundListener[hitIndex].point);
-                Commands[index] = new RaycastCommand(
+                var fromListenerToReflection = ReflectionPoints[index] - Listener;
+                Commands[index * 2] = new RaycastCommand(
                     from: Listener,
-                    direction: ReflectionPoints[index] - Listener,
-                    QueryParameters.Default);
-                Commands[index + 1] = new RaycastCommand(
-                    from: Sources[sourceIndex],
-                    direction: ReflectionPoints[index] - Sources[sourceIndex],
-                    QueryParameters.Default);
+                    direction: fromListenerToReflection,
+                    QueryParameters.Default,
+                    distance: math.length(fromListenerToReflection) - 0.01f);
+                var fromReflectionToSource = Sources[sourceIndex] - ReflectionPoints[index];
+                Commands[index * 2 + 1] = new RaycastCommand(
+                    from: ReflectionPoints[index],
+                    direction: fromReflectionToSource,
+                    QueryParameters.Default,
+                    distance: math.length(fromReflectionToSource) - 0.01f);
             }
 
             private float3 FindSpecularReflection(float3 a, float3 b, float3 planeNormal, float3 planePoint)
@@ -112,13 +117,11 @@ namespace Code.Simulation
 
             public void Execute(int index)
             {
-                var isReflectionPointIsVisibleFromListener = DidRayHitReflectionPoint(
-                    VisibilityHits[index * 2], HitsAroundListener[index].normal, ReflectionPoints[index]);
-                var isReflectionPointIsVisibleFromSource = DidRayHitReflectionPoint(
-                    VisibilityHits[index * 2 + 1], HitsAroundListener[index].normal, ReflectionPoints[index]);
-                if (!IsHitAroundListenerCoplanar[index % HitsAroundListener.Length] && 
-                    isReflectionPointIsVisibleFromListener &&
-                    isReflectionPointIsVisibleFromSource)
+                var isReflectionPointVisibleFromListener = VisibilityHits[index * 2].distance == 0f;
+                var isReflectionPointVisibleFromSource = VisibilityHits[index * 2 + 1].distance == 0f;
+                if (!IsHitAroundListenerCoplanar[index % HitsAroundListener.Length]
+                    && isReflectionPointVisibleFromListener
+                    && isReflectionPointVisibleFromSource)
                 {
                     Paths[index] = new AudioPath()
                     {
@@ -136,16 +139,6 @@ namespace Code.Simulation
                 {
                     Paths[index] = new AudioPath() { IsValid = false };
                 }
-            }
-
-            private bool DidRayHitReflectionPoint(RaycastHit hit, float3 reflectionNormal, float3 reflectionPoint)
-            {
-                var normalMatches = math.dot(hit.normal, reflectionNormal) > 0.99f;
-                var hitPointMatches =
-                    math.abs(hit.point.x - reflectionPoint.x) +
-                    math.abs(hit.point.y - reflectionPoint.y) +
-                    math.abs(hit.point.z - reflectionPoint.z) > 0.01f;
-                return normalMatches && hitPointMatches;
             }
         }
 
