@@ -39,9 +39,11 @@ namespace Code.Simulation
                 Paths = paths,
                 Hits = _hits,
                 Commands = _commands,
+                Listener = listener,
+                Sources = sources,
             };
             var evaluateRaycastsHandle =
-                evaluateRaycastsJob.ScheduleParallel(paths.Length, 32, dependency: execRaycastsHandle);
+                evaluateRaycastsJob.ScheduleParallel(sources.Length, 32, dependency: execRaycastsHandle);
             return evaluateRaycastsHandle;
         }
 
@@ -55,24 +57,27 @@ namespace Code.Simulation
 
             public void Execute(int index)
             {
-                var direction = Listener - Sources[index];
+                var direction = Sources[index] - Listener;
                 var distance = length(direction);
-                Commands[index] = new RaycastCommand(Sources[index], direction, QueryParameters.Default, distance);
+                Commands[index] = new RaycastCommand(Listener, direction, QueryParameters.Default, distance);
             }
         }
 
         /// <summary>
-        /// Create audio paths from the raycast results. Disable safety checks to write to the <c>Paths</c> sub-array
-        /// while other jobs are writing to different sub-arrays of the same array.
+        /// Create audio paths from the raycast results.
         /// </summary>
         [BurstCompile]
         private struct EvaluateRaycasts : IJobFor
         {
+            // Disable safety checks to write to the <c>Paths</c> sub-array
+            // while other jobs are writing to different sub-arrays of the same array.
             [NativeDisableContainerSafetyRestriction]
             public NativeArray<AudioPath> Paths;
 
             [ReadOnly] public NativeArray<RaycastHit> Hits;
             [ReadOnly] public NativeArray<RaycastCommand> Commands;
+            [ReadOnly] public NativeArray<float3> Sources;
+            [ReadOnly] public float3 Listener;
 
             public void Execute(int index)
             {
@@ -80,8 +85,10 @@ namespace Code.Simulation
                 var ray = Paths[index];
                 ray.Reflections = 0;
                 ray.DistanceToImage = Commands[index].distance;
-                ray.IsValid = didHit;
+                ray.IsValid = !didHit; // nothing blocks the ray
                 ray.Energy = 1f;
+                ray.Positions.Add(Listener);
+                ray.Positions.Add(Sources[index]);
                 Paths[index] = ray;
             }
         }
