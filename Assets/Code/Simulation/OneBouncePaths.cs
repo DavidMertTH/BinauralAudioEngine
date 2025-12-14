@@ -5,6 +5,7 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using Unity.Collections.LowLevel.Unsafe;
+using System.Runtime.InteropServices;
 
 namespace Code.Simulation
 {
@@ -18,24 +19,25 @@ namespace Code.Simulation
         private NativeArray<RaycastHit> _visibilityHits;
 
         public JobHandle GetOneBouncePaths(float3 listener, NativeArray<float3> sources,
-            NativeArray<RaycastHit> surroundingHits, int hitsPerListenerOrSource, NativeArray<bool> isCoplanar,
+            NativeArray<RaycastHit> hitsAroundListener, NativeArray<bool> isHitAroundListenerCoplanar,
             JobHandle hitsReadyHandle, NativeArray<AudioPath> result)
         {
-            // One ray to the reflection point from the listener, one from the source
-            var numRaycasts = surroundingHits.Length * 2;
+            // Every hit around every source is possible reflection point
+            var numReflectionPoints = hitsAroundListener.Length * sources.Length;
+            var numRaycasts = numReflectionPoints * 2; // Need to check visibility from listener and from source
             _commands = Helper.ReallocateIfNeeded(_commands, numRaycasts, Allocator.Persistent);
             _reflectionPoints =
-                Helper.ReallocateIfNeeded(_reflectionPoints, surroundingHits.Length, Allocator.Persistent);
+                Helper.ReallocateIfNeeded(_reflectionPoints, numReflectionPoints, Allocator.Persistent);
             var findReflectionsHandle = new FindReflectionPoints()
             {
-                Commands = _commands,
+                CommandsA = _commands.Slice().SliceWithStride<RaycastCommand>(2 * Marshal.SizeOf<RaycastCommand>()),
+                CommandsB = _commands.Slice(1).SliceWithStride<RaycastCommand>(2 * Marshal.SizeOf<RaycastCommand>()),
                 ReflectionPoints = _reflectionPoints,
                 Sources = sources,
                 Listener = listener,
-                SurroundingHits = surroundingHits,
-                HitsPerListenerOrSource = hitsPerListenerOrSource,
-                IsCoplanar = isCoplanar
-            }.ScheduleParallel(surroundingHits.Length, 32, hitsReadyHandle);
+                HitsAroundListener = hitsAroundListener,
+                IsHitAroundListenerCoplanar = isHitAroundListenerCoplanar
+            }.ScheduleParallel(numReflectionPoints, 32, hitsReadyHandle);
             _visibilityHits = Helper.ReallocateIfNeeded(_visibilityHits, numRaycasts, Allocator.Persistent);
             var doRaycastsHandle = RaycastCommand.ScheduleBatch(
                 _commands, _visibilityHits, 1, findReflectionsHandle);
@@ -55,30 +57,31 @@ namespace Code.Simulation
         [BurstCompile]
         private struct FindReflectionPoints : IJobFor
         {
-            public NativeArray<RaycastCommand> Commands;
+            public NativeSlice<RaycastCommand> CommandsA;
+            public NativeSlice<RaycastCommand> CommandsB;
             public NativeArray<float3> ReflectionPoints;
 
             [ReadOnly] public NativeArray<float3> Sources;
             [ReadOnly] public float3 Listener;
-            [ReadOnly] public NativeArray<RaycastHit> SurroundingHits;
-            [ReadOnly] public int HitsPerListenerOrSource;
-            [ReadOnly] public NativeArray<bool> IsCoplanar;
+            [ReadOnly] public NativeArray<RaycastHit> HitsAroundListener;
+            [ReadOnly] public NativeArray<bool> IsHitAroundListenerCoplanar;
 
-            public void Execute(int hitIndex)
+            public void Execute(int index)
             {
+                var hitIndex = index % HitsAroundListener.Length;
                 // Coplanar surfaces would produce duplicate reflection points
-                if (IsCoplanar[hitIndex])
+                if (IsHitAroundListenerCoplanar[hitIndex])
                     return;
-                var sourceIndex = hitIndex / HitsPerListenerOrSource;
-                ReflectionPoints[hitIndex] = FindSpecularReflection(Sources[sourceIndex], Listener,
-                    SurroundingHits[hitIndex].normal, SurroundingHits[hitIndex].point);
-                Commands[hitIndex] = new RaycastCommand(
+                var sourceIndex = hitIndex / Sources.Length;
+                ReflectionPoints[index] = FindSpecularReflection(Sources[sourceIndex], Listener,
+                    HitsAroundListener[hitIndex].normal, HitsAroundListener[hitIndex].point);
+                CommandsA[index] = new RaycastCommand(
                     from: Listener,
-                    direction: ReflectionPoints[hitIndex] - Listener,
+                    direction: ReflectionPoints[index] - Listener,
                     QueryParameters.Default);
-                Commands[hitIndex + 1] = new RaycastCommand(
+                CommandsB[index] = new RaycastCommand(
                     from: Sources[sourceIndex],
-                    direction: ReflectionPoints[hitIndex] - Sources[sourceIndex],
+                    direction: ReflectionPoints[index] - Sources[sourceIndex],
                     QueryParameters.Default);
             }
 
