@@ -17,12 +17,14 @@ namespace Code.Simulation
         private NativeArray<RaycastCommand> _commands;
         public NativeArray<RaycastHit> _hits; // TODO: make private
         public readonly CoplanarHits _coplanarHits = new(); // TODO: make private
+        public int hitsPerOrigin; // TODO: remove
 
         public JobHandle CastRaysAroundOrigins(NativeArray<float3>.ReadOnly origins, AudioPathArrayLayout layout,
             out NativeArray<RaycastHit> hits, out int hitsStride, out NativeArray<bool> isHitCoplanar)
         {
             var numRaysPerOrigin = GetNumRaysPerOrigin(layout);
             hitsStride = numRaysPerOrigin;
+            hitsPerOrigin = numRaysPerOrigin;
             var getDirectionsHandle = GetDirections(numRaysPerOrigin, out var directions);
             var getCommandsHandle = GetCommands(getDirectionsHandle, origins, directions, out var commands);
             var raycastHandle = GetHits(getCommandsHandle, commands, out hits);

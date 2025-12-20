@@ -18,6 +18,7 @@ namespace Code.Core
         
         // TODO: Remove
         public NativeArray<RaycastHit>.ReadOnly SurroundingHits => _surroundRaycast._hits.AsReadOnly();
+        public int HitsPerOrigin => _surroundRaycast.hitsPerOrigin;
         public NativeArray<bool>.ReadOnly IsCoplanar => _surroundRaycast._coplanarHits._isHitCoplanar.AsReadOnly();
         
         private Transform _listener;

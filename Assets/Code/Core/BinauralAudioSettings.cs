@@ -13,9 +13,9 @@ namespace Code.Core
         [SerializeField] private bool enableHannFiltering;
         public bool EnableHannFiltering => enableHannFiltering;
 
-        [SerializeField] [Range(100f, 10000f)] private int oneBounceRayCount = 1000;
-        [SerializeField] [Range(100f, 10000f)] private int twoBounceRayCount = 1000;
-        [SerializeField] [Range(100f, 10000f)] private int manyBounceRayCount = 1000;
+        [SerializeField] [Range(1f, 10000f)] private int oneBounceRayCount = 1000;
+        [SerializeField] [Range(1f, 10000f)] private int twoBounceRayCount = 1000;
+        [SerializeField] [Range(1f, 10000f)] private int manyBounceRayCount = 1000;
 
         public AudioPathArrayLayout GetAudioPathArrayLayout(int numSources) =>
             new(numSources, oneBounceRayCount, twoBounceRayCount, manyBounceRayCount);

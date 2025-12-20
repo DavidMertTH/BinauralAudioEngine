@@ -104,7 +104,9 @@ namespace Code.Simulation
                     return false;
                 var sameNormal = math.dot(a.normal, b.normal) > 0.99;
                 var distToPlane = math.abs(math.dot(a.point - b.point, b.normal));
-                return sameNormal && distToPlane < 0.01f;
+                if (sameNormal && distToPlane < 0.01f)
+                    return true;
+                return false;
             }
         }
 

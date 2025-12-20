@@ -7,12 +7,12 @@ namespace Code.Analysis
     {
         private void Update()
         {
-            for (var i = 0; i < BinauralAudioEngine.Instance.SurroundingHits.Length; i++)
+            // Show the raycasts for the listener only
+            for (var i = 0; i < BinauralAudioEngine.Instance.HitsPerOrigin; i++)
             {
                 var hit = BinauralAudioEngine.Instance.SurroundingHits[i];
                 var isCoplanar = BinauralAudioEngine.Instance.IsCoplanar[i];
-                if (hit.collider == null) continue;
-                var color = isCoplanar ? Color.green : Color.red;
+                var color = hit.collider == null ? Color.red : isCoplanar ? Color.grey : Color.green;
                 Debug.DrawLine(Camera.main.transform.position, hit.point, color);
             }
         }
