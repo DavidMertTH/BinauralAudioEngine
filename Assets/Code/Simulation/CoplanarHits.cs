@@ -58,9 +58,12 @@ namespace Code.Simulation
         private struct FindCoplanarHitsJob : IJobFor
         {
             /// <summary>
-            /// The output of the job. Every group of <c>ComparisonsPerOrigin</c> consecutive elements refers to the
-            /// hits of one raycast origin from <c>Hits</c>. Every element specifies whether a pair of raycasts from
-            /// that origin hit coplanar surfaces. 
+            /// Output of the job.
+            /// Contains a boolean value for each pair of two raycasts from the same origin. If an entry is true, two
+            /// raycasts hit coplanar surfaces or both raycasts hit nothing. The comparison results for each origin are
+            /// organized sequentially in groups of <c>ComparisonsPerOrigin</c> values. The indices in the hits array
+            /// that were compared for each entry in this array follow this example pattern (for 4 hits per origin):
+            /// 0,1 - 0,2 - 0,3 - 1,2 - 1,3 - 2,3
             /// </summary>
             public NativeArray<bool> IsCoplanar;
 
@@ -116,8 +119,16 @@ namespace Code.Simulation
         [BurstCompile]
         private struct StoreCoplanarHitsJob : IJobFor
         {
+            /// <summary>
+            /// Output of the job. Same number of entries as <c>Hits</c>. Each entry specifies whether the corresponding
+            /// entry in <c>Hits</c> could be removed from the array without reducing the number of hit surfaces, such
+            /// that redundant work can be avoided later.
+            /// </summary>
             public NativeArray<bool> IsHitCoplanar;
 
+            /// <summary>
+            /// Output of <c>FindCoplanarHitsJob</c>. Refer to <c>FindCoplanarHitsJob</c> for documentation.
+            /// </summary>
             [ReadOnly] public NativeArray<bool> ComparisonResults;
 
             /// <summary>
@@ -131,6 +142,9 @@ namespace Code.Simulation
             /// </summary>
             [ReadOnly] public int HitsPerOrigin;
 
+            /// <summary>
+            /// The number of comparisons 
+            /// </summary>
             [ReadOnly] public int ComparisonsPerOrigin;
 
             public void Execute(int index)
@@ -140,11 +154,14 @@ namespace Code.Simulation
                     IsHitCoplanar[index] = true;
                     return;
                 }
-
+                
                 var originsBeforeThis = index / HitsPerOrigin;
                 var comparisonsBeforeThis = originsBeforeThis * ComparisonsPerOrigin;
                 var indexPerOrigin = index % HitsPerOrigin; // The first hit from each origin will be 0
-                var startIndex = comparisonsBeforeThis + (indexPerOrigin - 1) * (indexPerOrigin - 2) / 2;
+                // A hit is coplanar/redundant if any hit with a higher index is coplanar to it. Find the range of
+                // comparisons where the hit with the current index was compared to hits with higher indices.
+                var startIndex = comparisonsBeforeThis + ComparisonsPerOrigin -
+                                 (HitsPerOrigin - indexPerOrigin) * (HitsPerOrigin - indexPerOrigin - 1) / 2;
                 var endIndex = startIndex + HitsPerOrigin - indexPerOrigin - 1;
                 for (var i = startIndex; i < endIndex; i++)
                 {

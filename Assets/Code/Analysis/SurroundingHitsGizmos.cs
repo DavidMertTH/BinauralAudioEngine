@@ -12,7 +12,7 @@ namespace Code.Analysis
             {
                 var hit = BinauralAudioEngine.Instance.SurroundingHits[i];
                 var isCoplanar = BinauralAudioEngine.Instance.IsCoplanar[i];
-                var color = hit.collider == null ? Color.red : isCoplanar ? Color.grey : Color.green;
+                var color = isCoplanar ? Color.grey : Color.green;
                 Debug.DrawLine(Camera.main.transform.position, hit.point, color);
             }
         }
