@@ -33,7 +33,7 @@ namespace Code.Simulation
             _hits = Helper.ReallocateIfNeeded(_hits, sources.Length, Allocator.Persistent);
             var execRaycastsHandle = RaycastCommand.ScheduleBatch(_commands, _hits, 1, dependsOn: createCommandsHandle);
 
-            // Evaluate raycasts -> audio rays
+            // Evaluate raycasts -> audio paths
             var evaluateRaycastsJob = new EvaluateRaycasts()
             {
                 Paths = paths,
@@ -82,14 +82,14 @@ namespace Code.Simulation
             public void Execute(int index)
             {
                 var didHit = Hits[index].distance != 0f;
-                var ray = Paths[index];
-                ray.Reflections = 0;
-                ray.DistanceToImage = Commands[index].distance;
-                ray.IsValid = !didHit; // nothing blocks the ray
-                ray.Energy = 1f;
-                ray.Positions.Add(Listener);
-                ray.Positions.Add(Sources[index]);
-                Paths[index] = ray;
+                var path = Paths[index];
+                path.Reflections = 0;
+                path.DistanceToImage = Commands[index].distance;
+                path.IsValid = !didHit; // nothing blocks the ray
+                path.Energy = 1f;
+                path.Positions.Add(Listener);
+                path.Positions.Add(Sources[index]);
+                Paths[index] = path;
             }
         }
 
