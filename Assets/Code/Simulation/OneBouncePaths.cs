@@ -90,8 +90,8 @@ namespace Code.Simulation
 
             private float3 FindSpecularReflection(float3 a, float3 b, float3 planeNormal, float3 planePoint)
             {
-                var aToPlaneDist = Helper.DistanceFronPlane(a, planeNormal, planePoint);
-                var bToPlaneDist = Helper.DistanceFronPlane(b, planeNormal, planePoint);
+                var aToPlaneDist = Helper.DistanceFronPlane(a, planePoint, planeNormal);
+                var bToPlaneDist = Helper.DistanceFronPlane(b, planePoint, planeNormal);
                 var aProj = a - planeNormal * aToPlaneDist;
                 var bProj = b - planeNormal * bToPlaneDist;
                 var t = aToPlaneDist / (aToPlaneDist + bToPlaneDist);
@@ -123,7 +123,7 @@ namespace Code.Simulation
                     && isReflectionPointVisibleFromListener
                     && isReflectionPointVisibleFromSource)
                 {
-                    Paths[index] = new AudioPath()
+                    var path = new AudioPath()
                     {
                         Reflections = 1,
                         ImagePosition = ReflectionPoints[index],
@@ -131,9 +131,10 @@ namespace Code.Simulation
                         IsValid = true,
                         Energy = 1f, // TODO: Calc energy
                     };
-                    Paths[index].Positions.Add(ListenerPosition);
-                    Paths[index].Positions.Add(ReflectionPoints[index]);
-                    Paths[index].Positions.Add(SourcePositions[index / HitsAroundListener.Length]);
+                    path.Positions.Add(ListenerPosition);
+                    path.Positions.Add(ReflectionPoints[index]);
+                    path.Positions.Add(SourcePositions[index / HitsAroundListener.Length]);
+                    Paths[index] = path;
                 }
                 else
                 {
