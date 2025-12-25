@@ -90,8 +90,8 @@ namespace Code.Simulation
 
             private float3 FindSpecularReflection(float3 a, float3 b, float3 planeNormal, float3 planePoint)
             {
-                var aToPlaneDist = Helper.DistanceFronPlane(a, planePoint, planeNormal);
-                var bToPlaneDist = Helper.DistanceFronPlane(b, planePoint, planeNormal);
+                var aToPlaneDist = Helper.DistanceFromPlane(a, planePoint, planeNormal);
+                var bToPlaneDist = Helper.DistanceFromPlane(b, planePoint, planeNormal);
                 var aProj = a - planeNormal * aToPlaneDist;
                 var bProj = b - planeNormal * bToPlaneDist;
                 var t = aToPlaneDist / (aToPlaneDist + bToPlaneDist);

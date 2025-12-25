@@ -96,7 +96,7 @@ namespace Code
         }
 
         [BurstCompile]
-        public static float DistanceFronPlane(float3 point, float3 planePoint, float3 planeNormal)
+        public static float DistanceFromPlane(float3 point, float3 planePoint, float3 planeNormal)
         {
             return math.dot(planeNormal, point - planePoint);
         }
@@ -121,6 +121,50 @@ namespace Code
             i = (int)math.floor((2 * n - 1 - math.sqrt(math.square(2 * n - 1) - 8 * k)) / 2);
             var rowStart = math.floor(i * n - i * (i + 1) / 2f);
             j = (int)(k - rowStart + i + 1);
+        }
+
+        public static bool DidHit(RaycastHit hit) => hit.distance != 0f;
+        
+        /// <summary>
+        /// Determines if two raycasts hit the same surface (or two coplanar surfaces)
+        /// </summary>
+        public static bool CheckCoplanar(RaycastHit a, RaycastHit b)
+        {
+            var bothMissed = !DidHit(a) && !DidHit(b);
+            if (bothMissed)
+                return true;
+            var oneHitOneMissed = DidHit(a) != DidHit(b);
+            if (oneHitOneMissed)
+                return false;
+            var sameNormal = math.dot(a.normal, b.normal) > 0.99;
+            var distToPlane = math.abs(math.dot(a.point - b.point, b.normal));
+            if (sameNormal && distToPlane < 0.01f)
+                return true;
+            return false;
+        }
+
+        /// <summary>
+        /// Intersect a line segment with a plane
+        /// </summary>
+        /// <returns>Whether an intersection was found</returns>
+        public static bool TryIntersectLineSegmentWithPlane(float3 lineSegStart, float3 lineSegEnd, float3 planePoint,
+            float3 planeNormal, out float3 intersection)
+        {
+            var startToEnd = lineSegEnd - lineSegStart;
+            var d = math.dot(planeNormal, startToEnd);
+            if (math.abs(d) < 0.001) // Parallel to plane
+            {
+                intersection = float3.zero;
+                return false;
+            }
+            var t = math.dot(planeNormal, planePoint - lineSegStart) / d;
+            if (t is < 0f or > 1f) // Intersection is past limits of line segment
+            {
+                intersection = float3.zero;
+                return false;
+            }
+            intersection = lineSegStart + startToEnd * t;
+            return true;
         }
     }
 }
