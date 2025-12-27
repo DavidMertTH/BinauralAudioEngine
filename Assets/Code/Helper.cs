@@ -124,7 +124,7 @@ namespace Code
         }
 
         public static bool DidHit(RaycastHit hit) => hit.distance != 0f;
-        
+
         /// <summary>
         /// Determines if two raycasts hit the same surface (or two coplanar surfaces)
         /// </summary>
@@ -157,12 +157,14 @@ namespace Code
                 intersection = float3.zero;
                 return false;
             }
+
             var t = math.dot(planeNormal, planePoint - lineSegStart) / d;
             if (t is < 0f or > 1f) // Intersection is past limits of line segment
             {
                 intersection = float3.zero;
                 return false;
             }
+
             intersection = lineSegStart + startToEnd * t;
             return true;
         }
