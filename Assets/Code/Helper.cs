@@ -168,5 +168,16 @@ namespace Code
             intersection = lineSegStart + startToEnd * t;
             return true;
         }
+
+        public static bool IsClose(float3 a, float3 b)
+        {
+            var diff = a - b;
+            return math.abs(diff.x) < 0.01f && math.abs(diff.y) < 0.01f && math.abs(diff.z) < 0.01f;
+        }
+        
+        public static bool DidRayHitPoint(RaycastHit ray, float3 point)
+        {
+            return DidHit(ray) && IsClose(ray.point, point);
+        }
     }
 }

@@ -5,6 +5,7 @@ using Code.Renderer;
 using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace Code.Simulation
 {
@@ -95,7 +96,7 @@ namespace Code.Simulation
             _listenerAndSourcePositions = Helper.ReallocateIfNeeded(_listenerAndSourcePositions, originCount,
                 Allocator.Persistent);
             _listenerAndSourcePositions[0] = listener.position;
-            for(var i = 0; i < sources.Count; i++)
+            for (var i = 0; i < sources.Count; i++)
                 _listenerAndSourcePositions[i + 1] = sources[i].transform.position;
             _audioPathArrayLayout = layout;
             AllAudioPaths = Helper.ReallocateIfNeeded(AllAudioPaths, layout.TotalCount, Allocator.Persistent);

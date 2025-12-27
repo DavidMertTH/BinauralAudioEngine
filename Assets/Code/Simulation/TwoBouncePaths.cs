@@ -78,42 +78,53 @@ namespace Code.Simulation
                 if (IsHitAroundListenerCoplanar[listenerHitIndex]
                     || IsHitAroundSourceCoplanar[sourceHitIndex]
                     || Helper.CheckCoplanar(listenerHit, sourceHit))
-                    return; // Paths are invalid by default
+                {
+                    Paths[index] = new AudioPath { IsValid = false };
+                    return;
+                }
+
                 var listenerMirrored = Helper.MirrorPointAcrossPlane(Listener, listenerHit.point, listenerHit.normal);
                 var sourceMirrored =
                     Helper.MirrorPointAcrossPlane(Sources[sourceIndex], sourceHit.point, sourceHit.normal);
                 if (!Helper.TryIntersectLineSegmentWithPlane(listenerMirrored, sourceMirrored, listenerHit.point,
-                        listenerHit.normal, out var firstIntersection))
-                    return;
-                if (!Helper.TryIntersectLineSegmentWithPlane(listenerMirrored, sourceMirrored, sourceHit.point,
+                        listenerHit.normal, out var firstIntersection)
+                    || !Helper.TryIntersectLineSegmentWithPlane(listenerMirrored, sourceMirrored, sourceHit.point,
                         sourceHit.normal, out var secondIntersection))
+                {
+                    Paths[index] = new AudioPath { IsValid = false };
                     return;
+                }
+
                 var listenerToFirstReflectionDistance = math.distance(Listener, firstIntersection);
                 var firstToSecondReflectionDistance = math.distance(firstIntersection, secondIntersection);
-                var secondIntersectionToSourceDistance = math.distance(secondIntersection, Sources[sourceIndex]);
+                var secondReflectionToSourceDistance = math.distance(secondIntersection, Sources[sourceIndex]);
                 var totalDistance = listenerToFirstReflectionDistance + firstToSecondReflectionDistance +
-                                    secondIntersectionToSourceDistance;
+                                    secondReflectionToSourceDistance;
                 var path = new AudioPath
                 {
+                    SourceIndex = sourceIndex,
                     DistanceToImage = totalDistance,
                     Energy = 1f, // TODO
                     ImagePosition = firstIntersection,
                     IsValid = true,
                     Reflections = 2,
                 };
+                path.Positions.Clear();
                 path.Positions.Add(Listener);
                 path.Positions.Add(firstIntersection);
                 path.Positions.Add(secondIntersection);
                 path.Positions.Add(Sources[sourceIndex]);
                 Paths[index] = path;
-                VisibilityChecks[index * 3] = new RaycastCommand(Listener, firstIntersection - Listener,
-                    QueryParameters.Default, listenerToFirstReflectionDistance - 0.01f);
-                VisibilityChecks[index * 3 + 1] = new RaycastCommand(firstIntersection,
-                    secondIntersection - firstIntersection, QueryParameters.Default,
-                    firstToSecondReflectionDistance - 0.01f);
-                VisibilityChecks[index * 3 + 2] = new RaycastCommand(secondIntersection,
-                    Sources[sourceIndex] - secondIntersection, QueryParameters.Default,
-                    secondIntersectionToSourceDistance);
+                VisibilityChecks[index * 3] = new RaycastCommand(from: Listener,
+                    direction: firstIntersection - Listener,
+                    QueryParameters.Default);
+                var firstToSecondIntersectionNormal =
+                    (secondIntersection - firstIntersection) / firstToSecondReflectionDistance;
+                VisibilityChecks[index * 3 + 1] = new RaycastCommand(
+                    from: firstIntersection + firstToSecondIntersectionNormal * 0.1f,
+                    direction: firstToSecondIntersectionNormal, QueryParameters.Default);
+                VisibilityChecks[index * 3 + 2] = new RaycastCommand(from: Sources[sourceIndex],
+                    direction: secondIntersection - Sources[sourceIndex], QueryParameters.Default);
             }
         }
 
@@ -134,11 +145,15 @@ namespace Code.Simulation
 
             public void Execute(int index)
             {
+                if (!Paths[index].IsValid)
+                    return;
                 var path = Paths[index];
-                path.IsValid = path.IsValid
-                               && !Helper.DidHit(VisibilityHits[index * 3])
-                               && !Helper.DidHit(VisibilityHits[index * 3 + 1])
-                               && !Helper.DidHit(VisibilityHits[index * 3 + 2]);
+                var firstBouncePoint = path.Positions[1];
+                var secondBouncePoint = path.Positions[2];
+                var isPathClear = Helper.DidRayHitPoint(VisibilityHits[index * 3], firstBouncePoint)
+                                  && Helper.DidRayHitPoint(VisibilityHits[index * 3 + 1], secondBouncePoint)
+                                  && Helper.DidRayHitPoint(VisibilityHits[index * 3 + 2], secondBouncePoint);
+                path.IsValid = isPathClear;
                 Paths[index] = path;
             }
         }

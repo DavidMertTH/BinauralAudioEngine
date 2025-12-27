@@ -9,6 +9,7 @@ namespace Code.Simulation
     /// </summary>
     public struct AudioPath
     {
+        public int SourceIndex;
         public int Reflections;
         public float3 ImagePosition;
         public float DistanceToImage;

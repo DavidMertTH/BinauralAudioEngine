@@ -83,12 +83,17 @@ namespace Code.Simulation
             {
                 var didHit = Hits[index].distance != 0f;
                 var path = Paths[index];
-                path.Reflections = 0;
-                path.DistanceToImage = Commands[index].distance;
                 path.IsValid = !didHit; // nothing blocks the ray
-                path.Energy = 1f;
-                path.Positions.Add(Listener);
-                path.Positions.Add(Sources[index]);
+                if (path.IsValid)
+                {
+                    path.SourceIndex = index;
+                    path.Reflections = 0;
+                    path.DistanceToImage = Commands[index].distance;
+                    path.Energy = 1f;
+                    path.Positions.Clear();
+                    path.Positions.Add(Listener);
+                    path.Positions.Add(Sources[index]);
+                }
                 Paths[index] = path;
             }
         }

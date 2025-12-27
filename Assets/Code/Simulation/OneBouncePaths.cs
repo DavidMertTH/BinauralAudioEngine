@@ -21,12 +21,10 @@ namespace Code.Simulation
             NativeArray<RaycastHit>.ReadOnly hitsAroundListener, NativeArray<bool>.ReadOnly isHitAroundListenerCoplanar,
             JobHandle hitsReadyHandle, NativeArray<AudioPath> result)
         {
-            // Every hit around the listener is a surface with a possible reflection point
-            var numReflectionPoints = hitsAroundListener.Length;
-            var numRaycasts = numReflectionPoints * 2; // Need to check visibility from listener and from source
+            var numRaycasts = result.Length * 2; // Need to check visibility from listener and from source
             _commands = Helper.ReallocateIfNeeded(_commands, numRaycasts, Allocator.Persistent);
             _reflectionPoints =
-                Helper.ReallocateIfNeeded(_reflectionPoints, numReflectionPoints, Allocator.Persistent);
+                Helper.ReallocateIfNeeded(_reflectionPoints, result.Length, Allocator.Persistent);
             var findReflectionsHandle = new FindReflectionPoints()
             {
                 Commands = _commands,
@@ -35,7 +33,7 @@ namespace Code.Simulation
                 Listener = listener,
                 HitsAroundListener = hitsAroundListener,
                 IsHitAroundListenerCoplanar = isHitAroundListenerCoplanar
-            }.ScheduleParallel(numReflectionPoints, 32, hitsReadyHandle);
+            }.ScheduleParallel(_reflectionPoints.Length, 32, hitsReadyHandle);
             _visibilityHits = Helper.ReallocateIfNeeded(_visibilityHits, numRaycasts, Allocator.Persistent);
             var doRaycastsHandle = RaycastCommand.ScheduleBatch(
                 _commands, _visibilityHits, 1, findReflectionsHandle);
@@ -71,21 +69,17 @@ namespace Code.Simulation
                 // Coplanar surfaces would produce duplicate reflection points
                 if (IsHitAroundListenerCoplanar[hitIndex])
                     return;
-                var sourceIndex = hitIndex / HitsAroundListener.Length;
+                var sourceIndex = index / HitsAroundListener.Length;
                 ReflectionPoints[index] = FindSpecularReflection(Sources[sourceIndex], Listener,
                     HitsAroundListener[hitIndex].normal, HitsAroundListener[hitIndex].point);
-                var fromListenerToReflection = ReflectionPoints[index] - Listener;
                 Commands[index * 2] = new RaycastCommand(
                     from: Listener,
-                    direction: fromListenerToReflection,
-                    QueryParameters.Default,
-                    distance: math.length(fromListenerToReflection) - 0.01f);
-                var fromReflectionToSource = Sources[sourceIndex] - ReflectionPoints[index];
+                    direction: ReflectionPoints[index] - Listener,
+                    QueryParameters.Default);
                 Commands[index * 2 + 1] = new RaycastCommand(
-                    from: ReflectionPoints[index],
-                    direction: fromReflectionToSource,
-                    QueryParameters.Default,
-                    distance: math.length(fromReflectionToSource) - 0.01f);
+                    from: Sources[sourceIndex],
+                    direction: ReflectionPoints[index] - Sources[sourceIndex],
+                    QueryParameters.Default);
             }
 
             private float3 FindSpecularReflection(float3 a, float3 b, float3 planeNormal, float3 planePoint)
@@ -117,20 +111,21 @@ namespace Code.Simulation
 
             public void Execute(int index)
             {
-                var isReflectionPointVisibleFromListener = VisibilityHits[index * 2].distance == 0f;
-                var isReflectionPointVisibleFromSource = VisibilityHits[index * 2 + 1].distance == 0f;
-                if (!IsHitAroundListenerCoplanar[index % HitsAroundListener.Length]
-                    && isReflectionPointVisibleFromListener
-                    && isReflectionPointVisibleFromSource)
+                var isPathClear =
+                    Helper.DidRayHitPoint(VisibilityHits[index * 2], ReflectionPoints[index]) &&
+                    Helper.DidRayHitPoint(VisibilityHits[index * 2 + 1], ReflectionPoints[index]);
+                if (!IsHitAroundListenerCoplanar[index % HitsAroundListener.Length] && isPathClear)
                 {
                     var path = new AudioPath()
                     {
+                        SourceIndex = index / HitsAroundListener.Length,
                         Reflections = 1,
                         ImagePosition = ReflectionPoints[index],
                         DistanceToImage = VisibilityHits[index * 2 + 1].distance,
                         IsValid = true,
                         Energy = 1f, // TODO: Calc energy
                     };
+                    path.Positions.Clear();
                     path.Positions.Add(ListenerPosition);
                     path.Positions.Add(ReflectionPoints[index]);
                     path.Positions.Add(SourcePositions[index / HitsAroundListener.Length]);

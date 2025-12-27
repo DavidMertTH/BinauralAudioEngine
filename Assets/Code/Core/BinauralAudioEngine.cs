@@ -4,7 +4,6 @@ using System.Threading;
 using ArthurKehrwald.Singleton;
 using Code.Renderer;
 using Code.Simulation;
-using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
 
@@ -14,12 +13,13 @@ namespace Code.Core
     {
         [SerializeField] private BinauralAudioSettings settings;
         public BinauralAudioSettings Settings => settings ??= new BinauralAudioSettings();
-        public NativeArray<AudioPath>.ReadOnly AudioPaths => _simulationData.AllAudioPaths.AsReadOnly();
 
         // TODO: Remove
-        public NativeArray<RaycastHit>.ReadOnly SurroundingHits => _surroundRaycast._hits.AsReadOnly();
+        public AudioPath[] AudioPaths;
+        public int NumSources => _audioFilters.Count;
+        public RaycastHit[] SurroundingHits;
         public int HitsPerOrigin => _surroundRaycast.hitsPerOrigin;
-        public NativeArray<bool>.ReadOnly IsCoplanar => _surroundRaycast._coplanarHits._isHitCoplanar.AsReadOnly();
+        public bool[] IsCoplanar;
         public bool IsReady { get; private set; }
 
         private Transform _listener;
@@ -47,8 +47,14 @@ namespace Code.Core
         {
             try
             {
-                await UpdateAllImpulseResponses();
-                IsReady = true;
+                while (true)
+                {
+                    await UpdateAllImpulseResponses();
+                    AudioPaths = _simulationData.AllAudioPaths.ToArray();
+                    SurroundingHits = _surroundRaycast._hits.ToArray();
+                    IsCoplanar = _surroundRaycast._coplanarHits._isHitCoplanar.ToArray();
+                    IsReady = true;
+                }
             }
             catch (OperationCanceledException)
             {
