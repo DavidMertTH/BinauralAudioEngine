@@ -17,7 +17,7 @@ namespace Code.Simulation
         private NativeArray<RaycastCommand> _commands;
         private NativeArray<RaycastHit> _hits;
 
-        public JobHandle GetDirectPaths(float3 listener, NativeArray<float3> sources, NativeArray<AudioPath> paths)
+        public JobHandle GetDirectPaths(float3 listener, NativeArray<float3>.ReadOnly sources, NativeArray<AudioPath> paths)
         {
             // Create raycast commands
             _commands = Helper.ReallocateIfNeeded(_commands, sources.Length, Allocator.Persistent);
@@ -52,7 +52,7 @@ namespace Code.Simulation
         {
             public NativeArray<RaycastCommand> Commands;
 
-            [ReadOnly] public NativeArray<float3> Sources;
+            [ReadOnly] public NativeArray<float3>.ReadOnly Sources;
             [ReadOnly] public float3 Listener;
 
             public void Execute(int index)
@@ -76,7 +76,7 @@ namespace Code.Simulation
 
             [ReadOnly] public NativeArray<RaycastHit> Hits;
             [ReadOnly] public NativeArray<RaycastCommand> Commands;
-            [ReadOnly] public NativeArray<float3> Sources;
+            [ReadOnly] public NativeArray<float3>.ReadOnly Sources;
             [ReadOnly] public float3 Listener;
 
             public void Execute(int index)

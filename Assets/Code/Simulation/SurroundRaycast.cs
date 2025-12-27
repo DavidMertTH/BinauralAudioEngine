@@ -19,10 +19,9 @@ namespace Code.Simulation
         public readonly CoplanarHits _coplanarHits = new(); // TODO: make private
         public int hitsPerOrigin; // TODO: remove
 
-        public JobHandle CastRaysAroundOrigins(NativeArray<float3>.ReadOnly origins, AudioPathArrayLayout layout,
+        public JobHandle CastRaysAroundOrigins(NativeArray<float3>.ReadOnly origins, int numRaysPerOrigin,
             out NativeArray<RaycastHit> hits, out int hitsStride, out NativeArray<bool> isHitCoplanar)
         {
-            var numRaysPerOrigin = GetNumRaysPerOrigin(layout);
             hitsStride = numRaysPerOrigin;
             hitsPerOrigin = numRaysPerOrigin;
             var getDirectionsHandle = GetDirections(numRaysPerOrigin, out var directions);
@@ -31,18 +30,6 @@ namespace Code.Simulation
             var checkCoplanarHandle =
                 _coplanarHits.FindCoplanarHits(raycastHandle, hits, hitsStride, out isHitCoplanar);
             return checkCoplanarHandle;
-        }
-
-        private int GetNumRaysPerOrigin(AudioPathArrayLayout layout)
-        {
-            var numSources = layout.DirectCount;
-            // The number or ray casts around the listener and each source needed for the requested
-            // number of paths with two bounces
-            var a = sqrt(layout.TwoBouncesCount / (float)numSources);
-            // The number of ray casts needed for the requested number of paths with one bounce
-            var b = layout.OneBounceCount / (float)numSources;
-            // The number used is the maximum of the two
-            return (int)ceil(max(a, b));
         }
 
         private JobHandle GetDirections(int num, out NativeArray<float3> directions)
@@ -57,11 +44,11 @@ namespace Code.Simulation
                 Directions = _directions,
                 Phi = Mathf.PI * (3f - Mathf.Sqrt(5f))
             };
-            return job.Schedule(num, 32);
+            return job.ScheduleParallel(num, 1, default);
         }
 
         [BurstCompile]
-        private struct GetRaycastDirectionsJob : IJobParallelFor
+        private struct GetRaycastDirectionsJob : IJobFor
         {
             public NativeArray<float3> Directions;
             public float Phi;
@@ -90,11 +77,11 @@ namespace Code.Simulation
                 Origins = origins,
                 Directions = directions,
             };
-            return job.Schedule(raycastCount, 32, getDirectionsHandle);
+            return job.ScheduleParallel(raycastCount, 32, getDirectionsHandle);
         }
 
         [BurstCompile]
-        private struct GetCommandsJob : IJobParallelFor
+        private struct GetCommandsJob : IJobFor
         {
             public NativeArray<RaycastCommand> RaycastCommands;
             [ReadOnly] public NativeArray<float3>.ReadOnly Origins;

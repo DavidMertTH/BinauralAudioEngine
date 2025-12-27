@@ -15,18 +15,20 @@ namespace Code.Core
         [SerializeField] private BinauralAudioSettings settings;
         public BinauralAudioSettings Settings => settings ??= new BinauralAudioSettings();
         public NativeArray<AudioPath>.ReadOnly AudioPaths => _simulationData.AllAudioPaths.AsReadOnly();
-        
+
         // TODO: Remove
         public NativeArray<RaycastHit>.ReadOnly SurroundingHits => _surroundRaycast._hits.AsReadOnly();
         public int HitsPerOrigin => _surroundRaycast.hitsPerOrigin;
         public NativeArray<bool>.ReadOnly IsCoplanar => _surroundRaycast._coplanarHits._isHitCoplanar.AsReadOnly();
-        
+        public bool IsReady { get; private set; }
+
         private Transform _listener;
         private readonly List<BinauralAudioFilter> _audioFilters = new();
         private readonly GlobalSimulationData _simulationData = new();
         private readonly SurroundRaycast _surroundRaycast = new();
         private readonly DirectPaths _directPaths = new();
         private readonly OneBouncePaths _oneBouncePaths = new();
+        private readonly TwoBouncePaths _twoBouncePaths = new();
         private readonly SemaphoreSlim _semaphoreSlim = new(1);
         private readonly CancellationTokenSource _onDestroyCts = new();
 
@@ -46,6 +48,10 @@ namespace Code.Core
             try
             {
                 await UpdateAllImpulseResponses();
+                IsReady = true;
+            }
+            catch (OperationCanceledException)
+            {
             }
             catch (Exception e)
             {
@@ -80,18 +86,25 @@ namespace Code.Core
             var directPathsHandle = _directPaths.GetDirectPaths(_simulationData.ListenerPosition,
                 _simulationData.SourcePositions, _simulationData.DirectPaths);
             var surroundRaycastHandle = _surroundRaycast.CastRaysAroundOrigins(
-                _simulationData.ListenerAndSourcePositions,
-                layout, out var hits, out var hitsStride, out var isHitCoplanar);
+                _simulationData.ListenerAndSourcePositions, Settings.RaysAroundListenerAndEachSource, out var hits,
+                out var hitsStride, out var isHitCoplanar);
+            var hitsAroundListener = hits.GetSubArray(0, hitsStride);
+            var isHitAroundListenerCoplanar = isHitCoplanar.GetSubArray(0, hitsStride);
+            var hitsAroundSources = hits.GetSubArray(hitsStride, hits.Length - hitsStride);
+            var isHitAroundSourcesCoplanar = isHitCoplanar.GetSubArray(hitsStride, isHitCoplanar.Length - hitsStride);
             var oneBouncePathsHandle = _oneBouncePaths.GetOneBouncePaths(_simulationData.ListenerPosition,
-                _simulationData.SourcePositions, hits.GetSubArray(0, hitsStride),
-                isHitCoplanar.GetSubArray(0, hitsStride), surroundRaycastHandle,
+                _simulationData.SourcePositions, hitsAroundListener.AsReadOnly(),
+                isHitAroundListenerCoplanar.AsReadOnly(), surroundRaycastHandle,
                 _simulationData.OneBouncePaths);
-            return JobHandle.CombineDependencies(directPathsHandle, oneBouncePathsHandle);
+            var twoBouncePathsHandle = _twoBouncePaths.GetTwoBounceBaths(_simulationData.ListenerPosition,
+                _simulationData.SourcePositions, hitsAroundListener, isHitAroundListenerCoplanar, hitsAroundSources,
+                isHitAroundSourcesCoplanar, hitsStride, surroundRaycastHandle, _simulationData.TwoBouncePaths);
+            return JobHandle.CombineDependencies(directPathsHandle, oneBouncePathsHandle, twoBouncePathsHandle);
         }
 
         private JobHandle ComputeImpulseResponses(JobHandle rayJob, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            return new JobHandle();
         }
 
         public void RegisterAudioFilter(BinauralAudioFilter filter)
@@ -127,16 +140,7 @@ namespace Code.Core
                 _surroundRaycast.Dispose();
                 _simulationData.Dispose();
                 _directPaths.Dispose();
-            }
-        }
-
-        public class AudioPathEventArgs : EventArgs
-        {
-            public readonly NativeArray<AudioPath>.ReadOnly Paths;
-
-            public AudioPathEventArgs(NativeArray<AudioPath>.ReadOnly paths)
-            {
-                Paths = paths;
+                _twoBouncePaths.Dispose();
             }
         }
     }

@@ -39,8 +39,8 @@ namespace Code.Simulation
         /// <summary>
         /// World-space positions of all audio sources in the scene
         /// </summary>
-        public NativeArray<float3> SourcePositions =>
-            _listenerAndSourcePositions.GetSubArray(1, _listenerAndSourcePositions.Length - 1);
+        public NativeArray<float3>.ReadOnly SourcePositions =>
+            _listenerAndSourcePositions.GetSubArray(1, _listenerAndSourcePositions.Length - 1).AsReadOnly();
 
         /// <summary>
         /// World-space position of the listener

@@ -17,8 +17,8 @@ namespace Code.Simulation
         private NativeArray<float3> _reflectionPoints;
         private NativeArray<RaycastHit> _visibilityHits;
 
-        public JobHandle GetOneBouncePaths(float3 listener, NativeArray<float3> sources,
-            NativeArray<RaycastHit> hitsAroundListener, NativeArray<bool> isHitAroundListenerCoplanar,
+        public JobHandle GetOneBouncePaths(float3 listener, NativeArray<float3>.ReadOnly sources,
+            NativeArray<RaycastHit>.ReadOnly hitsAroundListener, NativeArray<bool>.ReadOnly isHitAroundListenerCoplanar,
             JobHandle hitsReadyHandle, NativeArray<AudioPath> result)
         {
             // Every hit around the listener is a surface with a possible reflection point
@@ -48,7 +48,7 @@ namespace Code.Simulation
                 VisibilityHits = _visibilityHits,
                 SourcePositions = sources,
                 ListenerPosition = listener,
-            }.ScheduleParallel(numReflectionPoints, 32, doRaycastsHandle);
+            }.ScheduleParallel(result.Length, 32, doRaycastsHandle);
             return createPathsHandle;
         }
 
@@ -60,10 +60,10 @@ namespace Code.Simulation
 
             public NativeArray<float3> ReflectionPoints;
 
-            [ReadOnly] public NativeArray<float3> Sources;
+            [ReadOnly] public NativeArray<float3>.ReadOnly Sources;
             [ReadOnly] public float3 Listener;
-            [ReadOnly] public NativeArray<RaycastHit> HitsAroundListener;
-            [ReadOnly] public NativeArray<bool> IsHitAroundListenerCoplanar;
+            [ReadOnly] public NativeArray<RaycastHit>.ReadOnly HitsAroundListener;
+            [ReadOnly] public NativeArray<bool>.ReadOnly IsHitAroundListenerCoplanar;
 
             public void Execute(int index)
             {
@@ -109,10 +109,10 @@ namespace Code.Simulation
             public NativeArray<AudioPath> Paths;
 
             [ReadOnly] public NativeArray<RaycastHit> VisibilityHits;
-            [ReadOnly] public NativeArray<RaycastHit> HitsAroundListener;
-            [ReadOnly] public NativeArray<bool> IsHitAroundListenerCoplanar;
+            [ReadOnly] public NativeArray<RaycastHit>.ReadOnly HitsAroundListener;
+            [ReadOnly] public NativeArray<bool>.ReadOnly IsHitAroundListenerCoplanar;
             [ReadOnly] public NativeArray<float3> ReflectionPoints;
-            [ReadOnly] public NativeArray<float3> SourcePositions;
+            [ReadOnly] public NativeArray<float3>.ReadOnly SourcePositions;
             [ReadOnly] public float3 ListenerPosition;
 
             public void Execute(int index)

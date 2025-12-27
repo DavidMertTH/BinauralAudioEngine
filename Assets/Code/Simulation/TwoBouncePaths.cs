@@ -15,7 +15,7 @@ namespace Code.Simulation
         private NativeArray<RaycastCommand> _visibilityChecks;
         private NativeArray<RaycastHit> _visibilityHits;
 
-        public JobHandle GetTwoBounceBaths(float3 listener, NativeArray<float3> sources,
+        public JobHandle GetTwoBounceBaths(float3 listener, NativeArray<float3>.ReadOnly sources,
             NativeArray<RaycastHit> hitsAroundListener, NativeArray<bool> isHitAroundListenerCoplanar,
             NativeArray<RaycastHit> hitsAroundSources, NativeArray<bool> isHitAroundSourceCoplanar,
             int numHitsPerSource, JobHandle hitsReadyHandle, NativeArray<AudioPath> result)
@@ -61,7 +61,7 @@ namespace Code.Simulation
             [NativeDisableParallelForRestriction] public NativeArray<RaycastCommand> VisibilityChecks;
 
             [ReadOnly] public float3 Listener;
-            [ReadOnly] public NativeArray<float3> Sources;
+            [ReadOnly] public NativeArray<float3>.ReadOnly Sources;
             [ReadOnly] public NativeArray<RaycastHit> HitsAroundListener;
             [ReadOnly] public NativeArray<bool> IsHitAroundListenerCoplanar;
             [ReadOnly] public NativeArray<RaycastHit> HitsAroundSources;
@@ -70,7 +70,7 @@ namespace Code.Simulation
 
             public void Execute(int index)
             {
-                var listenerHitIndex = index % numHitsPerSource;
+                var listenerHitIndex = index % HitsAroundListener.Length;
                 var sourceHitIndex = index / HitsAroundListener.Length;
                 var sourceIndex = sourceHitIndex / numHitsPerSource;
                 var listenerHit = HitsAroundListener[listenerHitIndex];

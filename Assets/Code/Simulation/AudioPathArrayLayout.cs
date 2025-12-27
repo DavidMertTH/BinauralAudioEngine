@@ -12,18 +12,22 @@ namespace Code.Simulation
         public readonly int TwoBouncesCount;
         public readonly int ManyBouncesCount;
 
-        public int DirectPathsStartIndex => 0;
-        public int OneBouncePathsStartIndex => DirectCount;
-        public int TwoBouncesPathsStartIndex => OneBouncePathsStartIndex + OneBounceCount;
-        public int ManyBouncePathsStartIndex => TwoBouncesPathsStartIndex + TwoBouncesCount;
+        public readonly int DirectPathsStartIndex;
+        public readonly int OneBouncePathsStartIndex;
+        public readonly int TwoBouncesPathsStartIndex;
+        public readonly int ManyBouncePathsStartIndex;
 
-        public AudioPathArrayLayout(int numSources, int oneBounceCount, int twoBouncesCount, int manyBouncesCount)
+        public AudioPathArrayLayout(int numRaysAroundListener, int numRaysAroundEachSource, int numSources, int numIterativePaths)
         {
             DirectCount = numSources;
-            OneBounceCount = oneBounceCount;
-            TwoBouncesCount = twoBouncesCount;
-            ManyBouncesCount = manyBouncesCount;
+            OneBounceCount = numSources * numRaysAroundListener;
+            TwoBouncesCount = numSources * numRaysAroundEachSource * numRaysAroundListener;
+            ManyBouncesCount = numIterativePaths;
             TotalCount = DirectCount + OneBounceCount + TwoBouncesCount + ManyBouncesCount;
+            DirectPathsStartIndex = 0;
+            OneBouncePathsStartIndex = DirectCount;
+            TwoBouncesPathsStartIndex = OneBouncePathsStartIndex + OneBounceCount;
+            ManyBouncePathsStartIndex = TwoBouncesPathsStartIndex + TwoBouncesCount;
         }
     }
 }
