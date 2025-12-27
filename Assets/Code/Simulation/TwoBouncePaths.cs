@@ -71,19 +71,17 @@ namespace Code.Simulation
             public void Execute(int index)
             {
                 var listenerHitIndex = index % numHitsPerSource;
-                var sourceHitIndex = index / numHitsPerSource;
-                var sourceIndex = sourceHitIndex / Sources.Length;
+                var sourceHitIndex = index / HitsAroundListener.Length;
+                var sourceIndex = sourceHitIndex / numHitsPerSource;
                 var listenerHit = HitsAroundListener[listenerHitIndex];
                 var sourceHit = HitsAroundSources[sourceHitIndex];
                 if (IsHitAroundListenerCoplanar[listenerHitIndex]
                     || IsHitAroundSourceCoplanar[sourceHitIndex]
-                    || Helper.CheckCoplanar(listenerHit, sourceHit)
-                    || !Helper.DidHit(listenerHit)
-                    || !Helper.DidHit(sourceHit))
+                    || Helper.CheckCoplanar(listenerHit, sourceHit))
                     return; // Paths are invalid by default
                 var listenerMirrored = Helper.MirrorPointAcrossPlane(Listener, listenerHit.point, listenerHit.normal);
                 var sourceMirrored =
-                    Helper.MirrorPointAcrossPlane(Sources[sourceIndex], listenerHit.point, listenerHit.normal);
+                    Helper.MirrorPointAcrossPlane(Sources[sourceIndex], sourceHit.point, sourceHit.normal);
                 if (!Helper.TryIntersectLineSegmentWithPlane(listenerMirrored, sourceMirrored, listenerHit.point,
                         listenerHit.normal, out var firstIntersection))
                     return;
@@ -103,6 +101,10 @@ namespace Code.Simulation
                     IsValid = true,
                     Reflections = 2,
                 };
+                path.Positions.Add(Listener);
+                path.Positions.Add(firstIntersection);
+                path.Positions.Add(secondIntersection);
+                path.Positions.Add(Sources[sourceIndex]);
                 Paths[index] = path;
                 VisibilityChecks[index * 3] = new RaycastCommand(Listener, firstIntersection - Listener,
                     QueryParameters.Default, listenerToFirstReflectionDistance - 0.01f);
@@ -133,9 +135,10 @@ namespace Code.Simulation
             public void Execute(int index)
             {
                 var path = Paths[index];
-                path.IsValid = !Helper.DidHit(VisibilityHits[index * 3]) &&
-                               !Helper.DidHit(VisibilityHits[index * 3 + 1]) &&
-                               !Helper.DidHit(VisibilityHits[index * 3 + 2]);
+                path.IsValid = path.IsValid
+                               && !Helper.DidHit(VisibilityHits[index * 3])
+                               && !Helper.DidHit(VisibilityHits[index * 3 + 1])
+                               && !Helper.DidHit(VisibilityHits[index * 3 + 2]);
                 Paths[index] = path;
             }
         }
