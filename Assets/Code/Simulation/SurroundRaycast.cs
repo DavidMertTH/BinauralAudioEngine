@@ -20,12 +20,13 @@ namespace Code.Simulation
         public int hitsPerOrigin; // TODO: remove
 
         public JobHandle CastRaysAroundOrigins(NativeArray<float3>.ReadOnly origins, int numRaysPerOrigin,
-            out NativeArray<RaycastHit> hits, out int hitsStride, out NativeArray<bool> isHitCoplanar)
+            out NativeArray<RaycastHit> hits, out int hitsStride, out NativeArray<bool> isHitCoplanar,
+            out NativeArray<RaycastCommand> commands)
         {
             hitsStride = numRaysPerOrigin;
             hitsPerOrigin = numRaysPerOrigin;
             var getDirectionsHandle = GetDirections(numRaysPerOrigin, out var directions);
-            var getCommandsHandle = GetCommands(getDirectionsHandle, origins, directions, out var commands);
+            var getCommandsHandle = GetCommands(getDirectionsHandle, origins, directions, out commands);
             var raycastHandle = GetHits(getCommandsHandle, commands, out hits);
             var checkCoplanarHandle =
                 _coplanarHits.FindCoplanarHits(raycastHandle, hits, hitsStride, out isHitCoplanar);

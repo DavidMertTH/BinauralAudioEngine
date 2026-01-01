@@ -6,28 +6,28 @@ namespace Code.Simulation
     /// </summary>
     public readonly struct AudioPathArrayLayout
     {
-        public readonly int TotalCount;
-        public readonly int DirectCount;
-        public readonly int OneBounceCount;
-        public readonly int TwoBouncesCount;
-        public readonly int ManyBouncesCount;
+        public readonly int NumTotalPaths;
+        public readonly int NumDirectPaths;
+        public readonly int NumOneBouncePaths;
+        public readonly int NumTwoBouncePaths;
+        public readonly int NumIterativePaths;
 
         public readonly int DirectPathsStartIndex;
         public readonly int OneBouncePathsStartIndex;
         public readonly int TwoBouncesPathsStartIndex;
         public readonly int ManyBouncePathsStartIndex;
 
-        public AudioPathArrayLayout(int numRaysAroundListener, int numRaysAroundEachSource, int numSources, int numIterativePaths)
+        public AudioPathArrayLayout(int numRaysAroundListener, int numRaysAroundEachSource, int numSources, int maxIterativeBounces)
         {
-            DirectCount = numSources;
-            OneBounceCount = numSources * numRaysAroundListener;
-            TwoBouncesCount = numSources * numRaysAroundEachSource * numRaysAroundListener;
-            ManyBouncesCount = numIterativePaths;
-            TotalCount = DirectCount + OneBounceCount + TwoBouncesCount + ManyBouncesCount;
+            NumDirectPaths = numSources;
+            NumOneBouncePaths = numSources * numRaysAroundListener;
+            NumTwoBouncePaths = numSources * numRaysAroundEachSource * numRaysAroundListener;
+            NumIterativePaths = numSources * maxIterativeBounces * numRaysAroundListener;
+            NumTotalPaths = NumDirectPaths + NumOneBouncePaths + NumTwoBouncePaths + NumIterativePaths;
             DirectPathsStartIndex = 0;
-            OneBouncePathsStartIndex = DirectCount;
-            TwoBouncesPathsStartIndex = OneBouncePathsStartIndex + OneBounceCount;
-            ManyBouncePathsStartIndex = TwoBouncesPathsStartIndex + TwoBouncesCount;
+            OneBouncePathsStartIndex = NumDirectPaths;
+            TwoBouncesPathsStartIndex = OneBouncePathsStartIndex + NumOneBouncePaths;
+            ManyBouncePathsStartIndex = TwoBouncesPathsStartIndex + NumTwoBouncePaths;
         }
     }
 }

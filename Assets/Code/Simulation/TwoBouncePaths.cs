@@ -1,6 +1,7 @@
 using System;
 using Unity.Burst;
 using Unity.Collections;
+using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
@@ -16,8 +17,8 @@ namespace Code.Simulation
         private NativeArray<RaycastHit> _visibilityHits;
 
         public JobHandle GetTwoBounceBaths(float3 listener, NativeArray<float3>.ReadOnly sources,
-            NativeArray<RaycastHit> hitsAroundListener, NativeArray<bool> isHitAroundListenerCoplanar,
-            NativeArray<RaycastHit> hitsAroundSources, NativeArray<bool> isHitAroundSourceCoplanar,
+            NativeArray<RaycastHit>.ReadOnly hitsAroundListener, NativeArray<bool>.ReadOnly isHitAroundListenerCoplanar,
+            NativeArray<RaycastHit>.ReadOnly hitsAroundSources, NativeArray<bool>.ReadOnly isHitAroundSourceCoplanar,
             int numHitsPerSource, JobHandle hitsReadyHandle, NativeArray<AudioPath> result)
         {
             _visibilityChecks = Helper.ReallocateIfNeeded(_visibilityChecks, result.Length * 3, Allocator.Persistent);
@@ -52,6 +53,7 @@ namespace Code.Simulation
             /// Job will create one path for every pair of hits from <c>HitsAroundListener</c> and
             /// <c>HitsAroundSources</c>
             /// </summary>
+            [NativeDisableContainerSafetyRestriction]
             public NativeArray<AudioPath> Paths;
 
             /// <summary>
@@ -62,10 +64,10 @@ namespace Code.Simulation
 
             [ReadOnly] public float3 Listener;
             [ReadOnly] public NativeArray<float3>.ReadOnly Sources;
-            [ReadOnly] public NativeArray<RaycastHit> HitsAroundListener;
-            [ReadOnly] public NativeArray<bool> IsHitAroundListenerCoplanar;
-            [ReadOnly] public NativeArray<RaycastHit> HitsAroundSources;
-            [ReadOnly] public NativeArray<bool> IsHitAroundSourceCoplanar;
+            [ReadOnly] public NativeArray<RaycastHit>.ReadOnly HitsAroundListener;
+            [ReadOnly] public NativeArray<bool>.ReadOnly IsHitAroundListenerCoplanar;
+            [ReadOnly] public NativeArray<RaycastHit>.ReadOnly HitsAroundSources;
+            [ReadOnly] public NativeArray<bool>.ReadOnly IsHitAroundSourceCoplanar;
             [ReadOnly] public int numHitsPerSource;
 
             public void Execute(int index)

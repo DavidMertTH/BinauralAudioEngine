@@ -4,6 +4,7 @@ using System.Threading;
 using ArthurKehrwald.Singleton;
 using Code.Renderer;
 using Code.Simulation;
+using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
 
@@ -29,6 +30,8 @@ namespace Code.Core
         private readonly DirectPaths _directPaths = new();
         private readonly OneBouncePaths _oneBouncePaths = new();
         private readonly TwoBouncePaths _twoBouncePaths = new();
+        private readonly IterativePaths _iterativePaths = new();
+        private NativeArray<JobHandle> _pathJobHandles = new(4, Allocator.Persistent);
         private readonly SemaphoreSlim _semaphoreSlim = new(1);
         private readonly CancellationTokenSource _onDestroyCts = new();
 
@@ -89,23 +92,27 @@ namespace Code.Core
         {
             var layout = Settings.GetAudioPathArrayLayout(_audioFilters.Count);
             _simulationData.Init(Listener, _audioFilters, layout);
-            var directPathsHandle = _directPaths.GetDirectPaths(_simulationData.ListenerPosition,
+            _pathJobHandles[0] = _directPaths.GetDirectPaths(_simulationData.ListenerPosition,
                 _simulationData.SourcePositions, _simulationData.DirectPaths);
             var surroundRaycastHandle = _surroundRaycast.CastRaysAroundOrigins(
                 _simulationData.ListenerAndSourcePositions, Settings.RaysAroundListenerAndEachSource, out var hits,
-                out var hitsStride, out var isHitCoplanar);
-            var hitsAroundListener = hits.GetSubArray(0, hitsStride);
-            var isHitAroundListenerCoplanar = isHitCoplanar.GetSubArray(0, hitsStride);
-            var hitsAroundSources = hits.GetSubArray(hitsStride, hits.Length - hitsStride);
-            var isHitAroundSourcesCoplanar = isHitCoplanar.GetSubArray(hitsStride, isHitCoplanar.Length - hitsStride);
-            var oneBouncePathsHandle = _oneBouncePaths.GetOneBouncePaths(_simulationData.ListenerPosition,
-                _simulationData.SourcePositions, hitsAroundListener.AsReadOnly(),
-                isHitAroundListenerCoplanar.AsReadOnly(), surroundRaycastHandle,
+                out var hitsStride, out var isHitCoplanar, out var commands);
+            var hitsAroundListener = hits.GetSubArray(0, hitsStride).AsReadOnly();
+            var commandsAroundListener = commands.GetSubArray(0, hitsStride).AsReadOnly();
+            var isHitAroundListenerCoplanar = isHitCoplanar.GetSubArray(0, hitsStride).AsReadOnly();
+            var hitsAroundSources = hits.GetSubArray(hitsStride, hits.Length - hitsStride).AsReadOnly();
+            var isHitAroundSourcesCoplanar = isHitCoplanar.GetSubArray(hitsStride, isHitCoplanar.Length - hitsStride).AsReadOnly();
+            _pathJobHandles[1] = _oneBouncePaths.GetOneBouncePaths(_simulationData.ListenerPosition,
+                _simulationData.SourcePositions, hitsAroundListener,
+                isHitAroundListenerCoplanar, surroundRaycastHandle,
                 _simulationData.OneBouncePaths);
-            var twoBouncePathsHandle = _twoBouncePaths.GetTwoBounceBaths(_simulationData.ListenerPosition,
+            _pathJobHandles[2] = _twoBouncePaths.GetTwoBounceBaths(_simulationData.ListenerPosition,
                 _simulationData.SourcePositions, hitsAroundListener, isHitAroundListenerCoplanar, hitsAroundSources,
                 isHitAroundSourcesCoplanar, hitsStride, surroundRaycastHandle, _simulationData.TwoBouncePaths);
-            return JobHandle.CombineDependencies(directPathsHandle, oneBouncePathsHandle, twoBouncePathsHandle);
+            _pathJobHandles[3] = _iterativePaths.GetIterativePaths(_simulationData.ListenerPosition,
+                _simulationData.SourcePositions, commandsAroundListener, hitsAroundListener, Settings.MaxIterativeBounces,
+                surroundRaycastHandle, _simulationData.HigherOrderPaths);
+            return JobHandle.CombineDependencies(_pathJobHandles);
         }
 
         private JobHandle ComputeImpulseResponses(JobHandle rayJob, CancellationToken ct)
@@ -147,6 +154,8 @@ namespace Code.Core
                 _simulationData.Dispose();
                 _directPaths.Dispose();
                 _twoBouncePaths.Dispose();
+                _iterativePaths.Dispose();
+                _pathJobHandles.Dispose();
             }
         }
     }

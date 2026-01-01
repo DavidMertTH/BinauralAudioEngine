@@ -59,28 +59,28 @@ namespace Code.Simulation
         /// Sub-array containing direct audio paths between the listener and an audio source
         /// </summary>
         public NativeArray<AudioPath> DirectPaths =>
-            AllAudioPaths.GetSubArray(_audioPathArrayLayout.DirectPathsStartIndex, _audioPathArrayLayout.DirectCount);
+            AllAudioPaths.GetSubArray(_audioPathArrayLayout.DirectPathsStartIndex, _audioPathArrayLayout.NumDirectPaths);
 
         /// <summary>
         /// Sub-array containing audio paths with one bounce
         /// </summary>
         public NativeArray<AudioPath> OneBouncePaths =>
             AllAudioPaths.GetSubArray(_audioPathArrayLayout.OneBouncePathsStartIndex,
-                _audioPathArrayLayout.OneBounceCount);
+                _audioPathArrayLayout.NumOneBouncePaths);
 
         /// <summary>
         /// Sub-array containing audio paths with two bounces
         /// </summary>
         public NativeArray<AudioPath> TwoBouncePaths =>
             AllAudioPaths.GetSubArray(_audioPathArrayLayout.TwoBouncesPathsStartIndex,
-                _audioPathArrayLayout.TwoBouncesCount);
+                _audioPathArrayLayout.NumTwoBouncePaths);
 
         /// <summary>
         /// Sub-array containing audio paths with more than two bounces
         /// </summary>
         public NativeArray<AudioPath> HigherOrderPaths =>
             AllAudioPaths.GetSubArray(_audioPathArrayLayout.ManyBouncePathsStartIndex,
-                _audioPathArrayLayout.ManyBouncesCount);
+                _audioPathArrayLayout.NumIterativePaths);
 
         private AudioPathArrayLayout _audioPathArrayLayout;
         private NativeArray<float3> _listenerAndSourcePositions;
@@ -99,7 +99,7 @@ namespace Code.Simulation
             for (var i = 0; i < sources.Count; i++)
                 _listenerAndSourcePositions[i + 1] = sources[i].transform.position;
             _audioPathArrayLayout = layout;
-            AllAudioPaths = Helper.ReallocateIfNeeded(AllAudioPaths, layout.TotalCount, Allocator.Persistent);
+            AllAudioPaths = Helper.ReallocateIfNeeded(AllAudioPaths, layout.NumTotalPaths, Allocator.Persistent);
         }
 
         public void Dispose()
