@@ -23,6 +23,7 @@ namespace Code.Simulation
         {
             _bounces = Helper.ReallocateIfNeeded(_bounces, numBounces * hitsAroundListener.Length,
                 Allocator.Persistent);
+            var bouncesStride = hitsAroundListener.Length;
             _bounceHits = Helper.ReallocateIfNeeded(_bounceHits, hitsAroundListener.Length, Allocator.Persistent);
             var hitsCopyHandle = new Copy<RaycastHit>
             {
@@ -43,12 +44,10 @@ namespace Code.Simulation
             {
                 var reflectHandle = new Bounce
                 {
-                    Bounces = _bounces,
+                    Bounces = _bounces.GetSubArray(i * bouncesStride, bouncesStride),
                     TotalDistances = _totalDistances,
                     ReflectCommands = _bounceCommands,
                     PreviousRayHits = _bounceHits,
-                    BounceIndex = i,
-                    MaxNumBounces = numBounces
                 }.ScheduleParallel(hitsAroundListener.Length, 32, prevLoopHandle);
 
                 var raycastHandle =
@@ -73,10 +72,10 @@ namespace Code.Simulation
                 Paths = result,
                 Bounces = _bounces,
 
+                BouncesStride = bouncesStride,
                 TotalDistances = _totalDistances,
                 Sources = sources,
                 Listener = listener,
-                MaxNumBounces = numBounces,
                 VisibilityHits = _visibilityHits,
             }.ScheduleParallel(result.Length, 32, visibilityCheckHandle);
 
@@ -96,13 +95,10 @@ namespace Code.Simulation
 
         private struct Bounce : IJobFor
         {
-            [NativeDisableParallelForRestriction]
             public NativeSlice<float3> Bounces;
             public NativeArray<float> TotalDistances;
             public NativeArray<RaycastCommand> ReflectCommands;
             [ReadOnly] public NativeArray<RaycastHit> PreviousRayHits;
-            [ReadOnly] public int BounceIndex;
-            [ReadOnly] public int MaxNumBounces;
 
             public void Execute(int index)
             {
@@ -113,7 +109,7 @@ namespace Code.Simulation
                     return;
                 }
 
-                Bounces[BounceIndex * MaxNumBounces + index] = PreviousRayHits[index].point;
+                Bounces[index] = PreviousRayHits[index].point;
                 TotalDistances[index] = TotalDistances[index] + PreviousRayHits[index].distance;
 
                 var reflectDir =
@@ -135,10 +131,10 @@ namespace Code.Simulation
             {
                 var source = Sources[index / Bounces.Length];
                 var bounce = Bounces[index % Bounces.Length];
-                var direction = source - bounce;
+                var direction = bounce - source;
                 var distance = math.distance(source, bounce);
                 VisibilityCommands[index] =
-                    new RaycastCommand(bounce, direction, QueryParameters.Default, distance);
+                    new RaycastCommand(source, direction, QueryParameters.Default, distance);
             }
         }
 
@@ -148,17 +144,17 @@ namespace Code.Simulation
             public NativeArray<AudioPath> Paths;
 
             [ReadOnly] public NativeArray<float3> Bounces;
+            [ReadOnly] public int BouncesStride;
             [ReadOnly] public NativeArray<float> TotalDistances;
             [ReadOnly] public NativeArray<float3>.ReadOnly Sources;
             [ReadOnly] public float3 Listener;
             [ReadOnly] public NativeArray<RaycastHit> VisibilityHits;
-            [ReadOnly] public int MaxNumBounces;
 
             public void Execute(int index)
             {
                 var bounceIndex = index % Bounces.Length;
                 var lastBounce = Bounces[bounceIndex];
-                var numBounces = bounceIndex % MaxNumBounces + 1;
+                var numBounces = bounceIndex / BouncesStride + 1;
 
                 if (lastBounce is { x: 0, y: 0, z: 0 } || Helper.DidHit(VisibilityHits[index]) || numBounces < 3)
                 {
@@ -179,8 +175,8 @@ namespace Code.Simulation
                 };
 
                 path.Positions.Add(Listener);
-                for (var i = bounceIndex - numBounces + 1; i <= bounceIndex; i++)
-                    path.Positions.Add(Bounces[i]);
+                for (var i = numBounces - 1; i >= 0; i--)
+                    path.Positions.Add(Bounces[bounceIndex - i * BouncesStride]);
                 var source = Sources[sourceIndex];
                 path.Positions.Add(source);
                 Paths[index] = path;

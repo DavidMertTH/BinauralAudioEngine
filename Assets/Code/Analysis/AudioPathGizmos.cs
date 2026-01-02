@@ -12,6 +12,7 @@ namespace Code.Analysis
         [SerializeField] private bool _drawDirectPaths = true;
         [SerializeField] private bool _drawOneBouncePaths = true;
         [SerializeField] private bool _drawTwoBouncePaths = true;
+        [SerializeField] private bool _drawHigherOrderBouncePaths = true;
 
         private readonly Color[] _colors = new[] { Color.red, Color.blue, Color.green, Color.yellow, Color.cyan };
 
@@ -22,12 +23,13 @@ namespace Code.Analysis
             {
                 if (!path.IsValid || path.Positions.Length < 2)
                     continue;
-                var numBounces = path.Positions.Length - 2;
-                if (numBounces == 0 && !_drawDirectPaths)
+                if (path.Reflections == 0 && !_drawDirectPaths)
                     continue;
-                if (numBounces == 1 && !_drawOneBouncePaths)
+                if (path.Reflections == 1 && !_drawOneBouncePaths)
                     continue;
-                if (numBounces == 2 && !_drawTwoBouncePaths)
+                if (path.Reflections == 2 && !_drawTwoBouncePaths)
+                    continue;
+                if (path.Reflections > 2 && !_drawHigherOrderBouncePaths)
                     continue;
                 var lineStartPos = path.Positions[0];
                 for (var j = 1; j < path.Positions.Length; j++)
