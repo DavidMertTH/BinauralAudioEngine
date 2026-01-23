@@ -17,7 +17,7 @@ namespace Code.Simulation
         private NativeArray<RaycastHit> _targetHits;
 
         private NativeArray<AudioPath>[] _audioPathsToTarget;
-        private NativeArray<AudioPath> _audioRaysContinuous;
+        private NativeArray<AudioPath> _AudioPathsContinuous;
 
         public List<AudioPath> GetHighOrderRays(Vector3 target, int bounceAmount,
             NativeArray<RaycastCommand> initialCommands, float absorption)
@@ -36,7 +36,7 @@ namespace Code.Simulation
             _previousCommands[0] = initialCommands;
             _previousHits = new NativeArray<RaycastHit>(initialCommands.Length, Allocator.TempJob);
             _targetHits = new NativeArray<RaycastHit>(initialCommands.Length, Allocator.TempJob);
-            _audioRaysContinuous = new NativeArray<AudioPath>(initialCommands.Length, Allocator.TempJob);
+            _AudioPathsContinuous = new NativeArray<AudioPath>(initialCommands.Length, Allocator.TempJob);
 
             JobHandle jobHandle = RaycastCommand.ScheduleBatch(initialCommands, _previousHits, 1, 1);
             jobHandle.Complete();
@@ -57,8 +57,8 @@ namespace Code.Simulation
                 {
                     PreviousHit = _previousHits,
                     Target = target,
-                    AudioRays = _audioRaysContinuous,
-                    AudioRaysToTarget = _audioPathsToTarget[i],
+                    AudioPaths = _AudioPathsContinuous,
+                    AudioPathsToTarget = _audioPathsToTarget[i],
                     ReflectionRay = _reflectionCommands,
                     FromTarget = _fromTarget,
                     PreviousRay = _previousCommands[i],
@@ -69,7 +69,7 @@ namespace Code.Simulation
                 EvalRays evalJob = new EvalRays()
                 {
                     PreviousHits = _previousHits,
-                    AudioRays = _audioPathsToTarget[i],
+                    AudioPaths = _audioPathsToTarget[i],
                     ToTarget = _targetHits,
                     Target = target,
                 };
@@ -91,7 +91,7 @@ namespace Code.Simulation
             _targetHits.Dispose();
             _reflectionCommands.Dispose();
             _fromTarget.Dispose();
-            _audioRaysContinuous.Dispose();
+            _AudioPathsContinuous.Dispose();
             return rays;
         }
 
@@ -111,17 +111,17 @@ namespace Code.Simulation
             }
         }
 
-        private AudioPath[] GetRayList(NativeArray<AudioPath> audioRays)
+        private AudioPath[] GetRayList(NativeArray<AudioPath> AudioPaths)
         {
-            AudioPath[] rays = new AudioPath[audioRays.Length];
-            audioRays.CopyTo(rays);
+            AudioPath[] rays = new AudioPath[AudioPaths.Length];
+            AudioPaths.CopyTo(rays);
             return rays;
         }
 
         [BurstCompile]
         private struct EvalRays : IJobParallelFor
         {
-            public NativeArray<AudioPath> AudioRays;
+            public NativeArray<AudioPath> AudioPaths;
             
             [ReadOnly] public NativeArray<RaycastHit> PreviousHits;
             [ReadOnly] public NativeArray<RaycastHit> ToTarget;
@@ -129,15 +129,15 @@ namespace Code.Simulation
             [ReadOnly] public float ScatteringCoefficient;
             public void Execute(int index)
             {
-                if (ToTarget[index].distance < 0.001f || AudioRays[index].Reflections <= 2)
+                if (ToTarget[index].distance < 0.001f || AudioPaths[index].Reflections <= 2)
                 {
-                    AudioRays[index] = new AudioPath() { IsValid = false };
+                    AudioPaths[index] = new AudioPath() { IsValid = false };
                     return;
                 }
 
                 if ((PreviousHits[index].point - ToTarget[index].point).magnitude < 0.01f)
                 {
-                    AudioPath path = AudioRays[index];
+                    AudioPath path = AudioPaths[index];
                     
                     path.IsValid = true;
                     path.ImagePosition = PreviousHits[index].point;
@@ -149,10 +149,10 @@ namespace Code.Simulation
                     
                     path.DistanceToImage += math.distance(Target, ToTarget[index].point);
                     path.Energy *= contribution;
-                    AudioRays[index] = path;
+                    AudioPaths[index] = path;
                     if (path.DistanceToImage < 9.28f)
                     {
-                        AudioRays[index] = path;
+                        AudioPaths[index] = path;
                     }
                 }
             }
@@ -161,8 +161,8 @@ namespace Code.Simulation
         [BurstCompile]
         private struct FillRays : IJobParallelFor
         {
-            public NativeArray<AudioPath> AudioRaysToTarget;
-            public NativeArray<AudioPath> AudioRays;
+            public NativeArray<AudioPath> AudioPathsToTarget;
+            public NativeArray<AudioPath> AudioPaths;
 
             public NativeArray<RaycastCommand> ReflectionRay;
             public NativeArray<RaycastCommand> FromTarget;
@@ -177,7 +177,7 @@ namespace Code.Simulation
             public void Execute(int index)
             {
                 if (PreviousHit[index].distance < 0.0001f) return;
-                var ray = AudioRays[index];
+                var ray = AudioPaths[index];
 
                 if (ray.Energy <= 0.000001f)
                 {
@@ -185,10 +185,10 @@ namespace Code.Simulation
                 }
                 else
                 {
-                    ray.Energy = AudioRays[index].Energy * Absorption;
+                    ray.Energy = AudioPaths[index].Energy * Absorption;
                 }
 
-                ray.Reflections = AudioRays[index].Reflections + 1;
+                ray.Reflections = AudioPaths[index].Reflections + 1;
                 ray.DistanceToImage += PreviousHit[index].distance;
                 ray.ImagePosition = PreviousHit[index].point + PreviousHit[index].normal * 0.001f;
                 ray.Positions.Add(ray.ImagePosition);
@@ -205,8 +205,8 @@ namespace Code.Simulation
                 
                 ray.ScatteringDivergence = Vector3.Angle(reflectedDir, PreviousHit[index].point - Target);
                 
-                AudioRays[index] = ray;
-                AudioRaysToTarget[index] = ray;
+                AudioPaths[index] = ray;
+                AudioPathsToTarget[index] = ray;
             }
         }
     }

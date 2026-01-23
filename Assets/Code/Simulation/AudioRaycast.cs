@@ -10,7 +10,7 @@ namespace Code.Simulation
     /// <summary>
     /// Casts audio rays into the scene using three methods.
     /// </summary>
-    public class AudioRaycast
+    public class AudioPathcast
     {
         public static Awaitable CastDirectRays(float4 origin, NativeArray<float4> targets,
             out NativeArray<AudioPath> paths, CancellationToken ct)

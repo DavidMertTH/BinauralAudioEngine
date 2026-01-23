@@ -2,8 +2,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
+using Code.Core;
 using Code.Simulation;
 using MathNet.Numerics;
 using MathNet.Numerics.IntegralTransforms;
@@ -21,7 +23,6 @@ namespace Code.Renderer
         public bool reloadIr;
         public int irLenght = 1024 * 7;
         public string path;
-        public SpatialListener spatialListener;
         public bool openFile = false;
         public float volume;
         public bool isRunning;
@@ -66,17 +67,12 @@ namespace Code.Renderer
 
             if (reloadIr)
             {
-                spatialListener.UpdateAudioProcessor();
-
-                List<AudioRay> rays = new List<AudioRay>();
-                rays.Add(spatialListener.DirectRay);
-                rays.AddRange(spatialListener.PrimaryRays);
-                rays.AddRange(spatialListener.SecondaryRays);
-                rays.AddRange(spatialListener.HigherOrderRays);
+                var rays = BinauralAudioEngine.Instance.AudioPaths.ToList();
+                var listener = BinauralAudioEngine.Instance.Listener;
                 reloadIr = false;
                 Debug.Log("found " + rays.Count + " Rays");
                 (float[], float[]) ir = RaysToIr.CreateBrirLeftAndRight(rays, irLenght,
-                    spatialListener.gameObject, _sampleRate,
+                    listener.gameObject, _sampleRate,
                     1);
                 EnterNewIr(ir.Item1, ir.Item2);
             }

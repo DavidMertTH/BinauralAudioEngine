@@ -35,7 +35,7 @@ namespace Code.Core
         private readonly SemaphoreSlim _semaphoreSlim = new(1);
         private readonly CancellationTokenSource _onDestroyCts = new();
 
-        private Transform Listener
+        public Transform Listener
         {
             get
             {
@@ -77,7 +77,7 @@ namespace Code.Core
             await _semaphoreSlim.WaitAsync(linkedCts.Token);
             try
             {
-                var rayJob = ComputeAudioRays(linkedCts.Token);
+                var rayJob = ComputeAudioPaths(linkedCts.Token);
                 var impulseResponseJob = ComputeImpulseResponses(rayJob, linkedCts.Token);
                 var combinedJob = JobHandle.CombineDependencies(impulseResponseJob, rayJob);
                 await combinedJob.ToTask(linkedCts.Token);
@@ -88,7 +88,7 @@ namespace Code.Core
             }
         }
 
-        private JobHandle ComputeAudioRays(CancellationToken ct)
+        private JobHandle ComputeAudioPaths(CancellationToken ct)
         {
             var layout = Settings.GetAudioPathArrayLayout(_audioFilters.Count);
             _simulationData.Init(Listener, _audioFilters, layout);

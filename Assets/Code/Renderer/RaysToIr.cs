@@ -7,7 +7,7 @@ namespace Code.Renderer
 {
     public class RaysToIr
     {
-        public static (float[], float[]) CreateBrirLeftAndRight(List<AudioRay> rays, int irLength,
+        public static (float[], float[]) CreateBrirLeftAndRight(List<AudioPath> rays, int irLength,
             GameObject audioTarget, int sampleRate, int Gain)
         {
             float[] impulseResponseLeft = new float[irLength];
@@ -38,7 +38,7 @@ namespace Code.Renderer
                     float distanceToSource = ray.DistanceToImage + (sofaHrir.radius);
                     float propagationDelaySec = distanceToSource / 343f; // Schallgeschwindigkeit: 343 m/s
                     float propagationDelaySamples = sampleRate * propagationDelaySec;
-                    float distanceAmplitudeTwo = ray.Absorbtion * (8 / distanceToSource) * Gain;
+                    float distanceAmplitudeTwo = ray.Energy * (8 / distanceToSource) * Gain;
 
                     for (int i = 0; i < sofaHrir.hrtfData.N; i++)
                     {

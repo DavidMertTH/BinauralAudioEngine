@@ -170,7 +170,7 @@ namespace Code.Simulation
 
             CheckSecondaryRays checkSecJob = new CheckSecondaryRays()
             {
-                AudioRays = secPaths,
+                AudioPaths = secPaths,
                 Source = source.transform.position,
                 Target = target.transform.position,
                 SecHits = secondaryHits,
@@ -228,7 +228,7 @@ namespace Code.Simulation
                 PrimaryHit = primaryHit,
                 Target = target.transform.position,
                 Origin = source.transform.position,
-                AudioRays = _primaryReflections,
+                AudioPaths = _primaryReflections,
                 InitHit = surroundingHitsSource
             };
             jobHandle = checkJob.Schedule(surroundingHitsSource.Length, 8);
@@ -246,7 +246,7 @@ namespace Code.Simulation
         [BurstCompile]
         private struct CheckSecondaryRays : IJobParallelFor
         {
-            public NativeArray<AudioPath> AudioRays;
+            public NativeArray<AudioPath> AudioPaths;
 
             [ReadOnly] public NativeList<SecondaryHit> SecHits;
             [ReadOnly] public NativeArray<RaycastHit> ToSourceHit;
@@ -267,7 +267,7 @@ namespace Code.Simulation
                         IsValid = false,
                     };
 
-                    AudioRays[index] = falsePath;
+                    AudioPaths[index] = falsePath;
                     return;
                 }
 
@@ -292,14 +292,14 @@ namespace Code.Simulation
 
                 path.Positions.Add(ToSourceHit[index].point);
                 path.Positions.Add(ToTargetHit[index].point);
-                AudioRays[index] = path;
+                AudioPaths[index] = path;
             }
         }
 
         [BurstCompile]
         private struct CheckPrimaryRays : IJobParallelFor
         {
-            public NativeArray<AudioPath> AudioRays;
+            public NativeArray<AudioPath> AudioPaths;
             [ReadOnly] public NativeArray<RaycastHit> InitHit;
             [ReadOnly] public NativeArray<RaycastHit> PrimaryHit;
             [ReadOnly] public Vector3 Origin;
@@ -321,7 +321,7 @@ namespace Code.Simulation
                     IsValid = true,
                 };
                 path.Positions.Add(PrimaryHit[index].point);
-                AudioRays[index] = path;
+                AudioPaths[index] = path;
             }
         }
 

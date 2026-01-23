@@ -155,9 +155,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   wet: 1
-  crossoverLength: 1
-  clip: {fileID: 0}
-  hallReverb: 0
   fullIrLength: 0
 --- !u!114 &17601212
 MonoBehaviour:
@@ -387,7 +384,6 @@ MonoBehaviour:
   reloadIr: 0
   irLenght: 7168
   path: 
-  spatialListener: {fileID: 0}
   openFile: 0
   volume: 0
   isRunning: 0
@@ -2179,8 +2175,6 @@ GameObject:
   - component: {fileID: 1346978765}
   - component: {fileID: 1346978764}
   - component: {fileID: 1346978763}
-  - component: {fileID: 1346978771}
-  - component: {fileID: 1346978772}
   m_Layer: 7
   m_Name: OfflineSource
   m_TagString: Untagged
@@ -2204,7 +2198,6 @@ MonoBehaviour:
   reloadIr: 0
   irLenght: 7168
   path: 
-  spatialListener: {fileID: 1428495664}
   openFile: 0
   volume: 0
   isRunning: 0
@@ -2400,30 +2393,6 @@ Transform:
   - {fileID: 1046002536}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1346978771
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1346978762}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6da43522623d4704e979466dc7650b65, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &1346978772
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1346978762}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 347013242dca7c44fb5001793033ea59, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1374262843
 GameObject:
   m_ObjectHideFlags: 0
@@ -2586,7 +2555,6 @@ GameObject:
   - component: {fileID: 1428495660}
   - component: {fileID: 1428495659}
   - component: {fileID: 1428495658}
-  - component: {fileID: 1428495664}
   - component: {fileID: 1428495663}
   - component: {fileID: 1428495662}
   m_Layer: 6
@@ -2718,28 +2686,6 @@ MonoBehaviour:
   source: {fileID: 17601213}
   binauralAudioProcessor: {fileID: 17601212}
   calculateAcoustics: 0
---- !u!114 &1428495664
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1428495657}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3c27d23bce6296e4797b877478acdf67, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  imageSource: {fileID: 1428495663}
-  raycastAudio: {fileID: 1428495662}
-  binauralAudioProcessor: {fileID: 17601212}
-  source: {fileID: 1346978769}
-  renderDirectRay: 1
-  renderPrimaryRay: 0
-  renderSecondaryRay: 1
-  renderHigherOrderRays: 1
-  bounces: 20
-  absorbtion: 0.954
 --- !u!1 &1448477675
 GameObject:
   m_ObjectHideFlags: 0
