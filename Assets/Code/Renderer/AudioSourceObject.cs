@@ -20,10 +20,11 @@ namespace Code.Renderer
         public int audioChunkAmount;
         public bool reloadIr;
         public int irLenght = 1024 * 7;
-
+        public string path;
         public SpatialListener spatialListener;
         public bool openFile = false;
-
+        public float volume;
+        public bool isRunning;
         [HideInInspector] public float[] audioTrack;
         [HideInInspector] public AudioSource audioSource;
 
@@ -31,13 +32,13 @@ namespace Code.Renderer
         private Complex[][] _spectralAudio;
         private float[] audioLeft;
         private float[] audioRight;
-
+        
         private Complex[] _spectralIrLeft;
         private Complex[] _spectralIrRight;
         private int _dspBufferLength;
         public int _sampleRate;
         private int _fullBlockLength;
-        private int _currentPlayBackHead;
+        public int currentPlayBackHead;
         private IEnumerator _convolutionCoroutine;
         public bool _coroutineRunning;
         private float[] _irLeft;
@@ -120,7 +121,7 @@ namespace Code.Renderer
 
             Complex[][] spectralAudio = _spectralAudio;
 
-            int startHead = _currentPlayBackHead;
+            int startHead = currentPlayBackHead;
 
             audioLeft = new float[audioLen + irLen - 1];
             audioRight = new float[audioLen + irLen - 1];
@@ -288,7 +289,7 @@ namespace Code.Renderer
             return complexAudioData;
         }
 
-        public void LoadAudioTrackFromSource()
+        public string LoadAudioTrackFromSource()
         {
             string path = EditorUtility.OpenFilePanel("Wähle eine Datei", "", "wav");
             if (!string.IsNullOrEmpty(path))
@@ -304,11 +305,14 @@ namespace Code.Renderer
                 audioSource.Play();
                 CreateOfflineAudioBuffer();
             }
+
+            this.path = path;
+            return path;
         }
 
         private void OnAudioFilterRead(float[] data, int channels)
         {
-            if (audioLeft == null || audioRight == null )
+           if (audioLeft == null || audioRight == null || !isRunning)
             {
                 for (int i = 0; i < data.Length; i++)
                 {
@@ -321,15 +325,16 @@ namespace Code.Renderer
             int bufferCounter;
             for (int i = 0; i < data.Length; i++)
             {
-                bufferCounter = _currentPlayBackHead * _dspBufferLength + (i / 2);
+                bufferCounter = currentPlayBackHead * _dspBufferLength + (i / 2);
 
                 data[i] = i % 2 == 0 ? audioRight[bufferCounter] : audioLeft[bufferCounter];
                 // data[i * 2] = audioLeft[_currentPlayBackHead * _dspBufferLength + i];
                 // data[i * 2 + 1] = audioRight[_currentPlayBackHead * _dspBufferLength + i];
+                data[i] *= volume;
             }
 
-            _currentPlayBackHead++;
-            if (audioChunkAmount <= _currentPlayBackHead) _currentPlayBackHead = 0;
+            currentPlayBackHead++;
+            if (audioChunkAmount <= currentPlayBackHead) currentPlayBackHead = 0;
         }
     }
 }

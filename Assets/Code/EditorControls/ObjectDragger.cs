@@ -45,7 +45,6 @@ namespace Code.EditorControlls
 
             if (Input.GetMouseButtonDown(1))
             {
-                Debug.Log("pressing");
                 _currentlyRotating = GetObjectUnderMouse();
             }
         }

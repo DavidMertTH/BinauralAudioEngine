@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
 
 namespace Code.EditorControlls
@@ -31,6 +32,10 @@ namespace Code.EditorControlls
         public void ListenForInputs()
         {
             Vector3 clickedPosition = GetClickedPosition();
+            if (EventSystem.current.IsPointerOverGameObject())
+            {
+                return;
+            }
             if (_wallPositionA != Vector3.zero)
             {
                 UpdateDemoWall(clickedPosition);
