@@ -7,7 +7,7 @@ namespace Code.Simulation
 {
     public class SpatialListener : MonoBehaviour
     {
-        public ImageSource imageSource;
+        public ImageSourceOld imageSourceOld;
         public RaycastAudio raycastAudio;
         public BinauralAudioProcessor binauralAudioProcessor;
         public AudioSource source;
@@ -19,7 +19,7 @@ namespace Code.Simulation
 
         [Range(0, 100)] [SerializeField] public int bounces;
 
-        [Range(0, 1)] [SerializeField] public float absorbtion;
+        [Range(0, 1)] [SerializeField] public float absorption;
 
         private SpatialListener _target;
 
@@ -54,7 +54,7 @@ namespace Code.Simulation
                 imageSource.GetSecundaryReflections(_surroundingHitsSource, _surroundingHitsTarget, absorbtion);
             HigherOrderRays = raycastAudio.GetHighOrderRays(
                 _target.transform.position, bounces,
-                AudioEnvironment.Instance.GetRaycastsAroundPosition(source.transform.position), absorbtion);
+                AudioEnvironment.Instance.GetRaycastsAroundPosition(source.transform.position), absorption);
 
             binauralAudioProcessor.DirectHit = DirectRay;
             binauralAudioProcessor.PrimaryReflections = PrimaryRays;
@@ -86,14 +86,14 @@ namespace Code.Simulation
             {
                 foreach (AudioRay ray in PrimaryRays)
                 {
-                    if (ray.Positions.Length == 0) continue;
-                    if (!ray.IsValid) return;
+                    if (path.Positions.Length == 0) continue;
+                    if (!path.IsValid) return;
 
-                    color = new Color(0.5f, (10 - ray.DistanceToImage) / 10, 0.5f, 1f);
+                    color = new Color(0.5f, (10 - path.DistanceToImage) / 10, 0.5f, 1f);
                     Gizmos.color = color;
 
-                    Gizmos.DrawRay(ray.Positions[0], (_target.transform.position - (Vector3)ray.ImagePosition));
-                    Gizmos.DrawRay(ray.Positions[0], (source.transform.position - (Vector3)ray.ImagePosition));
+                    Gizmos.DrawRay(path.Positions[0], (_target.transform.position - (Vector3)path.ImagePosition));
+                    Gizmos.DrawRay(path.Positions[0], (source.transform.position - (Vector3)path.ImagePosition));
                 }
             }
 
@@ -101,15 +101,15 @@ namespace Code.Simulation
             {
                 foreach (AudioRay ray in SecondaryRays)
                 {
-                    if (ray.Positions.Length == 0) continue;
-                    if (!ray.IsValid) return;
+                    if (path.Positions.Length == 0) continue;
+                    if (!path.IsValid) return;
 
                     color = Color.blue;
                     Gizmos.color = color;
 
-                    Gizmos.DrawRay(ray.Positions[0], source.transform.position - (Vector3)ray.Positions[0]);
-                    Gizmos.DrawRay(ray.Positions[0], (Vector3)ray.Positions[1] - (Vector3)ray.Positions[0]);
-                    Gizmos.DrawRay(ray.Positions[1], _target.transform.position - (Vector3)ray.Positions[1]);
+                    Gizmos.DrawRay(path.Positions[0], source.transform.position - (Vector3)path.Positions[0]);
+                    Gizmos.DrawRay(path.Positions[0], (Vector3)path.Positions[1] - (Vector3)path.Positions[0]);
+                    Gizmos.DrawRay(path.Positions[1], _target.transform.position - (Vector3)path.Positions[1]);
                 }
             }
 
@@ -117,28 +117,28 @@ namespace Code.Simulation
             {
                 foreach (AudioRay ray in HigherOrderRays)
                 {
-                    if (ray.Positions.Length == 0) continue;
-                    if (!ray.IsValid) continue;
-                    color = new Color(0, 0, 0, ray.Absorbtion/2);
+                    if (path.Positions.Length == 0) continue;
+                    if (!path.IsValid) continue;
+                    color = new Color(0, 0, 0, path.Energy/2);
                     Gizmos.color = color;
 
-                    Gizmos.DrawRay(ray.Positions[0], source.transform.position - (Vector3)ray.Positions[0]);
-                    for (int i = 0; i < ray.Positions.Length - 1; i++)
+                    Gizmos.DrawRay(path.Positions[0], source.transform.position - (Vector3)path.Positions[0]);
+                    for (int i = 0; i < path.Positions.Length - 1; i++)
                     {
-                        Gizmos.DrawRay(ray.Positions[i], (Vector3)ray.Positions[i + 1] - (Vector3)ray.Positions[i]);
+                        Gizmos.DrawRay(path.Positions[i], (Vector3)path.Positions[i + 1] - (Vector3)path.Positions[i]);
                     }
 
-                    Gizmos.DrawRay((Vector3)ray.Positions[^1], _target.transform.position - (Vector3)ray.Positions[^1]);
+                    Gizmos.DrawRay((Vector3)path.Positions[^1], _target.transform.position - (Vector3)path.Positions[^1]);
                 }
             }
         }
 
-        private AudioRay GetDirectRay(Vector3 localSource, Vector3 localTarget)
+        private AudioPath GetDirectPath(Vector3 localSource, Vector3 localTarget)
         {
             RaycastHit hit;
             Vector3 direction = localTarget - localSource;
-            AudioRay directHit = new AudioRay();
-            directHit.Absorbtion = 1;
+            AudioPath directHit = new AudioPath();
+            directHit.Energy = 1;
             LayerMask mask = LayerMask.GetMask("Wall");
           
             if ( ! Physics.Raycast(localSource, direction, out hit, direction.magnitude, mask))

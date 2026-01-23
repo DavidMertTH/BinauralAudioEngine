@@ -11,19 +11,10 @@ namespace Code.Renderer
     public class LiveConvolutionReverb : MonoBehaviour
     {
         [Range(0, 1)] [SerializeField] public float wet;
-        [Range(1, 1024 * 4)] [SerializeField] public int crossoverLength;
-        public AudioClip clip;
-        [Range(0, 1)] [SerializeField] public float hallReverb;
         [HideInInspector] public int fullIrLength;
-        private Complex[] _reverbLayerFreq;
-        public static readonly Stopwatch Clock = Stopwatch.StartNew();
-
-        private Complex[][] _lastIrLeft;
-        private Complex[][] _lastIrRight;
 
         private float[] _overlapBufferLeft;
         private float[] _overlapBufferRight;
-
 
         public enum Side
         {
@@ -33,8 +24,7 @@ namespace Code.Renderer
 
         private void Awake()
         {
-            fullIrLength = 1024 * 6;
-
+            fullIrLength = 1024 * 2;
             _overlapBufferLeft = new float[fullIrLength * 2];
             _overlapBufferRight = new float[fullIrLength * 2];
         }
@@ -42,9 +32,6 @@ namespace Code.Renderer
         private void Start()
         {
             FourierTransformControl.TryUseNativeMKL();
-            AudioFileLoader audioFileLoader = new AudioFileLoader();
-            audioFileLoader.Clip = clip;
-            audioFileLoader.LoadClip();
         }
 
         public static int GetMaxZweierPotenz(int size)
@@ -67,8 +54,7 @@ namespace Code.Renderer
             float[] dry, ref float[] overlapBuffer)
         {
             if (lastIrFreqDomain == null) lastIrFreqDomain = irFreqDomain;
-
-
+            
             Complex[] oldAudioFolded = new Complex[irFreqDomain.Length];
             Complex[] newAudioFolded = new Complex[irFreqDomain.Length];
 
@@ -115,6 +101,7 @@ namespace Code.Renderer
             {
                 overlapBuffer = _overlapBufferRight;
             }
+
             int paddedLength = blockLength * 2;
 
             int irBlockAmount = irTimeDomain.Length / blockLength;

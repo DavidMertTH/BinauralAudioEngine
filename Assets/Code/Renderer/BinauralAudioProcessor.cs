@@ -23,7 +23,7 @@ namespace Code.Renderer
 
         public Transform targetObject;
         public AudioFileLoader audioFileLoader;
-
+ 
         public bool bypass = false;
         public bool useDirect = false;
         public bool usePrimaryReflections = false;
@@ -33,10 +33,11 @@ namespace Code.Renderer
         public int blockSize = 128;
         public LiveConvolutionReverb reverb;
 
-        public AudioRay DirectHit;
-        public List<AudioRay> PrimaryReflections;
-        public List<AudioRay> SecundaryReflections;
-        public List<AudioRay> HigherOrderReflections;
+        public AudioPath DirectPath;
+        public List<AudioPath> PrimaryReflections;
+        public List<AudioPath> SecondaryReflections;
+        public List<AudioPath> HigherOrderReflections;
+        
         public float[] impulseResponseLeft;
         public float[] impulseResponseRight;
         [HideInInspector] public float[] leftData;
@@ -220,20 +221,20 @@ namespace Code.Renderer
             if (bypass || !_isSetup) return;
 
 
-            List<AudioRay> rays = GetAllSelectedRays();
+            List<AudioPath> paths = GetAllSelectedPaths();
 
             _nativeImpulseResponseLeft = new NativeArray<float>(_irLength, Allocator.TempJob);
             _nativeImpulseResponseRight = new NativeArray<float>(_irLength, Allocator.TempJob);
 
-            NativeArray<int> timeDelayLeft = new NativeArray<int>(rays.Count, Allocator.TempJob);
-            NativeArray<int> timeDelayRight = new NativeArray<int>(rays.Count, Allocator.TempJob);
+            NativeArray<int> timeDelayLeft = new NativeArray<int>(paths.Count, Allocator.TempJob);
+            NativeArray<int> timeDelayRight = new NativeArray<int>(paths.Count, Allocator.TempJob);
 
-            NativeArray<float> amplitudeLeft = new NativeArray<float>(rays.Count, Allocator.TempJob);
-            NativeArray<float> amplitudeRight = new NativeArray<float>(rays.Count, Allocator.TempJob);
+            NativeArray<float> amplitudeLeft = new NativeArray<float>(paths.Count, Allocator.TempJob);
+            NativeArray<float> amplitudeRight = new NativeArray<float>(paths.Count, Allocator.TempJob);
 
 
-            NativeArray<AudioRay> nativeAudioRays = new NativeArray<AudioRay>(rays.Count, Allocator.TempJob);
-            nativeAudioRays.CopyFrom(rays.ToArray());
+            NativeArray<AudioPath> nativesPaths = new NativeArray<AudioPath>(paths.Count, Allocator.TempJob);
+            nativesPaths.CopyFrom(paths.ToArray());
 
 
             GetRayToImpulseData dataJob = new GetRayToImpulseData()
@@ -245,7 +246,7 @@ namespace Code.Renderer
 
                 Gain = Gain,
                 IrLength = _irLength,
-                Rays = nativeAudioRays,
+                Paths = nativesPaths,
                 SampleRate = sampleRate,
                 LeftEarPosition = _leftEar,
                 RightEarPosition = _rightEar,
@@ -278,10 +279,10 @@ namespace Code.Renderer
             impulseResponseLeft = new float[_irLength];
             impulseResponseRight = new float[_irLength];
 
-            List<AudioRay> rays = GetAllSelectedRays();
+            List<AudioPath> paths = GetAllSelectedPaths();
 
-            float lengthDirectRay = DirectHit.DistanceToImage;
-            foreach (var ray in rays)
+            float lengthDirectRay = DirectPath.DistanceToImage;
+            foreach (var ray in paths)
             {
                 if (!ray.IsValid) continue;
 
@@ -302,7 +303,7 @@ namespace Code.Renderer
                     float distanceToSource = ray.DistanceToImage + (sofaHRIR.radius);
                     float propagationDelaySec = distanceToSource / 343f; // Schallgeschwindigkeit: 343 m/s
                     float propagationDelaySamples = sampleRate * propagationDelaySec;
-                    float distanceAmplitudeTwo = ray.Absorbtion * (8 / distanceToSource) * Gain;
+                    float distanceAmplitudeTwo = ray.Energy * (8 / distanceToSource) * Gain;
 
                     for (int i = 0; i < sofaHRIR.hrtfData.N; i++)
                     {
@@ -383,18 +384,18 @@ namespace Code.Renderer
         //     }
         // }
 
-        public List<AudioRay> GetAllSelectedRays()
+        public List<AudioPath> GetAllSelectedPaths()
         {
-            List<AudioRay> rays = new List<AudioRay> { };
-            if (useDirect && DirectHit.IsValid)
-                rays.Add(DirectHit);
+            List<AudioPath> paths = new List<AudioPath> { };
+            if (useDirect && DirectPath.IsValid)
+                paths.Add(DirectPath);
             if (usePrimaryReflections && PrimaryReflections != null && PrimaryReflections.Count > 0)
-                rays.AddRange(PrimaryReflections);
-            if (useSecondaryReflections && SecundaryReflections != null && SecundaryReflections.Count > 0)
-                rays.AddRange(SecundaryReflections);
+                paths.AddRange(PrimaryReflections);
+            if (useSecondaryReflections && SecondaryReflections != null && SecondaryReflections.Count > 0)
+                paths.AddRange(SecondaryReflections);
             if (useHigherOrderReflections && HigherOrderReflections != null && HigherOrderReflections.Count > 0)
-                rays.AddRange(HigherOrderReflections);
-            return rays;
+                paths.AddRange(HigherOrderReflections);
+            return paths;
         }
 
         [BurstCompile]
@@ -406,7 +407,7 @@ namespace Code.Renderer
             public NativeArray<float> AmplitudeLeft;
             public NativeArray<float> AmplitudeRight;
 
-            [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<AudioRay> Rays;
+            [DeallocateOnJobCompletion] [ReadOnly] public NativeArray<AudioPath> Paths;
             [ReadOnly] public Vector3 LeftEarPosition;
             [ReadOnly] public Vector3 RightEarPosition;
             [ReadOnly] public Vector3 TargetPosition;
@@ -417,22 +418,22 @@ namespace Code.Renderer
 
             public void Execute(int index)
             {
-                AudioRay ray = Rays[index];
+                AudioPath path = Paths[index];
 
-                if (!ray.IsValid)
+                if (!path.IsValid)
                 {
                     TimeDelaySamplesLeft[index] = -1;
                     TimeDelaySamplesRight[index] = -1;
                     return;
                 }
 
-                float imageToCenter = Vector3.Distance(TargetPosition, ray.ImagePosition);
+                float imageToCenter = Vector3.Distance(TargetPosition, path.ImagePosition);
 
-                float offsetLeft = imageToCenter - Vector3.Distance(LeftEarPosition, ray.ImagePosition);
-                float offsetRight = imageToCenter - Vector3.Distance(RightEarPosition, ray.ImagePosition);
+                float offsetLeft = imageToCenter - Vector3.Distance(LeftEarPosition, path.ImagePosition);
+                float offsetRight = imageToCenter - Vector3.Distance(RightEarPosition, path.ImagePosition);
 
-                float leftDistance = ray.DistanceToImage - offsetLeft;
-                float rightDistance = ray.DistanceToImage - offsetRight;
+                float leftDistance = path.DistanceToImage - offsetLeft;
+                float rightDistance = path.DistanceToImage - offsetRight;
 
                 float leftDelaySec = leftDistance / 343f;
                 float rightDelaySec = rightDistance / 343f;
@@ -456,8 +457,8 @@ namespace Code.Renderer
                 float averageDistance = (leftDistance + rightDistance) / 2;
                 float distanceAmplitude = 3 / (averageDistance);
 
-                float leftAmplitude = distanceAmplitude * (1 - binauralFactor) * ray.Absorbtion * Gain;
-                float rightAmplitude = distanceAmplitude * (1 + binauralFactor) * ray.Absorbtion * Gain;
+                float leftAmplitude = distanceAmplitude * (1 - binauralFactor) * path.Energy * Gain;
+                float rightAmplitude = distanceAmplitude * (1 + binauralFactor) * path.Energy * Gain;
 
                 leftAmplitude = Mathf.Min(leftAmplitude, 1);
                 rightAmplitude = Mathf.Min(rightAmplitude, 1);
