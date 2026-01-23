@@ -14,7 +14,7 @@ namespace Code.Core
         [SerializeField] private bool enableHannFiltering;
         public bool EnableHannFiltering => enableHannFiltering;
 
-        [SerializeField] [Range(1f, 10000f)] private int raysAroundListenerAndEachSource = 1000;
+        [SerializeField] [Range(1f, 100f)] private int raysAroundListenerAndEachSource = 10;
 
         [SerializeField] [Range(3f, 6f)] private int maxIterativeBounces = 5;
 
