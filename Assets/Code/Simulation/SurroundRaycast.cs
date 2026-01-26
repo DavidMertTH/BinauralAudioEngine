@@ -15,16 +15,14 @@ namespace Code.Simulation
     {
         private NativeArray<float3> _directions;
         private NativeArray<RaycastCommand> _commands;
-        public NativeArray<RaycastHit> _hits; // TODO: make private
-        public readonly CoplanarHits _coplanarHits = new(); // TODO: make private
-        public int hitsPerOrigin; // TODO: remove
+        private NativeArray<RaycastHit> _hits;
+        private readonly CoplanarHits _coplanarHits = new();
 
         public JobHandle CastRaysAroundOrigins(NativeArray<float3>.ReadOnly origins, int numRaysPerOrigin,
             out NativeArray<RaycastHit> hits, out int hitsStride, out NativeArray<bool> isHitCoplanar,
             out NativeArray<RaycastCommand> commands)
         {
             hitsStride = numRaysPerOrigin;
-            hitsPerOrigin = numRaysPerOrigin;
             var getDirectionsHandle = GetDirections(numRaysPerOrigin, out var directions);
             var getCommandsHandle = GetCommands(getDirectionsHandle, origins, directions, out commands);
             var raycastHandle = GetHits(getCommandsHandle, commands, out hits);

@@ -13,14 +13,10 @@ namespace Code.Core
     public class BinauralAudioEngine : Singleton<BinauralAudioEngine, DoAutoCreate<BinauralAudioEngine>>
     {
         [SerializeField] private BinauralAudioSettings settings;
-        public BinauralAudioSettings Settings => settings ??= new BinauralAudioSettings();
+        private BinauralAudioSettings Settings => settings ??= new BinauralAudioSettings();
 
         // TODO: Remove
         public AudioPath[] AudioPaths;
-        public int NumSources => _audioFilters.Count;
-        public RaycastHit[] SurroundingHits;
-        public int HitsPerOrigin => _surroundRaycast.hitsPerOrigin;
-        public bool[] IsCoplanar;
         public bool IsReady { get; private set; }
 
         private Transform _listener;
@@ -54,8 +50,6 @@ namespace Code.Core
                 {
                     await UpdateAllImpulseResponses();
                     AudioPaths = _simulationData.AllAudioPaths.ToArray();
-                    SurroundingHits = _surroundRaycast._hits.ToArray();
-                    IsCoplanar = _surroundRaycast._coplanarHits._isHitCoplanar.ToArray();
                     IsReady = true;
                 }
             }

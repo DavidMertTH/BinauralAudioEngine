@@ -10,7 +10,7 @@ namespace Code.Simulation
     public class CoplanarHits : IDisposable
     {
         private NativeArray<bool> _coplanarComparisonResults;
-        public NativeArray<bool> _isHitCoplanar; // TODO: make private
+        private NativeArray<bool> _isHitCoplanar;
 
         /// <summary>
         /// Finds raycast hits from the same origin that hit the same surface. This is important for the image source
@@ -136,7 +136,7 @@ namespace Code.Simulation
                     IsHitCoplanar[index] = true;
                     return;
                 }
-                
+
                 var originsBeforeThis = index / HitsPerOrigin;
                 var comparisonsBeforeThis = originsBeforeThis * ComparisonsPerOrigin;
                 var indexPerOrigin = index % HitsPerOrigin; // The first hit from each origin will be 0
