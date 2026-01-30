@@ -26,14 +26,15 @@ namespace Code.Renderer
         public bool openFile = false;
         public float volume;
         public bool isRunning;
+        public RaysVisualizer raysVisualizer;
         [HideInInspector] public float[] audioTrack;
         [HideInInspector] public AudioSource audioSource;
-
+        public List<AudioPath> audioPaths;
         private float[][] _audioChunks;
         private Complex[][] _spectralAudio;
         private float[] audioLeft;
         private float[] audioRight;
-        
+
         private Complex[] _spectralIrLeft;
         private Complex[] _spectralIrRight;
         private int _dspBufferLength;
@@ -46,6 +47,7 @@ namespace Code.Renderer
         private float[] _irRight;
         private bool _updateIrNextFrame;
 
+
         private void Start()
         {
             audioSource = GetComponent<AudioSource>();
@@ -57,6 +59,20 @@ namespace Code.Renderer
             // CreateOfflineIrBuffer();
         }
 
+        public List<AudioPath> GetValidPaths( List<AudioPath> unfilteredPaths)
+        {
+            List<AudioPath> validPaths = new List<AudioPath>();
+            for (int i = 0; i < unfilteredPaths.Count; i++)
+            {
+                if(unfilteredPaths[i].IsValid)
+                validPaths.Add(unfilteredPaths[i]);
+            }
+            return validPaths;
+        }
+        public void UpdateVisualization()
+        {
+            raysVisualizer.EnterNewRays(GetValidPaths(audioPaths), this.gameObject);
+        }
         private void Update()
         {
             if (openFile)
@@ -67,14 +83,15 @@ namespace Code.Renderer
 
             if (reloadIr)
             {
-                var rays = BinauralAudioEngine.Instance.AudioPaths.ToList();
+                audioPaths = BinauralAudioEngine.Instance.AudioPaths.ToList();
                 var listener = BinauralAudioEngine.Instance.Listener;
                 reloadIr = false;
-                Debug.Log("found " + rays.Count + " Rays");
-                (float[], float[]) ir = RaysToIr.CreateBrirLeftAndRight(rays, irLenght,
+                Debug.Log("found " + audioPaths.Count + " Rays");
+                (float[], float[]) ir = RaysToIr.CreateBrirLeftAndRight(audioPaths, irLenght,
                     listener.gameObject, _sampleRate,
                     1);
                 EnterNewIr(ir.Item1, ir.Item2);
+                UpdateVisualization();
             }
 
             if (_updateIrNextFrame)
@@ -82,7 +99,7 @@ namespace Code.Renderer
                 if (!_coroutineRunning)
                 {
                     _updateIrNextFrame = false;
-                    
+
                     StartCoroutine(CreateConvolvedAudioBufferCoroutine(_irLeft, _irRight));
                 }
             }
@@ -308,7 +325,7 @@ namespace Code.Renderer
 
         private void OnAudioFilterRead(float[] data, int channels)
         {
-           if (audioLeft == null || audioRight == null || !isRunning)
+            if (audioLeft == null || audioRight == null || !isRunning)
             {
                 for (int i = 0; i < data.Length; i++)
                 {

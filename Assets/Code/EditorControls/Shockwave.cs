@@ -1,10 +1,12 @@
-﻿using UnityEngine;
+﻿using Code.Renderer;
+using UnityEngine;
 
 namespace Code.EditorControls
 {
     [RequireComponent(typeof(UnityEngine.Renderer))]
     public class Shockwave : MonoBehaviour
     {
+        public AudioSourceObject sourceObject;
         public float duration = 1.0f;
         public float maxRadius = 0.8f;
         public float startRadius = 0.0f;
@@ -21,10 +23,11 @@ namespace Code.EditorControls
 
         void Update()
         {
+            if (!sourceObject.isRunning) _time = 0;
+
             _time += Time.deltaTime;
             float t = Mathf.Clamp01(_time / duration);
 
-            // Easing (leicht beschleunigt, dann abflachend)
             float eased = t * t * (3f - 2f * t);
 
             float radius = Mathf.Lerp(startRadius, maxRadius, eased);

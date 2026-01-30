@@ -8,7 +8,6 @@ namespace Code.EditorControlls
     {
         private GameObject _currentlyDragging;
         public GameObject _currentlyRotating;
-
         private void Update()
         {
             if (_currentlyDragging != null)
@@ -26,7 +25,9 @@ namespace Code.EditorControlls
             if (Input.GetMouseButtonUp(0) && _currentlyDragging != null)
             {
                 if (_currentlyDragging.GetComponent<AudioSourceObject>() != null)
+                {
                     _currentlyDragging.GetComponent<AudioSourceObject>().reloadIr = true;
+                }
                 _currentlyDragging = null;
             }
 
