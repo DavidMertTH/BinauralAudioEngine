@@ -20,16 +20,16 @@ namespace Code.Core
         public bool IsReady { get; private set; }
 
         private Transform _listener;
-        private readonly List<BinauralAudioFilter> _audioFilters = new();
-        private readonly GlobalSimulationData _simulationData = new();
-        private readonly SurroundRaycast _surroundRaycast = new();
-        private readonly DirectPaths _directPaths = new();
-        private readonly OneBouncePaths _oneBouncePaths = new();
-        private readonly TwoBouncePaths _twoBouncePaths = new();
-        private readonly IterativePaths _iterativePaths = new();
-        private NativeArray<JobHandle> _pathJobHandles = new(4, Allocator.Persistent);
-        private readonly SemaphoreSlim _semaphoreSlim = new(1);
-        private readonly CancellationTokenSource _onDestroyCts = new();
+        private List<BinauralAudioFilter> _audioFilters;
+        private GlobalSimulationData _simulationData;
+        private SurroundRaycast _surroundRaycast;
+        private DirectPaths _directPaths;
+        private OneBouncePaths _oneBouncePaths;
+        private TwoBouncePaths _twoBouncePaths;
+        private IterativePaths _iterativePaths;
+        private NativeArray<JobHandle> _pathJobHandles;
+        private SemaphoreSlim _semaphoreSlim;
+        private CancellationTokenSource _onDestroyCts;
 
         public Transform Listener
         {
@@ -40,6 +40,20 @@ namespace Code.Core
                     throw new NullReferenceException("No AudioListener was found in the scene.");
                 return _listener;
             }
+        }
+
+        private void Awake()
+        {
+            _audioFilters = new List<BinauralAudioFilter>();
+            _simulationData = new GlobalSimulationData();
+            _surroundRaycast = new SurroundRaycast();
+            _directPaths = new DirectPaths();
+            _oneBouncePaths = new OneBouncePaths();
+            _twoBouncePaths = new TwoBouncePaths();
+            _iterativePaths = new IterativePaths();
+            _pathJobHandles = new NativeArray<JobHandle>(4, Allocator.Persistent);
+            _semaphoreSlim = new SemaphoreSlim(1, 1);
+            _onDestroyCts = new CancellationTokenSource();
         }
 
         private async void Start()
