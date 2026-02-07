@@ -7,6 +7,7 @@ using Code.Simulation;
 using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace Code.Core
 {
@@ -29,7 +30,6 @@ namespace Code.Core
         private IterativePaths _iterativePaths;
         private NativeArray<JobHandle> _pathJobHandles;
         private SemaphoreSlim _semaphoreSlim;
-        private CancellationTokenSource _onDestroyCts;
 
         public Transform Listener
         {
@@ -53,7 +53,6 @@ namespace Code.Core
             _iterativePaths = new IterativePaths();
             _pathJobHandles = new NativeArray<JobHandle>(4, Allocator.Persistent);
             _semaphoreSlim = new SemaphoreSlim(1, 1);
-            _onDestroyCts = new CancellationTokenSource();
         }
 
         private async void Start()
@@ -79,16 +78,15 @@ namespace Code.Core
         /// <summary>
         /// To be called by the GUI whenever the user makes changes to the scene that affect the impulse response.
         /// </summary>
-        public async Awaitable UpdateAllImpulseResponses(CancellationToken ct = default)
+        public async Awaitable UpdateAllImpulseResponses()
         {
-            using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct, _onDestroyCts.Token);
-            await _semaphoreSlim.WaitAsync(linkedCts.Token);
+            await _semaphoreSlim.WaitAsync();
             try
             {
-                var rayJob = ComputeAudioPaths(linkedCts.Token);
-                var impulseResponseJob = ComputeImpulseResponses(rayJob, linkedCts.Token);
+                var rayJob = ComputeAudioPaths();
+                var impulseResponseJob = ComputeImpulseResponses(rayJob);
                 var combinedJob = JobHandle.CombineDependencies(impulseResponseJob, rayJob);
-                await combinedJob.ToTask(linkedCts.Token);
+                await combinedJob.ToAwaitable();
             }
             finally
             {
@@ -96,7 +94,7 @@ namespace Code.Core
             }
         }
 
-        private JobHandle ComputeAudioPaths(CancellationToken ct)
+        private JobHandle ComputeAudioPaths()
         {
             var layout = Settings.GetAudioPathArrayLayout(_audioFilters.Count);
             _simulationData.Init(Listener, _audioFilters, layout);
@@ -109,7 +107,8 @@ namespace Code.Core
             var commandsAroundListener = commands.GetSubArray(0, hitsStride).AsReadOnly();
             var isHitAroundListenerCoplanar = isHitCoplanar.GetSubArray(0, hitsStride).AsReadOnly();
             var hitsAroundSources = hits.GetSubArray(hitsStride, hits.Length - hitsStride).AsReadOnly();
-            var isHitAroundSourcesCoplanar = isHitCoplanar.GetSubArray(hitsStride, isHitCoplanar.Length - hitsStride).AsReadOnly();
+            var isHitAroundSourcesCoplanar =
+                isHitCoplanar.GetSubArray(hitsStride, isHitCoplanar.Length - hitsStride).AsReadOnly();
             _pathJobHandles[1] = _oneBouncePaths.GetOneBouncePaths(_simulationData.ListenerPosition,
                 _simulationData.SourcePositions, hitsAroundListener,
                 isHitAroundListenerCoplanar, surroundRaycastHandle,
@@ -118,12 +117,13 @@ namespace Code.Core
                 _simulationData.SourcePositions, hitsAroundListener, isHitAroundListenerCoplanar, hitsAroundSources,
                 isHitAroundSourcesCoplanar, hitsStride, surroundRaycastHandle, _simulationData.TwoBouncePaths);
             _pathJobHandles[3] = _iterativePaths.GetIterativePaths(_simulationData.ListenerPosition,
-                _simulationData.SourcePositions, commandsAroundListener, hitsAroundListener, Settings.MaxIterativeBounces,
+                _simulationData.SourcePositions, commandsAroundListener, hitsAroundListener,
+                Settings.MaxIterativeBounces,
                 surroundRaycastHandle, _simulationData.HigherOrderPaths);
             return JobHandle.CombineDependencies(_pathJobHandles);
         }
 
-        private JobHandle ComputeImpulseResponses(JobHandle rayJob, CancellationToken ct)
+        private JobHandle ComputeImpulseResponses(JobHandle rayJob)
         {
             return new JobHandle();
         }
@@ -144,9 +144,7 @@ namespace Code.Core
         {
             try
             {
-                // Cancel ongoing processing...
-                _onDestroyCts.Cancel();
-                await _semaphoreSlim.WaitAsync(millisecondsTimeout: 500);
+                await _semaphoreSlim.WaitAsync(timeout: TimeSpan.FromSeconds(1));
             }
             catch (Exception e)
             {
@@ -156,7 +154,6 @@ namespace Code.Core
             finally
             {
                 // ...then dispose unmanaged resources
-                _onDestroyCts.Dispose();
                 _semaphoreSlim.Dispose();
                 _surroundRaycast.Dispose();
                 _simulationData.Dispose();

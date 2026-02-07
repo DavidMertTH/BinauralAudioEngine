@@ -101,10 +101,10 @@ namespace Code
             return math.dot(planeNormal, point - planePoint);
         }
 
-        public static async Task ToTask(this JobHandle jobHandle, CancellationToken ct = default)
+        public static async Awaitable ToAwaitable(this JobHandle jobHandle)
         {
             while (!jobHandle.IsCompleted)
-                await Awaitable.NextFrameAsync(ct);
+                await Awaitable.NextFrameAsync();
             jobHandle.Complete();
         }
 
