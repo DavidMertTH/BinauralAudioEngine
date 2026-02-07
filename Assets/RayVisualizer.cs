@@ -12,8 +12,8 @@ public class RayVisualizer : MonoBehaviour
     private void Update()
     {
         if (sourceObject == null) return;
-        if (sourceObject.audioPaths == null) return;
-        AudioPath path = sourceObject.audioPaths[0];
+        if (sourceObject.AudioPaths == null) return;
+        AudioPath path = sourceObject.AudioPaths[0];
         lineRenderer.positionCount = 3;
         lineRenderer.SetPosition(0, sourceObject.transform.position);
         lineRenderer.SetPosition(1, path.Positions[1]);
