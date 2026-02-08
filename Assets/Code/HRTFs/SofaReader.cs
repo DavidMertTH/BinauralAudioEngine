@@ -23,12 +23,10 @@ namespace Code
             var file = Marshal.PtrToStructure<MYSOFA_HRIR>(pointer);
             var hrirs = ExtractHrirs(file.DataIR);
             var positions = ExtractSourcePositions(file.SourcePosition);
-            var sampleRate = ExtractSampleRate(file.DataSamplingRate);
             return new HeadRelatedImpulseResponses(
                 impulseResponses: hrirs,
                 positions: positions,
-                stride: (int)file.N,
-                sampleRate: sampleRate);
+                stride: (int)file.N);
         }
 
         private static CoordType IdentifyCoordType(MYSOFA_ARRAY array)
@@ -48,6 +46,7 @@ namespace Code
                         _ => throw new ArgumentException("Unknown coord type: " + value)
                     };
                 }
+
                 ptr = attr.next;
             }
 
@@ -80,12 +79,6 @@ namespace Code
             }
 
             return ret;
-        }
-
-        private static float ExtractSampleRate(MYSOFA_ARRAY array)
-        {
-            var values = PtrToArray(array.values, (int)array.elements);
-            return values.Length > 0 ? values[0] : 48000f;
         }
 
         private static NativeArray<float> ExtractHrirs(MYSOFA_ARRAY array)
@@ -122,24 +115,24 @@ namespace Code
 
     public struct HeadRelatedImpulseResponses : IDisposable
     {
-        public readonly NativeArray<float> ImpulseResponses;
-        public readonly NativeArray<float3> Positions;
+        private NativeArray<float> _impulseResponses;
+        public NativeArray<float>.ReadOnly ImpulseResponses => _impulseResponses.AsReadOnly();
+        private NativeArray<float3> _positions;
+        public NativeArray<float3>.ReadOnly Positions => _positions.AsReadOnly();
         public readonly int Stride;
-        public readonly float SampleRate;
 
         public HeadRelatedImpulseResponses(NativeArray<float> impulseResponses,
-            NativeArray<float3> positions, int stride, float sampleRate)
+            NativeArray<float3> positions, int stride)
         {
-            ImpulseResponses = impulseResponses;
-            Positions = positions;
+            _impulseResponses = impulseResponses;
+            _positions = positions;
             Stride = stride;
-            SampleRate = sampleRate;
         }
 
         public void Dispose()
         {
-            if (ImpulseResponses.IsCreated) ImpulseResponses.Dispose();
-            if (Positions.IsCreated) Positions.Dispose();
+            _impulseResponses.Dispose();
+            _positions.Dispose();
         }
     }
 
