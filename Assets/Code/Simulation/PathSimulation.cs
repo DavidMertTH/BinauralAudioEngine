@@ -9,22 +9,10 @@ using UnityEngine;
 
 namespace Code.Simulation
 {
-    public class AudioSourceImpulseResponse
-    {
-        public readonly float[] Left;
-        public readonly float[] Right;
-
-        public AudioSourceImpulseResponse(float[] left, float[] right)
-        {
-            Left = left;
-            Right = right;
-        }
-    }
-
     /// <summary>
-    /// Contains all data needed for one pass through the audio pipeline
+    /// Simulates the paths of audio 'particles' in the scene.
     /// </summary>
-    public class SimulationData : IDisposable
+    public class PathSimulation : IDisposable
     {
         /// <summary>
         /// The first element is the listener position, followed by source positions (World space)
@@ -77,38 +65,16 @@ namespace Code.Simulation
             _allAudioPaths.GetSubArray(_audioPathArrayLayout.ManyBouncePathsStartIndex,
                 _audioPathArrayLayout.NumIterativePaths);
 
-        /// <summary>
-        /// Contiguous array of all impulse responses, structured by audio source, side, and time, in that order.
-        /// The length is determined by the number of sources and the impulse response length passed to <c>Init</c>.
-        /// </summary>
-        public NativeArray<float> AllImpulseResponses => _allImpulseResponses;
 
-        public IReadOnlyList<BinauralAudioFilter> Filters => _filters.AsReadOnly();
-        public HeadRelatedImpulseResponses Hrirs => _hrirs;
-        public ComputeDirectPaths ComputeDirectPaths { get; }
+        private SurroundRaycast SurroundRaycast { get; }
+        private ComputeDirectPaths ComputeDirectPaths { get; }
 
-        public ComputeOneBouncePaths ComputeOneBouncePaths { get; }
+        private ComputeOneBouncePaths ComputeOneBouncePaths { get; }
 
-        public ComputeTwoBouncePaths ComputeTwoBouncePaths { get; }
+        private ComputeTwoBouncePaths ComputeTwoBouncePaths { get; }
 
-        public ComputeIterativePaths ComputeIterativePaths { get; }
+        private ComputeIterativePaths ComputeIterativePaths { get; }
 
-        public SurroundRaycast SurroundRaycast { get; }
-
-        /// <summary>
-        /// Get the left and right impulse responses for a particular source
-        /// </summary>
-        /// <param name="sourceIndex">The index of the source in the list that was passed to <c>Init</c>.</param>
-        /// <returns></returns>
-        public AudioSourceImpulseResponse GetImpulseResponse(int sourceIndex)
-        {
-            var numSources = SourcePositions.Length;
-            var stride = _allImpulseResponses.Length / numSources / 2;
-            var startIndex = stride * sourceIndex * 2;
-            return new AudioSourceImpulseResponse(
-                _allImpulseResponses.GetSubArray(startIndex, stride).ToArray(),
-                _allImpulseResponses.GetSubArray(startIndex + stride, stride).ToArray());
-        }
 
         public JobHandle CombinePathJobHandles(JobHandle direct, JobHandle oneBounce, JobHandle twoBounce,
             JobHandle higherOrder)
@@ -123,19 +89,14 @@ namespace Code.Simulation
         private readonly AudioPathArrayLayout _audioPathArrayLayout;
         private NativeArray<float3> _listenerAndSourcePositions;
         private NativeArray<AudioPath> _allAudioPaths;
-        private NativeArray<float> _allImpulseResponses;
         private NativeArray<JobHandle> _pathJobHandles;
-        private HeadRelatedImpulseResponses _hrirs;
-        private readonly List<BinauralAudioFilter> _filters;
+        private readonly int _numRaysAroundListenerAndEachSource;
+        private readonly int _maxIterativeBounces;
 
-        /// <summary>
-        /// Initialize the simulation data according to settings and scene state. Call only before starting the
-        /// simulation, never while simulating.
-        /// </summary>
-        public SimulationData(Transform listener, List<BinauralAudioFilter> sources, BinauralAudioSettings settings)
+        public PathSimulation(Transform listener, List<BinauralAudioFilter> sources, BinauralAudioSettings settings)
         {
-            _hrirs = SofaReader.Read(settings.SofaFile);
-            _filters = new List<BinauralAudioFilter>(sources);
+            _numRaysAroundListenerAndEachSource = settings.RaysAroundListenerAndEachSource;
+            _maxIterativeBounces = settings.MaxIterativeBounces;
             var originCount = sources.Count + 1;
             _listenerAndSourcePositions = new NativeArray<float3>(originCount, Allocator.Persistent);
             _listenerAndSourcePositions[0] = listener.position;
@@ -143,8 +104,6 @@ namespace Code.Simulation
                 _listenerAndSourcePositions[i + 1] = sources[i].transform.position;
             _audioPathArrayLayout = settings.GetAudioPathArrayLayout(sources.Count);
             _allAudioPaths = new NativeArray<AudioPath>(_audioPathArrayLayout.NumTotalPaths, Allocator.Persistent);
-            _allImpulseResponses =
-                new NativeArray<float>(settings.ImpulseResponseSamples * sources.Count * 2, Allocator.Persistent);
             _pathJobHandles = new NativeArray<JobHandle>(4, Allocator.Persistent);
             ComputeDirectPaths = new ComputeDirectPaths();
             ComputeOneBouncePaths = new ComputeOneBouncePaths();
@@ -153,11 +112,37 @@ namespace Code.Simulation
             SurroundRaycast = new SurroundRaycast();
         }
 
+        public JobHandle Schedule(out NativeArray<AudioPath>.ReadOnly paths)
+        {
+            var directPathsHandle = ComputeDirectPaths.Schedule(ListenerPosition,
+                SourcePositions, DirectPaths);
+            var surroundRaycastHandle = SurroundRaycast.CastRaysAroundOrigins(
+                ListenerAndSourcePositions, _numRaysAroundListenerAndEachSource, out var hits,
+                out var hitsStride, out var isHitCoplanar, out var commands);
+            var hitsAroundListener = hits.GetSubArray(0, hitsStride).AsReadOnly();
+            var commandsAroundListener = commands.GetSubArray(0, hitsStride).AsReadOnly();
+            var isHitAroundListenerCoplanar = isHitCoplanar.GetSubArray(0, hitsStride).AsReadOnly();
+            var hitsAroundSources = hits.GetSubArray(hitsStride, hits.Length - hitsStride).AsReadOnly();
+            var isHitAroundSourcesCoplanar =
+                isHitCoplanar.GetSubArray(hitsStride, isHitCoplanar.Length - hitsStride).AsReadOnly();
+            var oneBouncePathsHandle = ComputeOneBouncePaths.Schedule(ListenerPosition,
+                SourcePositions, hitsAroundListener, isHitAroundListenerCoplanar, surroundRaycastHandle,
+                OneBouncePaths);
+            var twoBouncePathsHandle = ComputeTwoBouncePaths.Schedule(ListenerPosition,
+                SourcePositions, hitsAroundListener, isHitAroundListenerCoplanar, hitsAroundSources,
+                isHitAroundSourcesCoplanar, hitsStride, surroundRaycastHandle, TwoBouncePaths);
+            var iterativePathsHandle = ComputeIterativePaths.Schedule(ListenerPosition,
+                SourcePositions, commandsAroundListener, hitsAroundListener, _maxIterativeBounces,
+                surroundRaycastHandle, HigherOrderPaths);
+            paths = AllAudioPaths;
+            return CombinePathJobHandles(directPathsHandle, oneBouncePathsHandle, twoBouncePathsHandle,
+                iterativePathsHandle);
+        }
+
         public void Dispose()
         {
             _listenerAndSourcePositions.Dispose();
             _allAudioPaths.Dispose();
-            _hrirs.Dispose();
             _pathJobHandles.Dispose();
             ComputeDirectPaths.Dispose();
             ComputeOneBouncePaths.Dispose();

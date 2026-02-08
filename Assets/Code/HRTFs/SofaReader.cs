@@ -121,8 +121,8 @@ namespace Code
         public NativeArray<float3>.ReadOnly Positions => _positions.AsReadOnly();
         public readonly int Stride;
 
-        public HeadRelatedImpulseResponses(NativeArray<float> impulseResponses,
-            NativeArray<float3> positions, int stride)
+        public HeadRelatedImpulseResponses(NativeArray<float> impulseResponses, NativeArray<float3> positions,
+            int stride)
         {
             _impulseResponses = impulseResponses;
             _positions = positions;

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using ArthurKehrwald.Singleton;
 using Code.Renderer;
 using Code.Simulation;
@@ -56,54 +55,25 @@ namespace Code.Core
         /// </summary>
         public async Awaitable UpdateAllImpulseResponses()
         {
-            using var simData = new SimulationData(Listener, _audioFilters, settings);
-            var pathJob = ComputeAudioPaths(simData);
-            var impulseResponseJob = ComputeImpulseResponses(simData, pathJob);
+            using var pathSim = new PathSimulation(Listener, _audioFilters, settings);
+            var pathJob = pathSim.Schedule(out var paths);
+
+            using var irRenderer = new ImpulseResponseRenderer(settings, Listener, _audioFilters.Count);
+            var impulseResponseJob = irRenderer.Schedule(paths, pathJob, out _);
+
+            var filtersCopy = new List<BinauralAudioFilter>(_audioFilters); // In case it changes during the job
             var combinedJob = JobHandle.CombineDependencies(impulseResponseJob, pathJob);
             await combinedJob.ToAwaitable();
 
-            AudioPaths = simData.AllAudioPaths.ToArray();
-            for (var i = 0; i < simData.Filters.Count; i++)
+            AudioPaths = paths.ToArray();
+            for (var i = 0; i < filtersCopy.Count; i++)
             {
-                var sourceIr = simData.GetImpulseResponse(i);
-                if (simData.Filters[i].TryGetComponent<AudioSourceObject>(out var sourceObject))
+                var sourceIr = irRenderer.GetImpulseResponse(i);
+                if (filtersCopy[i].TryGetComponent<AudioSourceObject>(out var sourceObject))
                 {
                     sourceObject.EnterNewIr(sourceIr);
                 }
             }
-        }
-
-        private JobHandle ComputeAudioPaths(SimulationData simData)
-        {
-            var directPathsHandle = simData.ComputeDirectPaths.Schedule(simData.ListenerPosition,
-                simData.SourcePositions, simData.DirectPaths);
-            var surroundRaycastHandle = simData.SurroundRaycast.CastRaysAroundOrigins(
-                simData.ListenerAndSourcePositions, settings.RaysAroundListenerAndEachSource, out var hits,
-                out var hitsStride, out var isHitCoplanar, out var commands);
-            var hitsAroundListener = hits.GetSubArray(0, hitsStride).AsReadOnly();
-            var commandsAroundListener = commands.GetSubArray(0, hitsStride).AsReadOnly();
-            var isHitAroundListenerCoplanar = isHitCoplanar.GetSubArray(0, hitsStride).AsReadOnly();
-            var hitsAroundSources = hits.GetSubArray(hitsStride, hits.Length - hitsStride).AsReadOnly();
-            var isHitAroundSourcesCoplanar =
-                isHitCoplanar.GetSubArray(hitsStride, isHitCoplanar.Length - hitsStride).AsReadOnly();
-            var oneBouncePathsHandle = simData.ComputeOneBouncePaths.Schedule(simData.ListenerPosition,
-                simData.SourcePositions, hitsAroundListener, isHitAroundListenerCoplanar, surroundRaycastHandle,
-                simData.OneBouncePaths);
-            var twoBouncePathsHandle = simData.ComputeTwoBouncePaths.Schedule(simData.ListenerPosition,
-                simData.SourcePositions, hitsAroundListener, isHitAroundListenerCoplanar, hitsAroundSources,
-                isHitAroundSourcesCoplanar, hitsStride, surroundRaycastHandle, simData.TwoBouncePaths);
-            var iterativePathsHandle = simData.ComputeIterativePaths.Schedule(simData.ListenerPosition,
-                simData.SourcePositions, commandsAroundListener, hitsAroundListener, settings.MaxIterativeBounces,
-                surroundRaycastHandle, simData.HigherOrderPaths);
-            return simData.CombinePathJobHandles(directPathsHandle, oneBouncePathsHandle, twoBouncePathsHandle,
-                iterativePathsHandle);
-        }
-
-        private JobHandle ComputeImpulseResponses(SimulationData simData, JobHandle pathJob)
-        {
-            return ComputeImpulseResponse.Schedule(simData.AllAudioPaths, Listener,
-                settings.ImpulseResponseSamples, settings.ImpulseResponseSamplesPerSecond, simData.Hrirs, pathJob,
-                simData.AllImpulseResponses);
         }
 
         public void RegisterAudioFilter(BinauralAudioFilter filter)
