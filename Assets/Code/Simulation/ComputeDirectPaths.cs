@@ -12,12 +12,12 @@ namespace Code.Simulation
     /// <summary>
     /// Direct rays from audio sources to listener
     /// </summary>
-    public class DirectPaths : IDisposable
+    public class ComputeDirectPaths : IDisposable
     {
         private NativeArray<RaycastCommand> _commands;
         private NativeArray<RaycastHit> _hits;
 
-        public JobHandle GetDirectPaths(float3 listener, NativeArray<float3>.ReadOnly sources, NativeArray<AudioPath> paths)
+        public JobHandle Schedule(float3 listener, NativeArray<float3>.ReadOnly sources, NativeArray<AudioPath> paths)
         {
             // Create raycast commands
             _commands = Helper.ReallocateIfNeeded(_commands, sources.Length, Allocator.Persistent);

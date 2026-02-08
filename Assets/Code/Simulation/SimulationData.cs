@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Code.Renderer;
 using Unity.Collections;
+using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -20,9 +21,9 @@ namespace Code.Simulation
     }
 
     /// <summary>
-    /// Burst compatible global scene information for ray casting
+    /// Contains all data needed for one pass through the audio pipeline
     /// </summary>
-    public class GlobalSimulationData : IDisposable
+    public class SimulationData : IDisposable
     {
         /// <summary>
         /// The first element is the listener position, followed by source positions (World space)
@@ -82,8 +83,16 @@ namespace Code.Simulation
         public NativeArray<float> AllImpulseResponses => _allImpulseResponses;
 
         public IReadOnlyList<BinauralAudioFilter> Filters => _filters.AsReadOnly();
-
         public HeadRelatedImpulseResponses Hrirs => _hrirs;
+        public ComputeDirectPaths ComputeDirectPaths { get; }
+
+        public ComputeOneBouncePaths ComputeOneBouncePaths { get; }
+
+        public ComputeTwoBouncePaths ComputeTwoBouncePaths { get; }
+
+        public ComputeIterativePaths ComputeIterativePaths { get; }
+
+        public SurroundRaycast SurroundRaycast { get; }
 
         /// <summary>
         /// Get the left and right impulse responses for a particular source
@@ -100,33 +109,48 @@ namespace Code.Simulation
                 _allImpulseResponses.GetSubArray(startIndex + stride, stride).ToArray());
         }
 
-        private AudioPathArrayLayout _audioPathArrayLayout;
+        public JobHandle CombinePathJobHandles(JobHandle direct, JobHandle oneBounce, JobHandle twoBounce,
+            JobHandle higherOrder)
+        {
+            _pathJobHandles[0] = direct;
+            _pathJobHandles[1] = oneBounce;
+            _pathJobHandles[2] = twoBounce;
+            _pathJobHandles[3] = higherOrder;
+            return JobHandle.CombineDependencies(_pathJobHandles);
+        }
+
+        private readonly AudioPathArrayLayout _audioPathArrayLayout;
         private NativeArray<float3> _listenerAndSourcePositions;
         private NativeArray<AudioPath> _allAudioPaths;
         private NativeArray<float> _allImpulseResponses;
+        private NativeArray<JobHandle> _pathJobHandles;
         private HeadRelatedImpulseResponses _hrirs;
-        private List<BinauralAudioFilter> _filters;
+        private readonly List<BinauralAudioFilter> _filters;
 
         /// <summary>
         /// Initialize the simulation data according to settings and scene state. Call only before starting the
         /// simulation, never while simulating.
         /// </summary>
-        public void Init(Transform listener, List<BinauralAudioFilter> sources, AudioPathArrayLayout layout,
+        public SimulationData(Transform listener, List<BinauralAudioFilter> sources, AudioPathArrayLayout layout,
             int impulseResponseSamples, string sofaPath)
         {
-            _hrirs.Dispose();
             _hrirs = SofaReader.Read(sofaPath);
             _filters = new List<BinauralAudioFilter>(sources);
             var originCount = sources.Count + 1;
-            _listenerAndSourcePositions = Helper.ReallocateIfNeeded(_listenerAndSourcePositions, originCount,
-                Allocator.Persistent);
+            _listenerAndSourcePositions = new NativeArray<float3>(originCount, Allocator.Persistent);
             _listenerAndSourcePositions[0] = listener.position;
             for (var i = 0; i < sources.Count; i++)
                 _listenerAndSourcePositions[i + 1] = sources[i].transform.position;
             _audioPathArrayLayout = layout;
-            _allAudioPaths = Helper.ReallocateIfNeeded(_allAudioPaths, layout.NumTotalPaths, Allocator.Persistent);
-            _allImpulseResponses = Helper.ReallocateIfNeeded(_allImpulseResponses,
-                desiredSize: impulseResponseSamples * sources.Count * 2, Allocator.Persistent);
+            _allAudioPaths = new NativeArray<AudioPath>(layout.NumTotalPaths, Allocator.Persistent);
+            _allImpulseResponses =
+                new NativeArray<float>(impulseResponseSamples * sources.Count * 2, Allocator.Persistent);
+            _pathJobHandles = new NativeArray<JobHandle>(4, Allocator.Persistent);
+            ComputeDirectPaths = new ComputeDirectPaths();
+            ComputeOneBouncePaths = new ComputeOneBouncePaths();
+            ComputeTwoBouncePaths = new ComputeTwoBouncePaths();
+            ComputeIterativePaths = new ComputeIterativePaths();
+            SurroundRaycast = new SurroundRaycast();
         }
 
         public void Dispose()
@@ -134,6 +158,12 @@ namespace Code.Simulation
             _listenerAndSourcePositions.Dispose();
             _allAudioPaths.Dispose();
             _hrirs.Dispose();
+            _pathJobHandles.Dispose();
+            ComputeDirectPaths.Dispose();
+            ComputeOneBouncePaths.Dispose();
+            ComputeTwoBouncePaths.Dispose();
+            ComputeIterativePaths.Dispose();
+            SurroundRaycast.Dispose();
         }
     }
 }

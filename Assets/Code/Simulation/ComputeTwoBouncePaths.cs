@@ -11,12 +11,12 @@ namespace Code.Simulation
     /// <summary>
     /// Simulate audio paths with two bounces using the image source method to find specular reflections.
     /// </summary>
-    public class TwoBouncePaths : IDisposable
+    public class ComputeTwoBouncePaths : IDisposable
     {
         private NativeArray<RaycastCommand> _visibilityChecks;
         private NativeArray<RaycastHit> _visibilityHits;
 
-        public JobHandle GetTwoBounceBaths(float3 listener, NativeArray<float3>.ReadOnly sources,
+        public JobHandle Schedule(float3 listener, NativeArray<float3>.ReadOnly sources,
             NativeArray<RaycastHit>.ReadOnly hitsAroundListener, NativeArray<bool>.ReadOnly isHitAroundListenerCoplanar,
             NativeArray<RaycastHit>.ReadOnly hitsAroundSources, NativeArray<bool>.ReadOnly isHitAroundSourceCoplanar,
             int numHitsPerSource, JobHandle hitsReadyHandle, NativeArray<AudioPath> result)

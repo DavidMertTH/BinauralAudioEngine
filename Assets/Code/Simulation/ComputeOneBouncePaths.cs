@@ -11,13 +11,13 @@ namespace Code.Simulation
     /// <summary>
     /// Simulate audio paths with one bounce using the image source method
     /// </summary>
-    public class OneBouncePaths : IDisposable
+    public class ComputeOneBouncePaths : IDisposable
     {
         private NativeArray<RaycastCommand> _commands;
         private NativeArray<float3> _reflectionPoints;
         private NativeArray<RaycastHit> _visibilityHits;
 
-        public JobHandle GetOneBouncePaths(float3 listener, NativeArray<float3>.ReadOnly sources,
+        public JobHandle Schedule(float3 listener, NativeArray<float3>.ReadOnly sources,
             NativeArray<RaycastHit>.ReadOnly hitsAroundListener, NativeArray<bool>.ReadOnly isHitAroundListenerCoplanar,
             JobHandle hitsReadyHandle, NativeArray<AudioPath> result)
         {

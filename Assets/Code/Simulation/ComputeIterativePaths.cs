@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Code.Simulation
 {
-    public class IterativePaths : IDisposable
+    public class ComputeIterativePaths : IDisposable
     {
         private NativeArray<float3> _bounces;
         private NativeArray<float> _totalDistances;
@@ -16,7 +16,7 @@ namespace Code.Simulation
         private NativeArray<RaycastCommand> _visibilityCommands;
         private NativeArray<RaycastHit> _visibilityHits;
 
-        public JobHandle GetIterativePaths(float3 listener, NativeArray<float3>.ReadOnly sources,
+        public JobHandle Schedule(float3 listener, NativeArray<float3>.ReadOnly sources,
             NativeArray<RaycastCommand>.ReadOnly rayCommandsAroundListener,
             NativeArray<RaycastHit>.ReadOnly hitsAroundListener, int numBounces,
             JobHandle hitsReadyHandle, NativeArray<AudioPath> result)
