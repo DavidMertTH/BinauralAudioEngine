@@ -84,6 +84,8 @@ namespace Code.Core
             await _semaphoreSlim.WaitAsync();
             try
             {
+                _simulationData.Dispose();
+                _simulationData = new();
                 // TODO: Don't hardcode path
                 var sofaPath = Path.Combine(Application.streamingAssetsPath, "sofafiles/hrtf0.sofa");
                 var layout = Settings.GetAudioPathArrayLayout(_audioFilters.Count);
