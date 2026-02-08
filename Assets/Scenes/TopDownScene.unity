@@ -426,7 +426,7 @@ MonoBehaviour:
   settings:
     gain: 1
     enableHannFiltering: 0
-    raysAroundListenerAndEachSource: 10
+    raysAroundListenerAndEachSource: 25
     maxIterativeBounces: 5
 --- !u!4 &63906112
 Transform:

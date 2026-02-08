@@ -16,7 +16,7 @@ namespace Code.Renderer
     {
         public int audioChunkAmount;
         public bool reloadIr;
-        public int irLenght = 1024 * 7;
+        public int irLength = 1024 * 7;
         public string path;
         public bool openFile;
         public float volume;
@@ -28,7 +28,7 @@ namespace Code.Renderer
         [HideInInspector] public float[] audioTrack;
         [HideInInspector] public AudioSource audioSource;
         public List<AudioPath> AudioPaths;
-        
+
         private Complex[][] _spectralAudio;
         private float[] _audioLeft;
         private float[] _audioRight;
@@ -46,7 +46,7 @@ namespace Code.Renderer
         {
             audioSource = GetComponent<AudioSource>();
             if (audioSource == null) audioSource = gameObject.AddComponent<AudioSource>();
-            InitData(irLenght);
+            InitData(irLength);
             audioSource.loop = true;
             audioSource.Play();
             CreateOfflineAudioBuffer();
@@ -75,19 +75,6 @@ namespace Code.Renderer
                 LoadAudioTrackFromSource();
             }
 
-            if (reloadIr)
-            {
-                AudioPaths = BinauralAudioEngine.Instance.AudioPaths.ToList();
-                var listener = BinauralAudioEngine.Instance.Listener;
-                reloadIr = false;
-                Debug.Log("found " + AudioPaths.Count + " Rays");
-                var ir = RaysToIr.CreateBrirLeftAndRight(AudioPaths, irLenght,
-                    listener.gameObject, sampleRate,
-                    1);
-                EnterNewIr(ir.Item1, ir.Item2);
-                UpdateVisualization();
-            }
-
             if (_updateIrNextFrame)
                 if (!coroutineRunning)
                 {
@@ -103,10 +90,10 @@ namespace Code.Renderer
             _fullBlockLength = GetMaxZweierPotenz(_dspBufferLength + irLength - 1);
         }
 
-        private void EnterNewIr(float[] irLeft, float[] irRight)
+        public void EnterNewIr(AudioSourceImpulseResponse ir)
         {
-            _irLeft = irLeft;
-            _irRight = irRight;
+            _irLeft = ir.Left;
+            _irRight = ir.Right;
             _updateIrNextFrame = true;
         }
 
