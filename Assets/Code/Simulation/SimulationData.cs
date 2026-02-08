@@ -81,7 +81,9 @@ namespace Code.Simulation
         /// </summary>
         public NativeArray<float> AllImpulseResponses => _allImpulseResponses;
 
-        public List<BinauralAudioFilter> Filters;
+        public IReadOnlyList<BinauralAudioFilter> Filters => _filters.AsReadOnly();
+
+        public HeadRelatedImpulseResponses Hrirs => _hrirs;
 
         /// <summary>
         /// Get the left and right impulse responses for a particular source
@@ -102,15 +104,19 @@ namespace Code.Simulation
         private NativeArray<float3> _listenerAndSourcePositions;
         private NativeArray<AudioPath> _allAudioPaths;
         private NativeArray<float> _allImpulseResponses;
+        private HeadRelatedImpulseResponses _hrirs;
+        private List<BinauralAudioFilter> _filters;
 
         /// <summary>
         /// Initialize the simulation data according to settings and scene state. Call only before starting the
         /// simulation, never while simulating.
         /// </summary>
         public void Init(Transform listener, List<BinauralAudioFilter> sources, AudioPathArrayLayout layout,
-            int impulseResponseSamples)
+            int impulseResponseSamples, string sofaPath)
         {
-            Filters = new List<BinauralAudioFilter>(sources);
+            _hrirs.Dispose();
+            _hrirs = SofaReader.Read(sofaPath);
+            _filters = new List<BinauralAudioFilter>(sources);
             var originCount = sources.Count + 1;
             _listenerAndSourcePositions = Helper.ReallocateIfNeeded(_listenerAndSourcePositions, originCount,
                 Allocator.Persistent);
@@ -127,6 +133,7 @@ namespace Code.Simulation
         {
             _listenerAndSourcePositions.Dispose();
             _allAudioPaths.Dispose();
+            _hrirs.Dispose();
         }
     }
 }

@@ -84,8 +84,10 @@ namespace Code.Core
             await _semaphoreSlim.WaitAsync();
             try
             {
+                // TODO: Don't hardcode path
+                var sofaPath = Path.Combine(Application.streamingAssetsPath, "sofafiles/hrtf0.sofa");
                 var layout = Settings.GetAudioPathArrayLayout(_audioFilters.Count);
-                _simulationData.Init(Listener, _audioFilters, layout, settings.ImpulseResponseSamples);
+                _simulationData.Init(Listener, _audioFilters, layout, settings.ImpulseResponseSamples, sofaPath);
                 var pathJob = ComputeAudioPaths();
                 var impulseResponseJob = ComputeImpulseResponses(pathJob);
                 var combinedJob = JobHandle.CombineDependencies(impulseResponseJob, pathJob);
@@ -134,11 +136,8 @@ namespace Code.Core
 
         private JobHandle ComputeImpulseResponses(JobHandle pathJob)
         {
-            // TODO: Don't hardcode path
-            var sofaPath = Path.Combine(Application.streamingAssetsPath, "sofafiles/hrtf0.sofa");
-            var hrirs = SofaReader.Read(sofaPath);
             return ComputeImpulseResponse.Schedule(_simulationData.AllAudioPaths, Listener,
-                settings.ImpulseResponseSamples, settings.ImpulseResponseSamplesPerSecond, hrirs, pathJob,
+                settings.ImpulseResponseSamples, settings.ImpulseResponseSamplesPerSecond, _simulationData.Hrirs, pathJob,
                 _simulationData.AllImpulseResponses);
         }
 
