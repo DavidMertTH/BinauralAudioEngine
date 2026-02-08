@@ -1,7 +1,7 @@
 using System;
+using System.IO;
 using Code.Simulation;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace Code.Core
 {
@@ -12,12 +12,14 @@ namespace Code.Core
         [SerializeField] [Range(3f, 6f)] private int maxIterativeBounces = 5;
         [SerializeField] [Range(1f, 10f)] private float impulseResponseLengthSeconds = 7f;
         [SerializeField] private int impulseResponseSamplesPerSecond = 1024;
+        [SerializeField] private string sofaFile = "hrtf0.sofa";
 
         public int RaysAroundListenerAndEachSource => raysAroundListenerAndEachSource;
         public int MaxIterativeBounces => maxIterativeBounces;
         public float ImpulseResponseLengthSeconds => impulseResponseLengthSeconds;
         public int ImpulseResponseSamplesPerSecond => impulseResponseSamplesPerSecond;
-        public int ImpulseResponseSamples => (int) (impulseResponseSamplesPerSecond * impulseResponseLengthSeconds);
+        public int ImpulseResponseSamples => (int)(impulseResponseSamplesPerSecond * impulseResponseLengthSeconds);
+        public string SofaFile => Path.Combine(Application.streamingAssetsPath, "sofafiles", sofaFile);
 
         public AudioPathArrayLayout GetAudioPathArrayLayout(int numSources) =>
             new(numSources, raysAroundListenerAndEachSource, RaysAroundListenerAndEachSource, maxIterativeBounces);

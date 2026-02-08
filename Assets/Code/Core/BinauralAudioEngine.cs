@@ -57,11 +57,9 @@ namespace Code.Core
         /// </summary>
         public async Awaitable UpdateAllImpulseResponses()
         {
-            // TODO: Don't hardcode path
-            var sofaPath = Path.Combine(Application.streamingAssetsPath, "sofafiles/hrtf0.sofa");
             var layout = Settings.GetAudioPathArrayLayout(_audioFilters.Count);
             using var simData = new SimulationData(Listener, _audioFilters, layout, settings.ImpulseResponseSamples,
-                sofaPath);
+                Settings.SofaFile);
             var pathJob = ComputeAudioPaths(simData);
             var impulseResponseJob = ComputeImpulseResponses(simData, pathJob);
             var combinedJob = JobHandle.CombineDependencies(impulseResponseJob, pathJob);
