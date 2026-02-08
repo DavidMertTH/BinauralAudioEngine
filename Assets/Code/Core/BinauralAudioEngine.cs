@@ -13,13 +13,12 @@ namespace Code.Core
     public class BinauralAudioEngine : Singleton<BinauralAudioEngine, DoAutoCreate<BinauralAudioEngine>>
     {
         [SerializeField] private BinauralAudioSettings settings;
-        private BinauralAudioSettings Settings => settings ??= new BinauralAudioSettings();
 
         // TODO: Remove
         public AudioPath[] AudioPaths;
         public bool IsReady { get; private set; }
 
-        private readonly List<BinauralAudioFilter> _audioFilters = new List<BinauralAudioFilter>();
+        private readonly List<BinauralAudioFilter> _audioFilters = new();
         private Transform _listener;
 
         private Transform Listener
@@ -57,9 +56,7 @@ namespace Code.Core
         /// </summary>
         public async Awaitable UpdateAllImpulseResponses()
         {
-            var layout = Settings.GetAudioPathArrayLayout(_audioFilters.Count);
-            using var simData = new SimulationData(Listener, _audioFilters, layout, settings.ImpulseResponseSamples,
-                Settings.SofaFile);
+            using var simData = new SimulationData(Listener, _audioFilters, settings);
             var pathJob = ComputeAudioPaths(simData);
             var impulseResponseJob = ComputeImpulseResponses(simData, pathJob);
             var combinedJob = JobHandle.CombineDependencies(impulseResponseJob, pathJob);
@@ -81,7 +78,7 @@ namespace Code.Core
             var directPathsHandle = simData.ComputeDirectPaths.Schedule(simData.ListenerPosition,
                 simData.SourcePositions, simData.DirectPaths);
             var surroundRaycastHandle = simData.SurroundRaycast.CastRaysAroundOrigins(
-                simData.ListenerAndSourcePositions, Settings.RaysAroundListenerAndEachSource, out var hits,
+                simData.ListenerAndSourcePositions, settings.RaysAroundListenerAndEachSource, out var hits,
                 out var hitsStride, out var isHitCoplanar, out var commands);
             var hitsAroundListener = hits.GetSubArray(0, hitsStride).AsReadOnly();
             var commandsAroundListener = commands.GetSubArray(0, hitsStride).AsReadOnly();
@@ -90,14 +87,13 @@ namespace Code.Core
             var isHitAroundSourcesCoplanar =
                 isHitCoplanar.GetSubArray(hitsStride, isHitCoplanar.Length - hitsStride).AsReadOnly();
             var oneBouncePathsHandle = simData.ComputeOneBouncePaths.Schedule(simData.ListenerPosition,
-                simData.SourcePositions, hitsAroundListener,
-                isHitAroundListenerCoplanar, surroundRaycastHandle,
+                simData.SourcePositions, hitsAroundListener, isHitAroundListenerCoplanar, surroundRaycastHandle,
                 simData.OneBouncePaths);
             var twoBouncePathsHandle = simData.ComputeTwoBouncePaths.Schedule(simData.ListenerPosition,
                 simData.SourcePositions, hitsAroundListener, isHitAroundListenerCoplanar, hitsAroundSources,
                 isHitAroundSourcesCoplanar, hitsStride, surroundRaycastHandle, simData.TwoBouncePaths);
             var iterativePathsHandle = simData.ComputeIterativePaths.Schedule(simData.ListenerPosition,
-                simData.SourcePositions, commandsAroundListener, hitsAroundListener, Settings.MaxIterativeBounces,
+                simData.SourcePositions, commandsAroundListener, hitsAroundListener, settings.MaxIterativeBounces,
                 surroundRaycastHandle, simData.HigherOrderPaths);
             return simData.CombinePathJobHandles(directPathsHandle, oneBouncePathsHandle, twoBouncePathsHandle,
                 iterativePathsHandle);

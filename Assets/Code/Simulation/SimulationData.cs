@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Code.Core;
 using Code.Renderer;
 using Unity.Collections;
 using Unity.Jobs;
@@ -131,20 +132,19 @@ namespace Code.Simulation
         /// Initialize the simulation data according to settings and scene state. Call only before starting the
         /// simulation, never while simulating.
         /// </summary>
-        public SimulationData(Transform listener, List<BinauralAudioFilter> sources, AudioPathArrayLayout layout,
-            int impulseResponseSamples, string sofaPath)
+        public SimulationData(Transform listener, List<BinauralAudioFilter> sources, BinauralAudioSettings settings)
         {
-            _hrirs = SofaReader.Read(sofaPath);
+            _hrirs = SofaReader.Read(settings.SofaFile);
             _filters = new List<BinauralAudioFilter>(sources);
             var originCount = sources.Count + 1;
             _listenerAndSourcePositions = new NativeArray<float3>(originCount, Allocator.Persistent);
             _listenerAndSourcePositions[0] = listener.position;
             for (var i = 0; i < sources.Count; i++)
                 _listenerAndSourcePositions[i + 1] = sources[i].transform.position;
-            _audioPathArrayLayout = layout;
-            _allAudioPaths = new NativeArray<AudioPath>(layout.NumTotalPaths, Allocator.Persistent);
+            _audioPathArrayLayout = settings.GetAudioPathArrayLayout(sources.Count);
+            _allAudioPaths = new NativeArray<AudioPath>(_audioPathArrayLayout.NumTotalPaths, Allocator.Persistent);
             _allImpulseResponses =
-                new NativeArray<float>(impulseResponseSamples * sources.Count * 2, Allocator.Persistent);
+                new NativeArray<float>(settings.ImpulseResponseSamples * sources.Count * 2, Allocator.Persistent);
             _pathJobHandles = new NativeArray<JobHandle>(4, Allocator.Persistent);
             ComputeDirectPaths = new ComputeDirectPaths();
             ComputeOneBouncePaths = new ComputeOneBouncePaths();
