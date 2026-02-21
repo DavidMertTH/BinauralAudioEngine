@@ -93,7 +93,7 @@ namespace Code.Simulation
         private readonly int _numRaysAroundListenerAndEachSource;
         private readonly int _maxIterativeBounces;
 
-        public PathSimulation(Transform listener, List<BinauralAudioFilter> sources, BinauralAudioSettings settings)
+        public PathSimulation(Transform listener, List<Vector3> sources, BinauralAudioSettings settings)
         {
             _numRaysAroundListenerAndEachSource = settings.RaysAroundListenerAndEachSource;
             _maxIterativeBounces = settings.MaxIterativeBounces;
@@ -101,7 +101,7 @@ namespace Code.Simulation
             _listenerAndSourcePositions = new NativeArray<float3>(originCount, Allocator.Persistent);
             _listenerAndSourcePositions[0] = listener.position;
             for (var i = 0; i < sources.Count; i++)
-                _listenerAndSourcePositions[i + 1] = sources[i].transform.position;
+                _listenerAndSourcePositions[i + 1] = sources[i];
             _audioPathArrayLayout = settings.GetAudioPathArrayLayout(sources.Count);
             _allAudioPaths = new NativeArray<AudioPath>(_audioPathArrayLayout.NumTotalPaths, Allocator.Persistent);
             _pathJobHandles = new NativeArray<JobHandle>(4, Allocator.Persistent);

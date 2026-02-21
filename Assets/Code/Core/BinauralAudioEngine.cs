@@ -55,13 +55,27 @@ namespace Code.Core
         /// </summary>
         public async Awaitable UpdateAllImpulseResponses()
         {
-            using var pathSim = new PathSimulation(Listener, _audioFilters, settings);
+            await UpdateImpulseResponses(_audioFilters);
+        }
+        
+        /// <summary>
+        /// Call when a single audio source is repositioned.
+        /// </summary>
+        public async Awaitable UpdateImpulseResponse(BinauralAudioFilter filter)
+        {
+            await UpdateImpulseResponses(new List<BinauralAudioFilter> { filter });
+        }
+        
+        public async Awaitable UpdateImpulseResponses(List<BinauralAudioFilter> filters)
+        {
+            var sourcePositions = filters.ConvertAll(f => f.transform.position);
+            using var pathSim = new PathSimulation(Listener, sourcePositions, settings);
             var pathJob = pathSim.Schedule(out var paths);
 
-            using var irRenderer = new ImpulseResponseRenderer(settings, Listener, _audioFilters.Count);
+            using var irRenderer = new ImpulseResponseRenderer(settings, Listener, filters.Count);
             var impulseResponseJob = irRenderer.Schedule(paths, pathJob, out _);
 
-            var filtersCopy = new List<BinauralAudioFilter>(_audioFilters); // In case it changes during the job
+            var filtersCopy = new List<BinauralAudioFilter>(filters); // Defensive copy
             var combinedJob = JobHandle.CombineDependencies(impulseResponseJob, pathJob);
             await combinedJob.ToAwaitable();
 
