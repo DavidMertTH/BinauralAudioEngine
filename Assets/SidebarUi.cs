@@ -14,6 +14,8 @@ public class SidebarUi : MonoBehaviour
     public Slider timeSlider;
     private bool _suppressCallback = false;
 
+    private BinauralAudioFilter _activeFilter;
+
     public
         void Start()
     {
@@ -23,8 +25,9 @@ public class SidebarUi : MonoBehaviour
     void Update()
     {
         if (activeSource == null) return;
-        activeSource.volume = volumeSlider.value;
-        UpdateSliderFromCode(((float)activeSource.currentPlayBackHead) / activeSource.audioChunkAmount);
+        _activeFilter = activeSource.GetComponent<BinauralAudioFilter>();
+        _activeFilter.Volume = volumeSlider.value;
+        UpdateSliderFromCode(_activeFilter.PlaybackPosition01);
     }
 
     public void UpdateInfos()
@@ -44,11 +47,6 @@ public class SidebarUi : MonoBehaviour
         if (activeSource == null) return;
         activeSource.isRunning = !activeSource.isRunning;
     }
-    private void ChangePlayHead(float playHeadPosition)
-    {
-        if (activeSource == null) return;
-        activeSource.currentPlayBackHead = (int)(playHeadPosition * activeSource.audioChunkAmount);
-    }
 
     void UpdateSliderFromCode(float value)
     {
@@ -62,7 +60,6 @@ public class SidebarUi : MonoBehaviour
         if (_suppressCallback)
             return;
 
-        ChangePlayHead(value);
-        activeSource.currentPlayBackHead = (int)(timeSlider.value * activeSource.audioChunkAmount);
+        _activeFilter.PlaybackPosition01 = value;
     }
 }

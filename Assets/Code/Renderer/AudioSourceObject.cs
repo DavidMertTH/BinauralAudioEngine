@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
-using Code.Core;
 using Code.Simulation;
 using MathNet.Numerics.IntegralTransforms;
 using UnityEditor;
@@ -12,6 +10,7 @@ using UnityEngine;
 
 namespace Code.Renderer
 {
+    [RequireComponent(typeof(BinauralAudioFilter))]
     public class AudioSourceObject : MonoBehaviour
     {
         public int audioChunkAmount;
@@ -19,11 +18,9 @@ namespace Code.Renderer
         public int irLength = 1024 * 7;
         public string path;
         public bool openFile;
-        public float volume;
         public bool isRunning;
         public bool coroutineRunning;
         public int sampleRate;
-        public int currentPlayBackHead;
         public RaysVisualizer raysVisualizer;
         [HideInInspector] public float[] audioTrack;
         [HideInInspector] public AudioSource audioSource;
@@ -108,9 +105,6 @@ namespace Code.Renderer
             var convLen = dspLen + irLen - 1;
 
             var spectralAudio = _spectralAudio;
-
-            var startHead = currentPlayBackHead;
-
             _audioLeft = new float[audioLen + irLen - 1];
             _audioRight = new float[audioLen + irLen - 1];
 
@@ -126,7 +120,7 @@ namespace Code.Renderer
 
                 Parallel.For(0, chunkCount, k =>
                 {
-                    var block = (startHead + k) % chunkCount;
+                    var block = k % chunkCount;
 
                     var src = spectralAudio[block];
 
@@ -166,11 +160,14 @@ namespace Code.Renderer
 
             while (!task.IsCompleted)
                 yield return null;
+            
+            if (TryGetComponent<BinauralAudioFilter>(out var filter))
+                filter.SetAudio( _audioLeft, _audioRight);
             coroutineRunning = false;
             if (task.Exception != null)
                 Debug.LogError(task.Exception);
 
-            Debug.Log($"Convolution ready (started at chunk {startHead})");
+            Debug.Log($"Convolution ready.");
         }
 
 
@@ -196,8 +193,6 @@ namespace Code.Renderer
                 for (var y = 0; y < _dspBufferLength; y++)
                 {
                     var currentPosition = x * _dspBufferLength + y;
-                    if (monoBuffer.Length < currentPosition) continue;
-
                     segmentedMonoBuffer[x][y] = monoBuffer[currentPosition];
                 }
             }
@@ -281,27 +276,6 @@ namespace Code.Renderer
 
             path = chosenPath;
             return chosenPath;
-        }
-
-        private void OnAudioFilterRead(float[] data, int channels)
-        {
-            if (_audioLeft == null || _audioRight == null || !isRunning)
-            {
-                for (var i = 0; i < data.Length; i++) data[i] = 0;
-
-                return;
-            }
-
-            for (var i = 0; i < data.Length; i++)
-            {
-                var bufferCounter = currentPlayBackHead * _dspBufferLength + i / 2;
-
-                data[i] = i % 2 == 0 ? _audioRight[bufferCounter] : _audioLeft[bufferCounter];
-                data[i] *= volume;
-            }
-
-            currentPlayBackHead++;
-            if (audioChunkAmount <= currentPlayBackHead) currentPlayBackHead = 0;
         }
     }
 }
