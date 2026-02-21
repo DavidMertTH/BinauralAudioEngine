@@ -281,6 +281,13 @@
       },
       "url": "https://packages.unity.com"
     },
+    "org.nuget.mathnet.numerics": {
+      "version": "5.0.0",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://unitynuget-registry.openupm.com"
+    },
     "org.nuget.naudio.core": {
       "version": "2.2.1",
       "depth": 0,
