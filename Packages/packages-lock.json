@@ -281,6 +281,13 @@
       },
       "url": "https://packages.unity.com"
     },
+    "org.nuget.naudio.core": {
+      "version": "2.2.1",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://unitynuget-registry.openupm.com"
+    },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",
       "depth": 0,
