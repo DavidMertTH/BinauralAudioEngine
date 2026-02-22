@@ -6,7 +6,6 @@ using Code.Simulation;
 using Unity.Jobs;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.Serialization;
 using Debug = UnityEngine.Debug;
 
 namespace Code.Core

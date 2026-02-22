@@ -13,6 +13,7 @@ namespace Code.Core
         [SerializeField] [Range(1f, 10f)] private float impulseResponseLengthSeconds = 7f;
         [SerializeField] private int impulseResponseSamplesPerSecond = 1024;
         [SerializeField] private string sofaFile = "hrtf0.sofa";
+        [SerializeField] private LayerMask raycastMask = -1;
 
         public int RaysAroundListenerAndEachSource => raysAroundListenerAndEachSource;
         public int MaxIterativeBounces => maxIterativeBounces;
@@ -20,6 +21,7 @@ namespace Code.Core
         public int ImpulseResponseSamplesPerSecond => impulseResponseSamplesPerSecond;
         public int ImpulseResponseSamples => (int)(impulseResponseSamplesPerSecond * impulseResponseLengthSeconds);
         public string SofaFile => Path.Combine(Application.streamingAssetsPath, "sofafiles", sofaFile);
+        public LayerMask RaycastMask => raycastMask;
 
         public AudioPathArrayLayout GetAudioPathArrayLayout(int numSources) =>
             new(numSources, raysAroundListenerAndEachSource, RaysAroundListenerAndEachSource, maxIterativeBounces);

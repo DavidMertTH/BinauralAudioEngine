@@ -91,9 +91,11 @@ namespace Code.Simulation
         private NativeArray<JobHandle> _pathJobHandles;
         private readonly int _numRaysAroundListenerAndEachSource;
         private readonly int _maxIterativeBounces;
+        private readonly LayerMask _rayMask;
 
         public PathSimulation(Transform listener, List<Vector3> sources, BinauralAudioSettings settings)
         {
+            _rayMask = settings.RaycastMask;
             _numRaysAroundListenerAndEachSource = settings.RaysAroundListenerAndEachSource;
             _maxIterativeBounces = settings.MaxIterativeBounces;
             var originCount = sources.Count + 1;
@@ -114,9 +116,9 @@ namespace Code.Simulation
         public JobHandle Schedule(out NativeArray<AudioPath>.ReadOnly paths)
         {
             var directPathsHandle = ComputeDirectPaths.Schedule(ListenerPosition,
-                SourcePositions, DirectPaths);
+                SourcePositions, _rayMask, DirectPaths);
             var surroundRaycastHandle = SurroundRaycast.CastRaysAroundOrigins(
-                ListenerAndSourcePositions, _numRaysAroundListenerAndEachSource, out var hits,
+                ListenerAndSourcePositions, _numRaysAroundListenerAndEachSource, _rayMask, out var hits,
                 out var hitsStride, out var isHitCoplanar, out var commands);
             var hitsAroundListener = hits.GetSubArray(0, hitsStride).AsReadOnly();
             var commandsAroundListener = commands.GetSubArray(0, hitsStride).AsReadOnly();
@@ -125,13 +127,13 @@ namespace Code.Simulation
             var isHitAroundSourcesCoplanar =
                 isHitCoplanar.GetSubArray(hitsStride, isHitCoplanar.Length - hitsStride).AsReadOnly();
             var oneBouncePathsHandle = ComputeOneBouncePaths.Schedule(ListenerPosition,
-                SourcePositions, hitsAroundListener, isHitAroundListenerCoplanar, surroundRaycastHandle,
+                SourcePositions, hitsAroundListener, isHitAroundListenerCoplanar, _rayMask, surroundRaycastHandle,
                 OneBouncePaths);
             var twoBouncePathsHandle = ComputeTwoBouncePaths.Schedule(ListenerPosition,
                 SourcePositions, hitsAroundListener, isHitAroundListenerCoplanar, hitsAroundSources,
-                isHitAroundSourcesCoplanar, hitsStride, surroundRaycastHandle, TwoBouncePaths);
+                isHitAroundSourcesCoplanar, hitsStride, _rayMask, surroundRaycastHandle, TwoBouncePaths);
             var iterativePathsHandle = ComputeIterativePaths.Schedule(ListenerPosition,
-                SourcePositions, commandsAroundListener, hitsAroundListener, _maxIterativeBounces,
+                SourcePositions, commandsAroundListener, hitsAroundListener, _maxIterativeBounces, _rayMask,
                 surroundRaycastHandle, HigherOrderPaths);
             paths = AllAudioPaths;
             return CombinePathJobHandles(directPathsHandle, oneBouncePathsHandle, twoBouncePathsHandle,

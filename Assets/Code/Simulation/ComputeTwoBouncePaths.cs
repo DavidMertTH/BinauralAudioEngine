@@ -19,7 +19,7 @@ namespace Code.Simulation
         public JobHandle Schedule(float3 listener, NativeArray<float3>.ReadOnly sources,
             NativeArray<RaycastHit>.ReadOnly hitsAroundListener, NativeArray<bool>.ReadOnly isHitAroundListenerCoplanar,
             NativeArray<RaycastHit>.ReadOnly hitsAroundSources, NativeArray<bool>.ReadOnly isHitAroundSourceCoplanar,
-            int numHitsPerSource, JobHandle hitsReadyHandle, NativeArray<AudioPath> result)
+            int numHitsPerSource, LayerMask rayMask, JobHandle hitsReadyHandle, NativeArray<AudioPath> result)
         {
             _visibilityChecks = Helper.ReallocateIfNeeded(_visibilityChecks, result.Length * 3, Allocator.Persistent);
             var findPathsHandle = new FindPaths()
@@ -33,6 +33,7 @@ namespace Code.Simulation
                 numHitsPerSource = numHitsPerSource,
                 Paths = result,
                 VisibilityChecks = _visibilityChecks,
+                RayMask = rayMask
             }.ScheduleParallel(result.Length, 32, hitsReadyHandle);
             _visibilityHits =
                 Helper.ReallocateIfNeeded(_visibilityHits, _visibilityChecks.Length, Allocator.Persistent);
@@ -69,6 +70,7 @@ namespace Code.Simulation
             [ReadOnly] public NativeArray<RaycastHit>.ReadOnly HitsAroundSources;
             [ReadOnly] public NativeArray<bool>.ReadOnly IsHitAroundSourceCoplanar;
             [ReadOnly] public int numHitsPerSource;
+            [ReadOnly] public LayerMask RayMask;
 
             public void Execute(int index)
             {
@@ -119,14 +121,14 @@ namespace Code.Simulation
                 Paths[index] = path;
                 VisibilityChecks[index * 3] = new RaycastCommand(from: Listener,
                     direction: firstIntersection - Listener,
-                    QueryParameters.Default);
+                    new QueryParameters(RayMask));
                 var firstToSecondIntersectionNormal =
                     (secondIntersection - firstIntersection) / firstToSecondReflectionDistance;
                 VisibilityChecks[index * 3 + 1] = new RaycastCommand(
                     from: firstIntersection + firstToSecondIntersectionNormal * 0.1f,
-                    direction: firstToSecondIntersectionNormal, QueryParameters.Default);
+                    direction: firstToSecondIntersectionNormal, new QueryParameters(RayMask));
                 VisibilityChecks[index * 3 + 2] = new RaycastCommand(from: Sources[sourceIndex],
-                    direction: secondIntersection - Sources[sourceIndex], QueryParameters.Default);
+                    direction: secondIntersection - Sources[sourceIndex], new QueryParameters(RayMask));
             }
         }
 

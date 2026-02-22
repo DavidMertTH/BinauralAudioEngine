@@ -135,6 +135,7 @@ GameObject:
   - component: {fileID: 17601215}
   - component: {fileID: 17601217}
   - component: {fileID: 17601218}
+  - component: {fileID: 17601219}
   m_Layer: 7
   m_Name: LiveSource
   m_TagString: Untagged
@@ -168,20 +169,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3ebd7d07fd8d5b743ab10f16dfd5a45f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  targetObject: {fileID: 1428495661}
-  bypass: 0
-  useDirect: 1
-  usePrimaryReflections: 1
-  useSecondaryReflections: 1
-  useHigherOrderReflections: 1
-  Gain: 1
-  blockSize: 128
-  reverb: {fileID: 17601211}
-  impulseResponseLeft: []
-  impulseResponseRight: []
-  leftData: []
-  sampleRate: 0
-  useHRTFs: 1
 --- !u!82 &17601213
 AudioSource:
   m_ObjectHideFlags: 0
@@ -382,18 +369,28 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   audioChunkAmount: 0
   reloadIr: 0
-  irLenght: 7168
+  irLength: 7168
   path: 
   openFile: 0
-  volume: 0
-  isRunning: 0
-  color: {r: 0, g: 0, b: 0, a: 0}
+  coroutineRunning: 0
+  sampleRate: 0
   raysVisualizer: {fileID: 0}
   audioTrack: []
   audioSource: {fileID: 0}
-  _sampleRate: 0
-  currentPlayBackHead: 0
-  _coroutineRunning: 0
+  audioFilter: {fileID: 0}
+  color: {r: 0, g: 0, b: 0, a: 0}
+--- !u!114 &17601219
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 17601210}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc0f9b9269674e868d930d80bc840654, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &63906110
 GameObject:
   m_ObjectHideFlags: 0
@@ -425,10 +422,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _persistent: 1
   settings:
-    gain: 1
-    enableHannFiltering: 0
     raysAroundListenerAndEachSource: 10
     maxIterativeBounces: 5
+    impulseResponseLengthSeconds: 7
+    impulseResponseSamplesPerSecond: 1024
+    sofaFile: hrtf0.sofa
+    raycastMask:
+      serializedVersion: 2
+      m_Bits: 311
+  simulationDone:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!4 &63906112
 Transform:
   m_ObjectHideFlags: 0
@@ -2545,7 +2549,7 @@ CapsuleCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 2
   m_Radius: 0.5
   m_Height: 2
@@ -2647,10 +2651,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abdcbbee6d000314f88645df0ad11c0c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  target: {fileID: 1428495657}
-  source: {fileID: 17601213}
-  binauralAudioProcessor: {fileID: 17601212}
-  calculateAcoustics: 0
 --- !u!81 &1428495664
 AudioListener:
   m_ObjectHideFlags: 0
