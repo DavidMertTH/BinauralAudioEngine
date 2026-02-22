@@ -3,8 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
+using Code.Preprocessing;
 using Code.Simulation;
 using MathNet.Numerics.IntegralTransforms;
+using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 
@@ -46,7 +48,6 @@ namespace Code.Renderer
             InitData(irLength);
             audioSource.loop = true;
             audioSource.Play();
-            CreateOfflineAudioBuffer();
         }
 
         private static List<AudioPath> GetValidPaths(List<AudioPath> unfilteredPaths)
@@ -73,7 +74,7 @@ namespace Code.Renderer
             }
 
             if (_updateIrNextFrame)
-                if (!coroutineRunning)
+                if (!coroutineRunning && _spectralAudio != null)
                 {
                     _updateIrNextFrame = false;
 
@@ -84,7 +85,7 @@ namespace Code.Renderer
         private void InitData(int irLength)
         {
             AudioSettings.GetDSPBufferSize(out _dspBufferLength, out _);
-            _fullBlockLength = GetMaxZweierPotenz(_dspBufferLength + irLength - 1);
+            _fullBlockLength = CalcBlockSize(_dspBufferLength, irLength);
         }
 
         public void EnterNewIr(AudioSourceImpulseResponse ir)
@@ -96,6 +97,8 @@ namespace Code.Renderer
 
         private IEnumerator CreateConvolvedAudioBufferCoroutine(float[] irLeft, float[] irRight)
         {
+            var stopwatch = new System.Diagnostics.Stopwatch();
+            stopwatch.Start();
             coroutineRunning = true;
             var chunkCount = audioChunkAmount;
             var fullLen = _fullBlockLength;
@@ -157,7 +160,6 @@ namespace Code.Renderer
                 });
             });
 
-
             while (!task.IsCompleted)
                 yield return null;
             
@@ -167,75 +169,8 @@ namespace Code.Renderer
             if (task.Exception != null)
                 Debug.LogError(task.Exception);
 
-            Debug.Log($"Convolution ready.");
-        }
-
-
-        private void CreateOfflineAudioBuffer()
-        {
-            sampleRate = audioSource.clip.frequency;
-            var stereoBuffer = new float[audioSource.clip.samples * audioSource.clip.channels];
-            audioSource.clip.GetData(stereoBuffer, 0);
-
-            var monoBuffer = new float[audioSource.clip.samples];
-
-            for (var i = 0; i < monoBuffer.Length; i++) monoBuffer[i] = stereoBuffer[i * 2] + stereoBuffer[i * 2 + 1];
-
-            var amountAudioBuffer = monoBuffer.Length / _dspBufferLength;
-
-            var segmentedMonoBuffer = new float[amountAudioBuffer][];
-            _spectralAudio = new Complex[amountAudioBuffer][];
-
-            // ZeroBuffering Audio
-            for (var x = 0; x < amountAudioBuffer; x++)
-            {
-                segmentedMonoBuffer[x] = new float[_dspBufferLength];
-                for (var y = 0; y < _dspBufferLength; y++)
-                {
-                    var currentPosition = x * _dspBufferLength + y;
-                    segmentedMonoBuffer[x][y] = monoBuffer[currentPosition];
-                }
-            }
-
-            StartCoroutine(AudioToSpectrum(segmentedMonoBuffer, _fullBlockLength));
-
-            audioChunkAmount = amountAudioBuffer;
-
-
-            Debug.Log("monoBuffer.Length: " + monoBuffer.Length);
-            Debug.Log("dspBufferLength: " + _dspBufferLength);
-            Debug.Log("fullLength: " + _fullBlockLength);
-        }
-
-        private IEnumerator AudioToSpectrum(float[][] audioData, int fullLength)
-        {
-            var chunkCount = audioData.Length;
-
-            Debug.Log("Start FFT Parallel Conversion...");
-
-            var task = Task.Run(() =>
-            {
-                Parallel.For(0, chunkCount, i => { _spectralAudio[i] = ToFreqDomain(audioData[i], fullLength); });
-            });
-
-            while (!task.IsCompleted)
-                yield return null;
-
-            if (task.Exception != null)
-            {
-                Debug.LogError(task.Exception);
-                yield break;
-            }
-
-            Debug.Log("Fertig (FFT parallel)");
-        }
-
-        private int GetMaxZweierPotenz(int size)
-        {
-            var fftLen = 1;
-            while (fftLen < size)
-                fftLen <<= 1;
-            return fftLen;
+            stopwatch.Stop();
+            Debug.Log($"Convolution ready. Took {stopwatch.ElapsedMilliseconds} ms");
         }
 
         private Complex[] ToFreqDomain(float[] inTimeDomain, int length)
@@ -256,6 +191,12 @@ namespace Code.Renderer
 
             return complexAudioData;
         }
+        
+        private static int CalcBlockSize(int dspBufferSize, int impulseResponseNumSamples)
+        {
+            var size = dspBufferSize + impulseResponseNumSamples - 1;
+            return math.ceilpow2(size);
+        }
 
         public string LoadAudioTrackFromSource()
         {
@@ -263,15 +204,20 @@ namespace Code.Renderer
             if (!string.IsNullOrEmpty(chosenPath))
             {
                 Debug.Log("Ausgewählte Datei: " + chosenPath);
-                audioTrack = WaveFileImporter.ReadWavFile(chosenPath);
-                var channels = 2;
-                var clip = AudioClip.Create("ImportedClip", audioTrack.Length / channels, channels, sampleRate,
-                    false);
-                clip.SetData(audioTrack, 0);
-                audioSource.clip = clip;
-                Debug.Log($"AudioClip geladen: {clip.samples} Samples, {clip.channels} Kanäle, {clip.frequency} Hz");
-                audioSource.Play();
-                CreateOfflineAudioBuffer();
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                using var audioPreprocessor = new AudioPreprocessor(chosenPath, _dspBufferLength, _fullBlockLength);
+                audioPreprocessor.Schedule(out var spectralAudioNative).Complete();
+                var numBlocks = spectralAudioNative.Length / _fullBlockLength;
+                _spectralAudio = new Complex[numBlocks][];
+                for (var i = 0; i < numBlocks; i++)
+                {
+                    _spectralAudio[i] = new Complex[_fullBlockLength];
+                    spectralAudioNative.GetSubArray(i * _fullBlockLength, _fullBlockLength).CopyTo(_spectralAudio[i]);
+                }
+                audioChunkAmount = numBlocks;
+
+                sw.Stop();
+                Debug.Log($"Audio preprocessing took {sw.ElapsedMilliseconds} ms");
             }
 
             path = chosenPath;
