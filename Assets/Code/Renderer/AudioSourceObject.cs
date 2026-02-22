@@ -20,7 +20,6 @@ namespace Code.Renderer
         public int irLength = 1024 * 7;
         public string path;
         public bool openFile;
-        public bool isRunning;
         public bool coroutineRunning;
         public int sampleRate;
         public RaysVisualizer raysVisualizer;

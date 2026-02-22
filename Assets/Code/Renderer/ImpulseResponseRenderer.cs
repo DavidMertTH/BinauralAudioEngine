@@ -110,6 +110,9 @@ namespace Code.Renderer
                         Hrirs.ImpulseResponses[hrirStartLeft + i] * distanceAmplitudeTwo;
                     ImpulseResponses[irStartRight + i + (int)propagationDelaySamples] +=
                         Hrirs.ImpulseResponses[hrirStartRight + i] * distanceAmplitudeTwo;
+
+                    // ImpulseResponses[irStartLeft + i + (int)propagationDelaySamples] += distanceAmplitudeTwo * 0.1f;
+                    // ImpulseResponses[irStartRight + i + (int)propagationDelaySamples] += distanceAmplitudeTwo * 0.1f;
                 }
             }
 

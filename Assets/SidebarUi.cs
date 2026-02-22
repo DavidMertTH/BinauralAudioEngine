@@ -14,7 +14,7 @@ public class SidebarUi : MonoBehaviour
     public AudioSourceObject activeSource;
     public Slider volumeSlider;
     public Slider timeSlider;
-    private bool _suppressCallback = false;
+    private float _suppressCallback;
     private Color _colorToDisplay;
 
     public
@@ -33,10 +33,11 @@ public class SidebarUi : MonoBehaviour
 
     void Update()
     {
+        _suppressCallback -= Time.deltaTime;
         if (activeSource == null) return;
         activeSource.audioFilter.Volume = volumeSlider.value;
         if (activeSource.audioChunkAmount != 0)
-            UpdateSliderFromCode(((float) activeSource.audioFilter.PlaybackPosition01) / activeSource.audioChunkAmount);
+            UpdateSliderFromCode(activeSource.audioFilter.PlaybackPosition01);
         adaptiveColorImages.ForEach(img => img.color = activeSource.color);
     }
 
@@ -57,28 +58,26 @@ public class SidebarUi : MonoBehaviour
     public void StopAndStart()
     {
         if (activeSource == null) return;
-        activeSource.isRunning = !activeSource.isRunning;
+        activeSource.audioFilter.enabled = !activeSource.audioFilter.enabled;
     }
 
     private void ChangePlayHead(float playHeadPosition)
     {
         if (activeSource == null) return;
-        activeSource.audioFilter.PlaybackPosition01 = (int)(playHeadPosition * activeSource.audioChunkAmount);
+        activeSource.audioFilter.PlaybackPosition01 = playHeadPosition;
     }
 
     void UpdateSliderFromCode(float value)
     {
-        _suppressCallback = true;
-        timeSlider.value = value;
-        _suppressCallback = false;
+        // if(_suppressCallback>0)return;
+        // timeSlider.value = value;
     }
-
+    
     public void OnSliderValueChanged(float value)
     {
-        if (_suppressCallback)
-            return;
+        // _suppressCallback = 0.5f;
 
-        ChangePlayHead(value);
-        activeSource.audioFilter.PlaybackPosition01 = (int)(timeSlider.value * activeSource.audioChunkAmount);
+        // ChangePlayHead(value);
+        // activeSource.audioFilter.PlaybackPosition01 = timeSlider.value;
     }
 }
