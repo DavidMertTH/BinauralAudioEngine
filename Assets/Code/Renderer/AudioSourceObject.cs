@@ -29,7 +29,7 @@ namespace Code.Renderer
         public List<AudioPath> AudioPaths;
         public BinauralAudioFilter audioFilter;
         public Color color;
-        
+
         private Complex[][] _spectralAudio;
         private float[] _audioLeft;
         private float[] _audioRight;
@@ -41,6 +41,7 @@ namespace Code.Renderer
         private float[] _irLeft;
         private float[] _irRight;
         private bool _updateIrNextFrame;
+        private int _numSamples;
 
 
         private void Start()
@@ -65,7 +66,7 @@ namespace Code.Renderer
 
             return validPaths;
         }
-        
+
 
         private void Update()
         {
@@ -105,13 +106,13 @@ namespace Code.Renderer
             var chunkCount = audioChunkAmount;
             var fullLen = _fullBlockLength;
             var dspLen = _dspBufferLength;
-            var audioLen = audioSource.clip.samples;
+            // var audioLen = audioSource.clip.samples;
             var irLen = irLeft.Length;
             var convLen = dspLen + irLen - 1;
 
             var spectralAudio = _spectralAudio;
-            _audioLeft = new float[audioLen + irLen - 1];
-            _audioRight = new float[audioLen + irLen - 1];
+            _audioLeft = new float[_numSamples/2+irLength-1];
+            _audioRight = new float[_numSamples/2+irLength-1];
 
             var task = Task.Run(() =>
             {
@@ -164,9 +165,9 @@ namespace Code.Renderer
 
             while (!task.IsCompleted)
                 yield return null;
-            
+
             if (TryGetComponent<BinauralAudioFilter>(out var filter))
-                filter.SetAudio( _audioLeft, _audioRight);
+                filter.SetAudio(_audioLeft, _audioRight);
             coroutineRunning = false;
             if (task.Exception != null)
                 Debug.LogError(task.Exception);
@@ -198,7 +199,7 @@ namespace Code.Renderer
 
             return complexAudioData;
         }
-        
+
         private static int CalcBlockSize(int dspBufferSize, int impulseResponseNumSamples)
         {
             var size = dspBufferSize + impulseResponseNumSamples - 1;
@@ -213,16 +214,19 @@ namespace Code.Renderer
                 Debug.Log("Ausgewählte Datei: " + chosenPath);
                 var sw = System.Diagnostics.Stopwatch.StartNew();
                 using var audioPreprocessor = new AudioPreprocessor(chosenPath, _dspBufferLength, _fullBlockLength);
+                
                 audioPreprocessor.Schedule(out var spectralAudioNative).Complete();
                 var numBlocks = spectralAudioNative.Length / _fullBlockLength;
+
                 _spectralAudio = new Complex[numBlocks][];
                 for (var i = 0; i < numBlocks; i++)
                 {
                     _spectralAudio[i] = new Complex[_fullBlockLength];
                     spectralAudioNative.GetSubArray(i * _fullBlockLength, _fullBlockLength).CopyTo(_spectralAudio[i]);
                 }
-                audioChunkAmount = numBlocks;
 
+                audioChunkAmount = numBlocks;
+                _numSamples = audioPreprocessor.numSamples;
                 sw.Stop();
                 Debug.Log($"Audio preprocessing took {sw.ElapsedMilliseconds} ms");
             }

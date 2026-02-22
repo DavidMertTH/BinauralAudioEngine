@@ -1,4 +1,5 @@
 ﻿using System;
+using Code.Core;
 using Code.Renderer;
 using UnityEngine;
 
@@ -38,6 +39,8 @@ namespace Code.EditorControlls
                     _currentlyDragging.GetComponent<AudioSourceObject>().reloadIr = true;
                 }
 
+                if (_currentlyDragging.GetComponent<BinauralAudioFilter>() != null)
+                    BinauralAudioEngine.Instance.UpdateAllImpulseResponses();
                 _currentlyDragging = null;
             }
 
@@ -57,7 +60,7 @@ namespace Code.EditorControlls
             if (Input.GetMouseButtonDown(1))
             {
                 GameObject hitObject = GetObjectUnderMouse();
-                if(hitObject == null)return;
+                if (hitObject == null) return;
                 if (hitObject.GetComponent<AudioSourceObject>() != null) Destroy(hitObject);
                 if (hitObject.GetComponent<AudioListener>() != null) _currentlyRotating = hitObject;
             }

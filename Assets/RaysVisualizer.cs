@@ -47,6 +47,10 @@ public class RaysVisualizer : MonoBehaviour
 
     public void EnterNewRays(List<AudioPath> paths)
     {
+        for (int i = 0; i < numRays; i++)
+        {
+            _lineRenderer[i].material.color = sourceObject.color;
+        }
         CleanPreviousRays();
         int count = Mathf.Min(numRays, _lineRenderer.Count);
 

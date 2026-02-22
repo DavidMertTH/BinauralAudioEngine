@@ -70,7 +70,8 @@ namespace Code.Renderer
             for (var i = 0; i < data.Length; i++)
             {
                 var bufferCounter = _playbackIndex * _dspBufferLength + i / 2;
-
+                
+                if(bufferCounter >= _audioRight.Length || bufferCounter >= _audioLeft.Length)break;
                 data[i] = i % 2 == 0 ? _audioRight[bufferCounter] : _audioLeft[bufferCounter];
                 data[i] *= _volume;
             }

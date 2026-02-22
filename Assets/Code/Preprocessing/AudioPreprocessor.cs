@@ -11,6 +11,7 @@ namespace Code.Preprocessing
 {
     public class AudioPreprocessor : IDisposable
     {
+        public int numSamples;
         private bool _wasScheduled;
         private NativeArray<float> _multiChannelSamples;
         private NativeArray<float> _monoSamples;
@@ -72,7 +73,7 @@ namespace Code.Preprocessing
                 ComplexSamples = _complexSamples,
                 BlockSize = _complexBlockSize
             }.ScheduleParallel(complexBlockCount, 32, toComplexHandle);
-            
+            numSamples = _multiChannelSamples.Length;
             spectralAudio = _complexSamples;
             return timeToFrequencyHandle;
         }
