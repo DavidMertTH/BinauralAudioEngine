@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Code.Renderer;
 using Code.Simulation;
 using Unity.Mathematics;
 using UnityEngine;
@@ -7,11 +8,22 @@ using UnityEngine.Serialization;
 
 public class RaysVisualizer : MonoBehaviour
 {
+    public AudioSourceObject sourceObject;
     public GameObject rayPrefab;
     public int numRays;
     private List<LineRenderer> _lineRenderer = new List<LineRenderer>();
 
-    private void Awake()
+    private void Update()
+    {
+        if(sourceObject.audioPaths == null)return;
+        EnterNewRays(sourceObject.audioPaths,sourceObject.gameObject);
+        for (int i = 0; i < numRays; i++)
+        {
+            _lineRenderer[i].material.color = sourceObject.color;
+        }
+    }
+
+    private void Start()
     {
         for (int i = 0; i < numRays; i++)
         {
@@ -19,6 +31,7 @@ public class RaysVisualizer : MonoBehaviour
             _lineRenderer.Add(go.GetComponent<LineRenderer>());
             _lineRenderer[i].transform.parent = transform;
             _lineRenderer[i].enabled = false;
+            _lineRenderer[i].material.color = sourceObject.color;
         }
     }
 
@@ -26,6 +39,7 @@ public class RaysVisualizer : MonoBehaviour
     {
         for (int i = 0; i < numRays; i++)
         {
+            _lineRenderer[i].positionCount = 0;
             _lineRenderer[i].enabled = false;
         }
     }
@@ -37,7 +51,7 @@ public class RaysVisualizer : MonoBehaviour
 
         for (int i = 0; i < count; i++)
         {
-            if (i >= paths.Count || paths[i].Positions == null || paths[i].Positions.Length == 0)
+            if (i >= paths.Count || paths[i].Positions == null || paths[i].Positions.Length == 0 ||  !paths[i].IsValid)
             {
                 _lineRenderer[i].enabled = false;
                 continue;

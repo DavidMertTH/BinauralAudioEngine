@@ -7,13 +7,10 @@ using System.Numerics;
 using System.Threading.Tasks;
 using Code.Core;
 using Code.Simulation;
-using MathNet.Numerics;
 using MathNet.Numerics.IntegralTransforms;
-using UnityEditor;
+using SFB;
 using UnityEngine;
-using UnityEngine.Rendering;
-using UnityEngine.Serialization;
-using Vector3 = UnityEngine.Vector3;
+
 
 namespace Code.Renderer
 {
@@ -24,8 +21,10 @@ namespace Code.Renderer
         public int irLenght = 1024 * 7;
         public string path;
         public bool openFile = false;
-        public float volume;
+        public float volume = 0.7f;
         public bool isRunning;
+        public Color color;
+
         public RaysVisualizer raysVisualizer;
         [HideInInspector] public float[] audioTrack;
         [HideInInspector] public AudioSource audioSource;
@@ -56,23 +55,29 @@ namespace Code.Renderer
             audioSource.loop = true;
             audioSource.Play();
             CreateOfflineAudioBuffer();
-            // CreateOfflineIrBuffer();
+            SourceManager.Instance.Register(this);
+            color = SourceManager.Instance.NextColor();
+            SetGamobjectColor(color);
         }
 
-        public List<AudioPath> GetValidPaths( List<AudioPath> unfilteredPaths)
+        private void SetGamobjectColor(Color colorToSet)
+        {
+            GetComponent<UnityEngine.Renderer>().material.color = colorToSet;
+        }
+
+        public List<AudioPath> GetValidPaths(List<AudioPath> unfilteredPaths)
         {
             List<AudioPath> validPaths = new List<AudioPath>();
             for (int i = 0; i < unfilteredPaths.Count; i++)
             {
-                if(unfilteredPaths[i].IsValid)
-                validPaths.Add(unfilteredPaths[i]);
+                if (unfilteredPaths[i].IsValid)
+                    validPaths.Add(unfilteredPaths[i]);
             }
+
             return validPaths;
         }
-        public void UpdateVisualization()
-        {
-            raysVisualizer.EnterNewRays(GetValidPaths(audioPaths), this.gameObject);
-        }
+
+
         private void Update()
         {
             if (openFile)
@@ -91,7 +96,6 @@ namespace Code.Renderer
                     listener.gameObject, _sampleRate,
                     1);
                 EnterNewIr(ir.Item1, ir.Item2);
-                UpdateVisualization();
             }
 
             if (_updateIrNextFrame)
@@ -99,7 +103,7 @@ namespace Code.Renderer
                 if (!_coroutineRunning)
                 {
                     _updateIrNextFrame = false;
-
+                    if (string.IsNullOrEmpty(path)) return;
                     StartCoroutine(CreateConvolvedAudioBufferCoroutine(_irLeft, _irRight));
                 }
             }
@@ -128,7 +132,7 @@ namespace Code.Renderer
             int chunkCount = audioChunkAmount;
             int fullLen = _fullBlockLength;
             int dspLen = _dspBufferLength;
-            int audioLen = audioSource.clip.samples;
+            int audioLen = audioTrack.Length;
             int irLen = irLeft.Length;
             int convLen = dspLen + irLen - 1;
 
@@ -212,6 +216,7 @@ namespace Code.Renderer
 
         public void CreateOfflineAudioBuffer()
         {
+            if (audioSource.clip == null) return;
             _sampleRate = audioSource.clip.frequency;
             float[] stereoBuffer = new float[audioSource.clip.samples * audioSource.clip.channels];
             audioSource.clip.GetData(stereoBuffer, 0);
@@ -228,7 +233,6 @@ namespace Code.Renderer
             float[][] segmentedMonoBuffer = new float[amountAudioBuffer][];
             _spectralAudio = new Complex[amountAudioBuffer][];
 
-            //ZeroBuffering Audio
             for (int x = 0; x < amountAudioBuffer; x++)
             {
                 segmentedMonoBuffer[x] = new float[_dspBufferLength];
@@ -304,12 +308,19 @@ namespace Code.Renderer
 
         public string LoadAudioTrackFromSource()
         {
-            string path = EditorUtility.OpenFilePanel("Wähle eine Datei", "", "wav");
+            // string path = EditorUtility.OpenFilePanel("Wähle eine Datei", "", "wav");
+            // string path = FileOpener.OpenWavFile();
+            var extensions = new[]
+            {
+                new ExtensionFilter("Sound Files", "wav"),
+            };
+            path = StandaloneFileBrowser.OpenFilePanel("Open File", "", extensions, true)[0];
             if (!string.IsNullOrEmpty(path))
             {
                 Debug.Log("Ausgewählte Datei: " + path);
-                audioTrack = WaveFileImporter.ReadWavFile(path);
+                audioTrack = AudioFileImporter.ReadWavFile(path);
                 int channels = 2;
+                _sampleRate = AudioFileImporter.LastSampleRate;
                 AudioClip clip = AudioClip.Create("ImportedClip", audioTrack.Length / channels, channels, _sampleRate,
                     false);
                 clip.SetData(audioTrack, 0);
@@ -319,6 +330,7 @@ namespace Code.Renderer
                 CreateOfflineAudioBuffer();
             }
 
+            reloadIr = true;
             this.path = path;
             return path;
         }
@@ -339,15 +351,23 @@ namespace Code.Renderer
             for (int i = 0; i < data.Length; i++)
             {
                 bufferCounter = currentPlayBackHead * _dspBufferLength + (i / 2);
+                if (bufferCounter > audioLeft.Length)
+                {
+                    Debug.Log("AudioBufferSaturated");
+                    break;
+                }
 
-                data[i] = i % 2 == 0 ? audioRight[bufferCounter] : audioLeft[bufferCounter];
-                // data[i * 2] = audioLeft[_currentPlayBackHead * _dspBufferLength + i];
-                // data[i * 2 + 1] = audioRight[_currentPlayBackHead * _dspBufferLength + i];
+                data[i] = i % 2 == 0 ? audioLeft[bufferCounter] : audioRight[bufferCounter];
                 data[i] *= volume;
             }
 
             currentPlayBackHead++;
             if (audioChunkAmount <= currentPlayBackHead) currentPlayBackHead = 0;
+        }
+
+        private void OnDestroy()
+        {
+            SourceManager.Instance.DeRegister(this);
         }
     }
 }

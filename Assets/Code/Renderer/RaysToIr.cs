@@ -36,7 +36,7 @@ namespace Code.Renderer
                 if (leftEarResponse != null && rightEarResponse != null)
                 {
                     float distanceToSource = ray.DistanceToImage + (sofaHrir.radius);
-                    float propagationDelaySec = distanceToSource / 343f; // Schallgeschwindigkeit: 343 m/s
+                    float propagationDelaySec = distanceToSource / 343f;
                     float propagationDelaySamples = sampleRate * propagationDelaySec;
                     float distanceAmplitudeTwo = ray.Energy * (8 / distanceToSource) * Gain;
 

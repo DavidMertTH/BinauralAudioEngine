@@ -6,8 +6,17 @@ namespace Code.EditorControlls
 {
     public class ObjectDragger : MonoBehaviour
     {
+        public static ObjectDragger Instance;
         private GameObject _currentlyDragging;
         public GameObject _currentlyRotating;
+        public SidebarUi ui;
+
+        private void Awake()
+        {
+            if (Instance == null) Instance = this;
+            else Destroy(gameObject);
+        }
+
         private void Update()
         {
             if (_currentlyDragging != null)
@@ -28,6 +37,7 @@ namespace Code.EditorControlls
                 {
                     _currentlyDragging.GetComponent<AudioSourceObject>().reloadIr = true;
                 }
+
                 _currentlyDragging = null;
             }
 
@@ -41,13 +51,24 @@ namespace Code.EditorControlls
         {
             if (Input.GetMouseButtonDown(0))
             {
-                _currentlyDragging = GetObjectUnderMouse();
+                SetDragging(GetObjectUnderMouse());
             }
 
             if (Input.GetMouseButtonDown(1))
             {
-                _currentlyRotating = GetObjectUnderMouse();
+                GameObject hitObject = GetObjectUnderMouse();
+                if(hitObject == null)return;
+                if (hitObject.GetComponent<AudioSourceObject>() != null) Destroy(hitObject);
+                if (hitObject.GetComponent<AudioListener>() != null) _currentlyRotating = hitObject;
             }
+        }
+
+        public void SetDragging(GameObject objectDragging)
+        {
+            _currentlyDragging = objectDragging;
+            if (objectDragging == null) return;
+            if (objectDragging.GetComponent<AudioSourceObject>() != null)
+                ui.SetNewActiveSource(objectDragging.GetComponent<AudioSourceObject>());
         }
 
         public GameObject GetObjectUnderMouse()

@@ -1,128 +1,106 @@
-// NuGet: Install-Package NAudio
 using System;
 using System.IO;
-using NAudio.Wave;
 
-/// <summary>
-/// Zuverlässiger Audio-Importer für WAV und MP3.
-/// Gibt float[]-Samples (interleaved, normalisiert auf [-1, 1]) zurück.
-/// </summary>
-public static class AudioFileImporter
+namespace Code.Renderer
 {
-    public static int LastSampleRate   { get; private set; }
-    public static int LastNumChannels  { get; private set; }
-    public static int LastBitsPerSample { get; private set; }
-    public static long LastTotalSamples { get; private set; } // Samples pro Kanal
-
-    /// <summary>
-    /// Liest WAV oder MP3 und gibt alle Samples interleaved als float[] zurück.
-    /// </summary>
-    public static float[] ReadAudioFile(string filePath)
+    public static class AudioFileImporter
     {
-        string ext = Path.GetExtension(filePath).ToLowerInvariant();
+        public static int LastSampleRate    { get; private set; }
+        public static int LastNumChannels   { get; private set; }
+        public static int LastBitsPerSample { get; private set; }
 
-        return ext switch
+        public static float[] ReadWavFile(string filePath)
         {
-            ".wav"  => ReadWav(filePath),
-            ".mp3"  => ReadMp3(filePath),
-            ".aiff" or ".aif" => ReadWithNAudio<AiffFileReader>(filePath),
-            _       => throw new NotSupportedException($"Dateiformat '{ext}' wird nicht unterstützt.")
-        };
-    }
+            using var reader = new BinaryReader(File.OpenRead(filePath));
 
-    // ── WAV ──────────────────────────────────────────────────────────────────
+            // RIFF Header
+            string riff = new string(reader.ReadChars(4));
+            if (riff != "RIFF") throw new FormatException("Keine gültige WAV-Datei (kein RIFF).");
+            reader.ReadUInt32(); // Dateigröße
+            string wave = new string(reader.ReadChars(4));
+            if (wave != "WAVE") throw new FormatException("Keine gültige WAV-Datei (kein WAVE).");
 
-    private static float[] ReadWav(string filePath)
-    {
-        using var reader = new WaveFileReader(filePath);
-        return ExtractSamples(reader);
-    }
+            // Chunks durchsuchen
+            ushort audioFormat    = 0;
+            ushort numChannels    = 0;
+            uint   sampleRate     = 0;
+            ushort bitsPerSample  = 0;
+            bool   isFloat        = false;
+            long   dataPos        = -1;
+            uint   dataSize       = 0;
+            bool   haveFmt        = false;
 
-    // ── MP3 ──────────────────────────────────────────────────────────────────
-
-    private static float[] ReadMp3(string filePath)
-    {
-        // Mp3FileReader → WaveFormatConversionStream → IEEE Float
-        using var mp3Reader = new Mp3FileReader(filePath);
-        using var pcmStream = WaveFormatConversionStream.CreatePcmStream(mp3Reader);
-        return ExtractSamples(pcmStream);
-    }
-
-    // ── AIFF (Bonus) ─────────────────────────────────────────────────────────
-
-    private static float[] ReadWithNAudio<T>(string filePath) where T : WaveStream
-    {
-        using var reader = (WaveStream)Activator.CreateInstance(typeof(T), filePath)!;
-        return ExtractSamples(reader);
-    }
-
-    // ── Kern-Extraktion ───────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Konvertiert beliebigen WaveStream zu float[] [-1, 1], interleaved.
-    /// Unterstützt 8/16/24/32-bit PCM und 32-bit IEEE Float.
-    /// </summary>
-    private static float[] ExtractSamples(WaveStream stream)
-    {
-        var fmt = stream.WaveFormat;
-
-        LastSampleRate    = fmt.SampleRate;
-        LastNumChannels   = fmt.Channels;
-        LastBitsPerSample = fmt.BitsPerSample;
-
-        // Alles auf IEEE Float 32-bit konvertieren – NAudio macht das sauber
-        var floatFormat = WaveFormat.CreateIeeeFloatWaveFormat(fmt.SampleRate, fmt.Channels);
-
-        float[] result;
-        using var convStream = new WaveFormatConversionStream(floatFormat, stream);
-        {
-            // Puffergröße: 4 Bytes pro float-Sample
-            int bytesPerSample = 4;
-            long totalBytes = convStream.Length;
-            int totalFloats = (int)(totalBytes / bytesPerSample);
-
-            result = new float[totalFloats];
-            byte[] buffer = new byte[Math.Min(81920, (int)totalBytes)]; // 80 KB Chunks
-
-            int floatIndex = 0;
-            int bytesRead;
-            while ((bytesRead = convStream.Read(buffer, 0, buffer.Length)) > 0)
+            while (reader.BaseStream.Position + 8 <= reader.BaseStream.Length)
             {
-                int floatsInChunk = bytesRead / 4;
-                Buffer.BlockCopy(buffer, 0, result, floatIndex * 4, floatsInChunk * 4);
-                floatIndex += floatsInChunk;
+                string chunkId   = new string(reader.ReadChars(4));
+                uint   chunkSize = reader.ReadUInt32();
+                long   chunkEnd  = reader.BaseStream.Position + chunkSize;
+
+                if (chunkId == "fmt ")
+                {
+                    haveFmt      = true;
+                    audioFormat  = reader.ReadUInt16();
+                    numChannels  = reader.ReadUInt16();
+                    sampleRate   = reader.ReadUInt32();
+                    reader.ReadUInt32(); // byteRate
+                    reader.ReadUInt16(); // blockAlign
+                    bitsPerSample = reader.ReadUInt16();
+                    isFloat = (audioFormat == 0x0003); // IEEE Float
+                }
+                else if (chunkId == "data")
+                {
+                    dataPos  = reader.BaseStream.Position;
+                    dataSize = chunkSize;
+                }
+
+                // Zum nächsten Chunk springen (inkl. Padding bei ungerader Größe)
+                reader.BaseStream.Position = chunkEnd;
+                if ((chunkSize & 1) == 1 && reader.BaseStream.Position < reader.BaseStream.Length)
+                    reader.BaseStream.Position++;
+
+                if (haveFmt && dataPos >= 0) break;
             }
 
-            // Falls Puffer zu groß war, Array kürzen
-            if (floatIndex < result.Length)
-                Array.Resize(ref result, floatIndex);
+            if (!haveFmt)   throw new FormatException("Kein 'fmt '-Chunk gefunden.");
+            if (dataPos < 0) throw new FormatException("Kein 'data'-Chunk gefunden.");
+
+            LastSampleRate    = (int)sampleRate;
+            LastNumChannels   = numChannels;
+            LastBitsPerSample = bitsPerSample;
+
+            // Samples lesen
+            reader.BaseStream.Position = dataPos;
+            int bytesPerSample = bitsPerSample / 8;
+            int totalSamples   = (int)(dataSize / bytesPerSample);
+            float[] samples    = new float[totalSamples];
+
+            for (int i = 0; i < totalSamples; i++)
+            {
+                switch (bitsPerSample)
+                {
+                    case 8:
+                        samples[i] = (reader.ReadByte() - 128) / 128f;
+                        break;
+                    case 16:
+                        samples[i] = Math.Max(-1f, reader.ReadInt16() / 32768f);
+                        break;
+                    case 24:
+                        int b0 = reader.ReadByte(), b1 = reader.ReadByte(), b2 = reader.ReadByte();
+                        int s24 = b0 | (b1 << 8) | (b2 << 16);
+                        if ((s24 & 0x800000) != 0) s24 |= unchecked((int)0xFF000000);
+                        samples[i] = Math.Max(-1f, s24 / 8388608f);
+                        break;
+                    case 32:
+                        samples[i] = isFloat
+                            ? reader.ReadSingle()
+                            : Math.Max(-1f, reader.ReadInt32() / 2147483648f);
+                        break;
+                    default:
+                        throw new NotSupportedException($"{bitsPerSample} Bits werden nicht unterstützt.");
+                }
+            }
+
+            return samples;
         }
-
-        LastTotalSamples = result.Length / LastNumChannels;
-        return result;
     }
-
-    // ── Hilfsmethoden ────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Gibt nur den linken (oder mono) Kanal zurück.
-    /// </summary>
-    public static float[] GetMonoChannel(float[] interleaved, int channelIndex = 0)
-    {
-        if (LastNumChannels == 1) return interleaved;
-
-        int channels = LastNumChannels;
-        float[] mono = new float[interleaved.Length / channels];
-        for (int i = 0; i < mono.Length; i++)
-            mono[i] = interleaved[i * channels + channelIndex];
-        return mono;
-    }
-
-    /// <summary>
-    /// Gibt Metadaten als String aus (für Debug/Logging).
-    /// </summary>
-    public static string GetInfoString() =>
-        $"SampleRate={LastSampleRate} Hz | Channels={LastNumChannels} | " +
-        $"Bits={LastBitsPerSample} | Samples/ch={LastTotalSamples} | " +
-        $"Duration={(double)LastTotalSamples / LastSampleRate:F2}s";
 }
