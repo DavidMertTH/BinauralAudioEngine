@@ -5,6 +5,8 @@ using Code.Renderer;
 using Code.Simulation;
 using Unity.Jobs;
 using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.Serialization;
 using Debug = UnityEngine.Debug;
 
 namespace Code.Core
@@ -17,9 +19,9 @@ namespace Code.Core
         public AudioPath[] AudioPaths;
         public bool IsReady { get; private set; }
 
-        private readonly List<BinauralAudioFilter> _audioFilters = new();
+        public readonly List<BinauralAudioFilter> audioFilters = new();
         private Transform _listener;
-
+        public UnityEvent simulationDone;  // delegate
         private Transform Listener
         {
             get
@@ -55,7 +57,7 @@ namespace Code.Core
         /// </summary>
         public async Awaitable UpdateAllImpulseResponses()
         {
-            await UpdateImpulseResponses(_audioFilters);
+            await UpdateImpulseResponses(audioFilters);
         }
         
         /// <summary>
@@ -88,18 +90,19 @@ namespace Code.Core
                     sourceObject.EnterNewIr(sourceIr);
                 }
             }
+            simulationDone?.Invoke();
         }
 
         public void RegisterAudioFilter(BinauralAudioFilter filter)
         {
-            if (!_audioFilters.Contains(filter))
-                _audioFilters.Add(filter);
+            if (!audioFilters.Contains(filter))
+                audioFilters.Add(filter);
         }
 
         public void UnregisterAudioFilter(BinauralAudioFilter filter)
         {
-            if (_audioFilters.Contains(filter))
-                _audioFilters.Remove(filter);
+            if (audioFilters.Contains(filter))
+                audioFilters.Remove(filter);
         }
     }
 }

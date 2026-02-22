@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Code.Renderer;
 using TMPro;
@@ -7,14 +8,14 @@ using UnityEngine.UI;
 
 public class SidebarUi : MonoBehaviour
 {
+    public List<Image> adaptiveColorImages;
     public Button loadFileButton;
     public TextMeshProUGUI loadedFileText;
     public AudioSourceObject activeSource;
     public Slider volumeSlider;
     public Slider timeSlider;
     private bool _suppressCallback = false;
-
-    private BinauralAudioFilter _activeFilter;
+    private Color _colorToDisplay;
 
     public
         void Start()
@@ -22,18 +23,28 @@ public class SidebarUi : MonoBehaviour
         // Button.was += LoadNewFile;
     }
 
+    public void SetNewActiveSource(AudioSourceObject audioSource)
+    {
+        activeSource = audioSource;
+        _colorToDisplay = audioSource.color;
+        volumeSlider.value = activeSource.audioFilter.Volume;
+        if (adaptiveColorImages == null) return;
+    }
+
     void Update()
     {
         if (activeSource == null) return;
-        _activeFilter = activeSource.GetComponent<BinauralAudioFilter>();
-        _activeFilter.Volume = volumeSlider.value;
-        UpdateSliderFromCode(_activeFilter.PlaybackPosition01);
+        activeSource.audioFilter.Volume = volumeSlider.value;
+        if (activeSource.audioChunkAmount != 0)
+            UpdateSliderFromCode(((float) activeSource.audioFilter.PlaybackPosition01) / activeSource.audioChunkAmount);
+        adaptiveColorImages.ForEach(img => img.color = activeSource.color);
     }
+
 
     public void UpdateInfos()
     {
         string[] tokens = activeSource.path.Split(new[] { "/" }, StringSplitOptions.None);
-        loadedFileText.text =tokens.ToList().Last();
+        loadedFileText.text = tokens.ToList().Last();
     }
 
     public void LoadNewFile()
@@ -42,10 +53,17 @@ public class SidebarUi : MonoBehaviour
         loadedFileText.text = activeSource.LoadAudioTrackFromSource();
         UpdateInfos();
     }
+
     public void StopAndStart()
     {
         if (activeSource == null) return;
         activeSource.isRunning = !activeSource.isRunning;
+    }
+
+    private void ChangePlayHead(float playHeadPosition)
+    {
+        if (activeSource == null) return;
+        activeSource.audioFilter.PlaybackPosition01 = (int)(playHeadPosition * activeSource.audioChunkAmount);
     }
 
     void UpdateSliderFromCode(float value)
@@ -60,6 +78,7 @@ public class SidebarUi : MonoBehaviour
         if (_suppressCallback)
             return;
 
-        _activeFilter.PlaybackPosition01 = value;
+        ChangePlayHead(value);
+        activeSource.audioFilter.PlaybackPosition01 = (int)(timeSlider.value * activeSource.audioChunkAmount);
     }
 }

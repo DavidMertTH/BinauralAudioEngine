@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using Code.Core;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
 
@@ -8,6 +10,7 @@ namespace Code.EditorControlls
 {
     public class WallEditor : MonoBehaviour
     {
+        public SourceManager sourceManager;
         public Material highlightMaterial;
         public Material wallMaterial;
 
@@ -25,8 +28,8 @@ namespace Code.EditorControlls
             _demoWall.Init();
             _demoWall.SetMaterial(highlightMaterial);
             _demoWall.gameObject.SetActive(false);
+            sourceManager = SourceManager.Instance;
         }
-
 
 
         public void ListenForInputs()
@@ -36,6 +39,7 @@ namespace Code.EditorControlls
             {
                 return;
             }
+
             if (_wallPositionA != Vector3.zero)
             {
                 UpdateDemoWall(clickedPosition);
@@ -46,9 +50,10 @@ namespace Code.EditorControlls
                 if (!IsPositioningWall())
                 {
                     DeleteWallAtMousePosition();
+                    BinauralAudioEngine.Instance.UpdateAllImpulseResponses();
                 }
-                ResetSelection();
 
+                ResetSelection();
             }
 
             if (Input.GetMouseButtonDown(0))
@@ -63,15 +68,16 @@ namespace Code.EditorControlls
             RaycastHit hit;
             LayerMask mask = LayerMask.GetMask("Wall");
             if (!Physics.Raycast(ray, out hit, 200, mask)) return;
-            
+
             GameObject goToDelete = hit.collider.gameObject;
             Wall wallToDelete = goToDelete.GetComponent<Wall>();
-            
-            if(wallToDelete == null)return;
+
+            if (wallToDelete == null) return;
 
             walls.Remove(wallToDelete);
             Destroy(goToDelete);
         }
+
         private bool IsPositioningWall()
         {
             return (_wallPositionA != Vector3.zero);
@@ -138,7 +144,10 @@ namespace Code.EditorControlls
             wall.end = posB;
             wall.CreateMesh();
             wall.SetMaterial(wallMaterial);
+            wall.transform.parent = transform;
             wall.gameObject.layer = LayerMask.NameToLayer("Wall");
+            BinauralAudioEngine.Instance.UpdateAllImpulseResponses();
+            SourceManager.Instance.ReloadAllIrs();
             return wall;
         }
 

@@ -27,7 +27,9 @@ namespace Code.Renderer
         [HideInInspector] public float[] audioTrack;
         [HideInInspector] public AudioSource audioSource;
         public List<AudioPath> AudioPaths;
-
+        public BinauralAudioFilter audioFilter;
+        public Color color;
+        
         private Complex[][] _spectralAudio;
         private float[] _audioLeft;
         private float[] _audioRight;
@@ -48,6 +50,10 @@ namespace Code.Renderer
             InitData(irLength);
             audioSource.loop = true;
             audioSource.Play();
+            audioFilter = GetComponent<BinauralAudioFilter>();
+            color = SourceManager.NextColor();
+            GetComponent<UnityEngine.Renderer>().material.color = color;
+            SourceManager.Instance.Register(this);
         }
 
         private static List<AudioPath> GetValidPaths(List<AudioPath> unfilteredPaths)
@@ -59,11 +65,7 @@ namespace Code.Renderer
 
             return validPaths;
         }
-
-        private void UpdateVisualization()
-        {
-            raysVisualizer.EnterNewRays(GetValidPaths(AudioPaths), gameObject);
-        }
+        
 
         private void Update()
         {
@@ -171,6 +173,11 @@ namespace Code.Renderer
 
             stopwatch.Stop();
             Debug.Log($"Convolution ready. Took {stopwatch.ElapsedMilliseconds} ms");
+        }
+
+        private void OnDestroy()
+        {
+            SourceManager.Instance.DeRegister(this);
         }
 
         private Complex[] ToFreqDomain(float[] inTimeDomain, int length)

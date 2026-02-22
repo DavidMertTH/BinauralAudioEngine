@@ -18,7 +18,6 @@ Shader "Custom/Shockwave"
             "IgnoreProjector"="True"
         }
         
-        // Grab the screen behind the object into _GrabTexture
         GrabPass { "_GrabTexture" }
         
         Pass
@@ -60,33 +59,16 @@ Shader "Custom/Shockwave"
 
             half4 frag(v2f i) : SV_Target
             {
-                // Berechne Distanz vom Zentrum
                 float2 center = _Center.xy;
                 float dist = distance(i.uv, center);
-                
-                // Animiere den Radius über die Zeit
                 float animatedRadius = frac(_Time.y * _WaveSpeed) * 2.0;
-                
-                // Berechne die Distanz zur Welle
                 float waveDist = abs(dist - animatedRadius);
-                
-                // Erstelle eine Maske für die Welle
                 float waveMask = 1.0 - smoothstep(0, _WaveWidth, waveDist);
-                
-                // Berechne Verzerrungsrichtung (radial vom Zentrum)
                 float2 direction = normalize(i.uv - center);
-                
-                // Wende die Verzerrung an
                 float2 distortion = direction * waveMask * _DistortionStrength;
-                
-                // Sample die verzerrte Position
                 float2 grabUV = i.grabPos.xy / i.grabPos.w;
                 grabUV += distortion;
-                
-                // Hole die Farbe vom Hintergrund
                 half4 col = tex2D(_GrabTexture, grabUV);
-                
-                // Optional: Füge einen leichten Glüh-Effekt an der Welle hinzu
                 col.rgb += waveMask * 0.2;
                 
                 return col;
