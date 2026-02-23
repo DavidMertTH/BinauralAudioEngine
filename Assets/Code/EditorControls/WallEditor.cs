@@ -76,6 +76,7 @@ namespace Code.EditorControlls
 
             walls.Remove(wallToDelete);
             Destroy(goToDelete);
+            BinauralAudioEngine.Instance.UpdateAllImpulseResponses();
         }
 
         private bool IsPositioningWall()

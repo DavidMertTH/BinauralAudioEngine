@@ -42,11 +42,15 @@ namespace Code.EditorControlls
                 if (_currentlyDragging.GetComponent<BinauralAudioFilter>() != null)
                     BinauralAudioEngine.Instance.UpdateAllImpulseResponses();
                 _currentlyDragging = null;
+                BinauralAudioEngine.Instance.UpdateAllImpulseResponses();
+
             }
 
             if (Input.GetMouseButtonUp(1))
             {
                 _currentlyRotating = null;
+                BinauralAudioEngine.Instance.UpdateAllImpulseResponses();
+
             }
         }
 

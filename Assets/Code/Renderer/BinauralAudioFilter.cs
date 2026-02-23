@@ -10,7 +10,8 @@ namespace Code.Renderer
         private float[] _audioLeft;
         private float[] _audioRight;
         private int _dspBufferLength;
-
+        
+        
         private int DSPBufferCount =>
             _audioLeft != null && _dspBufferLength > 0 ? _audioLeft.Length / _dspBufferLength : 0;
 
@@ -66,7 +67,6 @@ namespace Code.Renderer
                 for (var i = 0; i < data.Length; i++) data[i] = 0;
                 return;
             }
-
             for (var i = 0; i < data.Length; i++)
             {
                 var bufferCounter = _playbackIndex * _dspBufferLength + i / 2;
@@ -75,6 +75,8 @@ namespace Code.Renderer
                 data[i] = i % 2 == 0 ? _audioRight[bufferCounter] : _audioLeft[bufferCounter];
                 data[i] *= _volume;
             }
+
+           
 
             _playbackIndex++;
             var numSegments = _audioLeft.Length / _dspBufferLength;

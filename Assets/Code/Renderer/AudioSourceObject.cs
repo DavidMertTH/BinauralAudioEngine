@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Threading.Tasks;
+using Code.Core;
 using Code.Preprocessing;
 using Code.Simulation;
 using MathNet.Numerics.IntegralTransforms;
@@ -31,7 +32,7 @@ namespace Code.Renderer
         public Color color;
         public float[] irLeft;
         public float[] irRight;
-        
+
         private Complex[][] _spectralAudio;
         private float[] _audioLeft;
         private float[] _audioRight;
@@ -55,6 +56,7 @@ namespace Code.Renderer
             color = SourceManager.NextColor();
             GetComponent<UnityEngine.Renderer>().material.color = color;
             SourceManager.Instance.Register(this);
+            BinauralAudioEngine.Instance.UpdateAllImpulseResponses();
         }
 
         private static List<AudioPath> GetValidPaths(List<AudioPath> unfilteredPaths)
@@ -91,10 +93,10 @@ namespace Code.Renderer
             _fullBlockLength = CalcBlockSize(_dspBufferLength, irLength);
         }
 
-        public void EnterNewIr(AudioSourceImpulseResponse ir)
+        public void EnterNewIr(float[] irL, float[] irR)
         {
-            irLeft = ir.Left;
-            irRight = ir.Right;
+            irLeft = irL;
+            irRight = irR;
             _updateIrNextFrame = true;
         }
 
@@ -103,80 +105,121 @@ namespace Code.Renderer
             var stopwatch = new System.Diagnostics.Stopwatch();
             stopwatch.Start();
             coroutineRunning = true;
-            var chunkCount = audioChunkAmount;
-            var fullLen = _fullBlockLength;
-            var dspLen = _dspBufferLength;
-            // var audioLen = audioSource.clip.samples;
-            var irLen = irLeft.Length;
-            var convLen = dspLen + irLen - 1;
 
             var spectralAudio = _spectralAudio;
-            _audioLeft = new float[_numSamples / 2 + irLength - 1];
-            _audioRight = new float[_numSamples / 2 + irLength - 1];
-            var max = 0f;
-            foreach (var s in irLeft)
-                if (Math.Abs(s) > max)
-                    max = Math.Abs(s);
-            Debug.Log($"IR max in GetImpulseResponse: {max}");
+            var chunkCount = Mathf.Min(audioChunkAmount, spectralAudio.Length);
+            var fullLen = spectralAudio[0].Length;
+            var dspLen = _dspBufferLength;
+            var irLen = irLeft.Length;
+
+            // IR in Segmente der Größe dspLen aufteilen
+            var irSegmentCount = Mathf.CeilToInt((float)irLen / dspLen);
+
+            // Output muss Audio + kompletten IR-Tail abdecken
+            var totalOutputLength = chunkCount * dspLen + irLen - 1;
+            _audioLeft = new float[totalOutputLength];
+            _audioRight = new float[totalOutputLength];
+
+            Debug.Log(
+                $"fullLen={fullLen}, dspLen={dspLen}, irLen={irLen}, irSegments={irSegmentCount}, chunks={chunkCount}, outLen={totalOutputLength}");
+
+            // IR-Segmente vorbereiten (außerhalb des Tasks, da ToFreqDomain nicht thread-safe sein muss)
+            var irSegmentsL = new Complex[irSegmentCount][];
+            var irSegmentsR = new Complex[irSegmentCount][];
+            for (var s = 0; s < irSegmentCount; s++)
+            {
+                var offset = s * dspLen;
+                var segLen = Mathf.Min(dspLen, irLen - offset);
+                var segL = new float[dspLen];
+                var segR = new float[dspLen];
+                Array.Copy(irLeft, offset, segL, 0, segLen);
+                Array.Copy(irRight, offset, segR, 0, segLen);
+                irSegmentsL[s] = ToFreqDomain(segL, fullLen);
+                irSegmentsR[s] = ToFreqDomain(segR, fullLen);
+            }
+
+            var audioLeft = _audioLeft;
+            var audioRight = _audioRight;
+
             var task = Task.Run(() =>
             {
-                var irSpecL = ToFreqDomain(irLeft, fullLen);
-                var irSpecR = ToFreqDomain(irRight, fullLen);
-
-                var stripeCount = Environment.ProcessorCount * 4;
-                var locks = new object[stripeCount];
-                for (var i = 0; i < stripeCount; i++)
-                    locks[i] = new object();
-
-
-                Parallel.For(0, chunkCount, k =>
+                try
                 {
-                    var block = k % chunkCount;
+                    var stripeCount = Environment.ProcessorCount * 4;
+                    var locks = new object[stripeCount];
+                    for (var i = 0; i < stripeCount; i++)
+                        locks[i] = new object();
 
-                    var src = spectralAudio[block];
-
-                    var tempL = new Complex[fullLen];
-                    var tempR = new Complex[fullLen];
-
-                    for (var j = 0; j < fullLen; j++)
+                    // Für jeden Audio-Chunk und jedes IR-Segment
+                    Parallel.For(0, chunkCount * irSegmentCount, idx =>
                     {
-                        tempL[j] = irSpecL[j] * src[j];
-                        tempR[j] = irSpecR[j] * src[j];
-                    }
+                        var k = idx / irSegmentCount; // Audio-Chunk Index
+                        var s = idx % irSegmentCount; // IR-Segment Index
 
-                    Fourier.Inverse(tempL, FourierOptions.Matlab);
-                    Fourier.Inverse(tempR, FourierOptions.Matlab);
+                        var src = spectralAudio[k];
+                        var irSpecL = irSegmentsL[s];
+                        var irSpecR = irSegmentsR[s];
 
-                    var baseIndex = block * dspLen;
+                        var tempL = new Complex[fullLen];
+                        var tempR = new Complex[fullLen];
 
-                    for (var n = 0; n < convLen; n++)
-                    {
-                        var idx = baseIndex + n;
-                        if (idx >= _audioLeft.Length)
-                            break;
-
-                        var l = (float)tempL[n].Real;
-                        var r = (float)tempR[n].Real;
-
-                        var stripe = idx % stripeCount;
-                        lock (locks[stripe])
+                        for (var j = 0; j < fullLen; j++)
                         {
-                            _audioLeft[idx] += l;
-                            _audioRight[idx] += r;
+                            tempL[j] = irSpecL[j] * src[j];
+                            tempR[j] = irSpecR[j] * src[j];
                         }
-                    }
-                });
+
+                        Fourier.Inverse(tempL, FourierOptions.Matlab);
+                        Fourier.Inverse(tempR, FourierOptions.Matlab);
+
+                        // Overlap-Add: Ergebnis an der richtigen Stelle addieren
+                        // Audio-Chunk k startet bei k*dspLen, IR-Segment s startet bei s*dspLen
+                        var baseIndex = k * dspLen + s * dspLen;
+                        var outLen = dspLen + dspLen - 1; // Länge des IFFT-Ergebnisses das relevant ist
+
+                        for (var n = 0; n < outLen; n++)
+                        {
+                            var outIdx = baseIndex + n;
+                            if (outIdx >= audioLeft.Length)
+                                break;
+
+                            var l = (float)tempL[n].Real;
+                            var r = (float)tempR[n].Real;
+
+                            var stripe = outIdx % stripeCount;
+                            lock (locks[stripe])
+                            {
+                                audioLeft[outIdx] += l;
+                                audioRight[outIdx] += r;
+                            }
+                        }
+                    });
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"[Convolution Task] {e.GetType().Name}: {e.Message}\n{e.StackTrace}");
+                    if (e is AggregateException ae)
+                        foreach (var inner in ae.InnerExceptions)
+                            Debug.LogError($"[Inner] {inner.GetType().Name}: {inner.Message}\n{inner.StackTrace}");
+                    throw;
+                }
             });
 
             while (!task.IsCompleted)
                 yield return null;
 
+            if (task.Exception != null)
+            {
+                foreach (var inner in task.Exception.Flatten().InnerExceptions)
+                    Debug.LogError($"[Task Exception] {inner.GetType().Name}: {inner.Message}\n{inner.StackTrace}");
+                coroutineRunning = false;
+                yield break;
+            }
+
             if (TryGetComponent<BinauralAudioFilter>(out var filter))
                 filter.SetAudio(_audioLeft, _audioRight);
-            coroutineRunning = false;
-            if (task.Exception != null)
-                Debug.LogError(task.Exception);
 
+            coroutineRunning = false;
             stopwatch.Stop();
             Debug.Log($"Convolution ready. Took {stopwatch.ElapsedMilliseconds} ms");
         }
@@ -236,6 +279,7 @@ namespace Code.Renderer
                 Debug.Log($"Audio preprocessing took {sw.ElapsedMilliseconds} ms");
             }
 
+            BinauralAudioEngine.Instance.UpdateAllImpulseResponses();
             path = chosenPath;
             return chosenPath;
         }

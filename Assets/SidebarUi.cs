@@ -13,6 +13,7 @@ public class SidebarUi : MonoBehaviour
     public TextMeshProUGUI loadedFileText;
     public AudioSourceObject activeSource;
     public GraphRenderer irGraph;
+    public GraphRenderer audioGraph;
     public Slider volumeSlider;
     private float _suppressCallback;
     private Color _colorToDisplay;
@@ -35,9 +36,10 @@ public class SidebarUi : MonoBehaviour
         _suppressCallback -= Time.deltaTime;
         if (activeSource == null) return;
         activeSource.audioFilter.Volume = volumeSlider.value;
+        // if (activeSource.audioFilter.lastPlayedAudioMono != null)
+        //     audioGraph.SetData(activeSource.audioFilter.lastPlayedAudioMono);
         adaptiveColorImages.ForEach(img => img.color = activeSource.color);
-        if(activeSource.irLeft != null) irGraph.SetData(activeSource.irLeft);
-
+        if (activeSource.irLeft != null) irGraph.SetData(activeSource.irLeft);
     }
 
 
@@ -65,5 +67,4 @@ public class SidebarUi : MonoBehaviour
         if (activeSource == null) return;
         activeSource.audioFilter.PlaybackPosition01 = playHeadPosition;
     }
-    
 }
