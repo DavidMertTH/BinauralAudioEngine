@@ -5,6 +5,7 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using Unity.Collections.LowLevel.Unsafe;
+using UnityEngine.UI.Extensions;
 
 namespace Code.Simulation
 {
@@ -19,7 +20,7 @@ namespace Code.Simulation
 
         public JobHandle Schedule(float3 listener, NativeArray<float3>.ReadOnly sources,
             NativeArray<RaycastHit>.ReadOnly hitsAroundListener, NativeArray<bool>.ReadOnly isHitAroundListenerCoplanar,
-            JobHandle hitsReadyHandle, NativeArray<AudioPath> result)
+            LayerMask rayMask, JobHandle hitsReadyHandle, NativeArray<AudioPath> result)
         {
             var numRaycasts = result.Length * 2; // Need to check visibility from listener and from source
             _commands = Helper.ReallocateIfNeeded(_commands, numRaycasts, Allocator.Persistent);
@@ -32,7 +33,8 @@ namespace Code.Simulation
                 Sources = sources,
                 Listener = listener,
                 HitsAroundListener = hitsAroundListener,
-                IsHitAroundListenerCoplanar = isHitAroundListenerCoplanar
+                IsHitAroundListenerCoplanar = isHitAroundListenerCoplanar,
+                RayMask = rayMask
             }.ScheduleParallel(_reflectionPoints.Length, 32, hitsReadyHandle);
             _visibilityHits = Helper.ReallocateIfNeeded(_visibilityHits, numRaycasts, Allocator.Persistent);
             var doRaycastsHandle = RaycastCommand.ScheduleBatch(
@@ -58,10 +60,11 @@ namespace Code.Simulation
 
             public NativeArray<float3> ReflectionPoints;
 
-            [ReadOnly] public NativeArray<float3>.ReadOnly Sources;
-            [ReadOnly] public float3 Listener;
-            [ReadOnly] public NativeArray<RaycastHit>.ReadOnly HitsAroundListener;
-            [ReadOnly] public NativeArray<bool>.ReadOnly IsHitAroundListenerCoplanar;
+            [Unity.Collections.ReadOnly] public NativeArray<float3>.ReadOnly Sources;
+            [Unity.Collections.ReadOnly] public float3 Listener;
+            [Unity.Collections.ReadOnly] public NativeArray<RaycastHit>.ReadOnly HitsAroundListener;
+            [Unity.Collections.ReadOnly] public NativeArray<bool>.ReadOnly IsHitAroundListenerCoplanar;
+            [Unity.Collections.ReadOnly] public LayerMask RayMask;
 
             public void Execute(int index)
             {
@@ -75,11 +78,11 @@ namespace Code.Simulation
                 Commands[index * 2] = new RaycastCommand(
                     from: Listener,
                     direction: ReflectionPoints[index] - Listener,
-                    QueryParameters.Default);
+                    new QueryParameters(RayMask));
                 Commands[index * 2 + 1] = new RaycastCommand(
                     from: Sources[sourceIndex],
                     direction: ReflectionPoints[index] - Sources[sourceIndex],
-                    QueryParameters.Default);
+                    new QueryParameters(RayMask));
             }
 
             private float3 FindSpecularReflection(float3 a, float3 b, float3 planeNormal, float3 planePoint)
@@ -102,12 +105,12 @@ namespace Code.Simulation
             [NativeDisableContainerSafetyRestriction]
             public NativeArray<AudioPath> Paths;
 
-            [ReadOnly] public NativeArray<RaycastHit> VisibilityHits;
-            [ReadOnly] public NativeArray<RaycastHit>.ReadOnly HitsAroundListener;
-            [ReadOnly] public NativeArray<bool>.ReadOnly IsHitAroundListenerCoplanar;
-            [ReadOnly] public NativeArray<float3> ReflectionPoints;
-            [ReadOnly] public NativeArray<float3>.ReadOnly SourcePositions;
-            [ReadOnly] public float3 ListenerPosition;
+            [Unity.Collections.ReadOnly] public NativeArray<RaycastHit> VisibilityHits;
+            [Unity.Collections.ReadOnly] public NativeArray<RaycastHit>.ReadOnly HitsAroundListener;
+            [Unity.Collections.ReadOnly] public NativeArray<bool>.ReadOnly IsHitAroundListenerCoplanar;
+            [Unity.Collections.ReadOnly] public NativeArray<float3> ReflectionPoints;
+            [Unity.Collections.ReadOnly] public NativeArray<float3>.ReadOnly SourcePositions;
+            [Unity.Collections.ReadOnly] public float3 ListenerPosition;
 
             public void Execute(int index)
             {

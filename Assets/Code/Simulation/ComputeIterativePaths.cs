@@ -18,7 +18,7 @@ namespace Code.Simulation
 
         public JobHandle Schedule(float3 listener, NativeArray<float3>.ReadOnly sources,
             NativeArray<RaycastCommand>.ReadOnly rayCommandsAroundListener,
-            NativeArray<RaycastHit>.ReadOnly hitsAroundListener, int numBounces,
+            NativeArray<RaycastHit>.ReadOnly hitsAroundListener, int numBounces, LayerMask rayMask,
             JobHandle hitsReadyHandle, NativeArray<AudioPath> result)
         {
             _bounces = Helper.ReallocateIfNeeded(_bounces, numBounces * hitsAroundListener.Length,
@@ -48,6 +48,7 @@ namespace Code.Simulation
                     TotalDistances = _totalDistances,
                     ReflectCommands = _bounceCommands,
                     PreviousRayHits = _bounceHits,
+                    RayMask = rayMask
                 }.ScheduleParallel(hitsAroundListener.Length, 32, prevLoopHandle);
 
                 var raycastHandle =
@@ -61,6 +62,7 @@ namespace Code.Simulation
                 VisibilityCommands = _visibilityCommands,
                 Bounces = _bounces,
                 Sources = sources,
+                RayMask = rayMask
             }.ScheduleParallel(result.Length, 32, prevLoopHandle);
 
             _visibilityHits = Helper.ReallocateIfNeeded(_visibilityHits, result.Length, Allocator.Persistent);
@@ -99,6 +101,7 @@ namespace Code.Simulation
             public NativeArray<float> TotalDistances;
             public NativeArray<RaycastCommand> ReflectCommands;
             [ReadOnly] public NativeArray<RaycastHit> PreviousRayHits;
+            [ReadOnly] public LayerMask RayMask;
 
             public void Execute(int index)
             {
@@ -116,7 +119,7 @@ namespace Code.Simulation
                     math.reflect(ReflectCommands[index].direction, PreviousRayHits[index].normal);
                 var origin = PreviousRayHits[index].point;
                 ReflectCommands[index] = new RaycastCommand(
-                    origin, reflectDir, QueryParameters.Default);
+                    origin, reflectDir, new QueryParameters(RayMask));
             }
         }
 
@@ -126,6 +129,7 @@ namespace Code.Simulation
 
             [ReadOnly] public NativeArray<float3> Bounces;
             [ReadOnly] public NativeArray<float3>.ReadOnly Sources;
+            [ReadOnly] public LayerMask RayMask;
 
             public void Execute(int index)
             {
@@ -134,7 +138,7 @@ namespace Code.Simulation
                 var direction = bounce - source;
                 var distance = math.distance(source, bounce);
                 VisibilityCommands[index] =
-                    new RaycastCommand(source, direction, QueryParameters.Default, distance);
+                    new RaycastCommand(source, direction, new QueryParameters(RayMask), distance);
             }
         }
 

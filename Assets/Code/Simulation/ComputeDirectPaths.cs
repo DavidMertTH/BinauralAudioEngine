@@ -6,6 +6,7 @@ using Unity.Mathematics;
 using static Unity.Mathematics.math;
 using UnityEngine;
 using Unity.Collections.LowLevel.Unsafe;
+using UnityEngine.UI.Extensions;
 
 namespace Code.Simulation
 {
@@ -17,7 +18,8 @@ namespace Code.Simulation
         private NativeArray<RaycastCommand> _commands;
         private NativeArray<RaycastHit> _hits;
 
-        public JobHandle Schedule(float3 listener, NativeArray<float3>.ReadOnly sources, NativeArray<AudioPath> paths)
+        public JobHandle Schedule(float3 listener, NativeArray<float3>.ReadOnly sources, LayerMask rayMask,
+            NativeArray<AudioPath> paths)
         {
             // Create raycast commands
             _commands = Helper.ReallocateIfNeeded(_commands, sources.Length, Allocator.Persistent);
@@ -26,6 +28,7 @@ namespace Code.Simulation
                 Commands = _commands,
                 Sources = sources,
                 Listener = listener,
+                RayMask = rayMask
             };
             var createCommandsHandle = createCommands.ScheduleParallel(_commands.Length, 32, default);
 
@@ -52,14 +55,15 @@ namespace Code.Simulation
         {
             public NativeArray<RaycastCommand> Commands;
 
-            [ReadOnly] public NativeArray<float3>.ReadOnly Sources;
-            [ReadOnly] public float3 Listener;
+            [Unity.Collections.ReadOnly] public NativeArray<float3>.ReadOnly Sources;
+            [Unity.Collections.ReadOnly] public float3 Listener;
+            [Unity.Collections.ReadOnly] public LayerMask RayMask;
 
             public void Execute(int index)
             {
                 var direction = Sources[index] - Listener;
                 var distance = length(direction);
-                Commands[index] = new RaycastCommand(Listener, direction, QueryParameters.Default, distance);
+                Commands[index] = new RaycastCommand(Listener, direction, new QueryParameters(RayMask), distance);
             }
         }
 
@@ -74,10 +78,10 @@ namespace Code.Simulation
             [NativeDisableContainerSafetyRestriction]
             public NativeArray<AudioPath> Paths;
 
-            [ReadOnly] public NativeArray<RaycastHit> Hits;
-            [ReadOnly] public NativeArray<RaycastCommand> Commands;
-            [ReadOnly] public NativeArray<float3>.ReadOnly Sources;
-            [ReadOnly] public float3 Listener;
+            [Unity.Collections.ReadOnly] public NativeArray<RaycastHit> Hits;
+            [Unity.Collections.ReadOnly] public NativeArray<RaycastCommand> Commands;
+            [Unity.Collections.ReadOnly] public NativeArray<float3>.ReadOnly Sources;
+            [Unity.Collections.ReadOnly] public float3 Listener;
 
             public void Execute(int index)
             {
@@ -94,6 +98,7 @@ namespace Code.Simulation
                     path.Positions.Add(Listener);
                     path.Positions.Add(Sources[index]);
                 }
+
                 Paths[index] = path;
             }
         }
