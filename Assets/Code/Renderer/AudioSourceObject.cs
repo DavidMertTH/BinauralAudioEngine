@@ -9,6 +9,7 @@ using MathNet.Numerics.IntegralTransforms;
 using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Code.Renderer
 {
@@ -28,7 +29,9 @@ namespace Code.Renderer
         public List<AudioPath> AudioPaths;
         public BinauralAudioFilter audioFilter;
         public Color color;
-
+        public float[] irLeft;
+        public float[] irRight;
+        
         private Complex[][] _spectralAudio;
         private float[] _audioLeft;
         private float[] _audioRight;
@@ -37,8 +40,6 @@ namespace Code.Renderer
         private int _dspBufferLength;
         private int _fullBlockLength;
         private IEnumerator _convolutionCoroutine;
-        private float[] _irLeft;
-        private float[] _irRight;
         private bool _updateIrNextFrame;
         private int _numSamples;
 
@@ -80,7 +81,7 @@ namespace Code.Renderer
                 {
                     _updateIrNextFrame = false;
 
-                    StartCoroutine(CreateConvolvedAudioBufferCoroutine(_irLeft, _irRight));
+                    StartCoroutine(CreateConvolvedAudioBufferCoroutine(irLeft, irRight));
                 }
         }
 
@@ -92,8 +93,8 @@ namespace Code.Renderer
 
         public void EnterNewIr(AudioSourceImpulseResponse ir)
         {
-            _irLeft = ir.Left;
-            _irRight = ir.Right;
+            irLeft = ir.Left;
+            irRight = ir.Right;
             _updateIrNextFrame = true;
         }
 
@@ -110,9 +111,13 @@ namespace Code.Renderer
             var convLen = dspLen + irLen - 1;
 
             var spectralAudio = _spectralAudio;
-            _audioLeft = new float[_numSamples/2+irLength-1];
-            _audioRight = new float[_numSamples/2+irLength-1];
-
+            _audioLeft = new float[_numSamples / 2 + irLength - 1];
+            _audioRight = new float[_numSamples / 2 + irLength - 1];
+            var max = 0f;
+            foreach (var s in irLeft)
+                if (Math.Abs(s) > max)
+                    max = Math.Abs(s);
+            Debug.Log($"IR max in GetImpulseResponse: {max}");
             var task = Task.Run(() =>
             {
                 var irSpecL = ToFreqDomain(irLeft, fullLen);
@@ -122,6 +127,7 @@ namespace Code.Renderer
                 var locks = new object[stripeCount];
                 for (var i = 0; i < stripeCount; i++)
                     locks[i] = new object();
+
 
                 Parallel.For(0, chunkCount, k =>
                 {
@@ -213,7 +219,7 @@ namespace Code.Renderer
                 Debug.Log("Ausgewählte Datei: " + chosenPath);
                 var sw = System.Diagnostics.Stopwatch.StartNew();
                 using var audioPreprocessor = new AudioPreprocessor(chosenPath, _dspBufferLength, _fullBlockLength);
-                
+
                 audioPreprocessor.Schedule(out var spectralAudioNative).Complete();
                 var numBlocks = spectralAudioNative.Length / _fullBlockLength;
 

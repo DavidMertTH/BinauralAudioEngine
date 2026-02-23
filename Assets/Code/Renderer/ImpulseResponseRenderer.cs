@@ -82,37 +82,32 @@ namespace Code.Renderer
 
             public void Execute(int index)
             {
-                // TODO: Account for HRIR sampling rate
                 var path = Paths[index];
                 if (!path.IsValid) return;
-
+                if(Mathf.Approximately(path.DistanceToImage, 1))return;
                 var imagePosInListenerSpace = math.mul(ListenerWorldToLocal, new float4(path.ImagePosition, 1)).xyz;
                 var bestHrirIndex = FindBestHrir(imagePosInListenerSpace);
 
-                // The distance from the center of the head to the HRTF measurement point.
                 var hrirDistance = math.length(Hrirs.Positions[bestHrirIndex]);
-
-                // TODO: Should hrirDistance be subtracyted instead?
                 var distanceToSource = path.DistanceToImage + hrirDistance;
                 const float speedOfSound = 343f;
                 var propagationDelaySec = distanceToSource / speedOfSound;
                 var propagationDelaySamples = IrSamplesPerSec * propagationDelaySec;
-                var distanceAmplitudeTwo = path.Energy * (8 / distanceToSource);
+
+                float distanceAmplitude = 3* path.Energy / (path.DistanceToImage * path.DistanceToImage);
 
                 var irStartLeft = path.SourceIndex * IrSamplesPerResponse * 2;
                 var irStartRight = irStartLeft + IrSamplesPerResponse;
                 var hrirStartLeft = bestHrirIndex * Hrirs.Stride * 2;
                 var hrirStartRight = hrirStartLeft + Hrirs.Stride;
-
+                // ImpulseResponses[irStartLeft + (int)propagationDelaySamples] = distanceAmplitude / 500f;
+                // ImpulseResponses[irStartRight  + (int)propagationDelaySamples] = distanceAmplitude / 500f;
                 for (var i = 0; i < Hrirs.Stride && i + propagationDelaySamples < IrSamplesPerResponse; i++)
                 {
                     ImpulseResponses[irStartLeft + i + (int)propagationDelaySamples] +=
-                        Hrirs.ImpulseResponses[hrirStartLeft + i] * distanceAmplitudeTwo;
+                    Hrirs.ImpulseResponses[hrirStartLeft + i] * distanceAmplitude;
                     ImpulseResponses[irStartRight + i + (int)propagationDelaySamples] +=
-                        Hrirs.ImpulseResponses[hrirStartRight + i] * distanceAmplitudeTwo;
-
-                    // ImpulseResponses[irStartLeft + i + (int)propagationDelaySamples] += distanceAmplitudeTwo * 0.1f;
-                    // ImpulseResponses[irStartRight + i + (int)propagationDelaySamples] += distanceAmplitudeTwo * 0.1f;
+                    Hrirs.ImpulseResponses[hrirStartRight + i] * distanceAmplitude;
                 }
             }
 
