@@ -10,6 +10,7 @@ namespace Code.Simulation
     public class ComputeIterativePaths : IDisposable
     {
         private NativeArray<float3> _bounces;
+        private NativeArray<float3> _bounceNormals;
         private NativeArray<float> _totalDistances;
         private NativeArray<RaycastCommand> _bounceCommands;
         private NativeArray<RaycastHit> _bounceHits;
@@ -19,9 +20,11 @@ namespace Code.Simulation
         public JobHandle Schedule(float3 listener, NativeArray<float3>.ReadOnly sources,
             NativeArray<RaycastCommand>.ReadOnly rayCommandsAroundListener,
             NativeArray<RaycastHit>.ReadOnly hitsAroundListener, int numBounces, LayerMask rayMask,
-            JobHandle hitsReadyHandle, NativeArray<AudioPath> result)
+            JobHandle hitsReadyHandle, NativeArray<AudioPath> result, float maxReflectAngleDeg)
         {
             _bounces = Helper.ReallocateIfNeeded(_bounces, numBounces * hitsAroundListener.Length,
+                Allocator.Persistent);
+            _bounceNormals = Helper.ReallocateIfNeeded(_bounceNormals, numBounces * hitsAroundListener.Length,
                 Allocator.Persistent);
             var bouncesStride = hitsAroundListener.Length;
             _bounceHits = Helper.ReallocateIfNeeded(_bounceHits, hitsAroundListener.Length, Allocator.Persistent);
@@ -45,6 +48,7 @@ namespace Code.Simulation
                 var reflectHandle = new Bounce
                 {
                     Bounces = _bounces.GetSubArray(i * bouncesStride, bouncesStride),
+                    BounceNormals = _bounceNormals.GetSubArray(i * bouncesStride, bouncesStride),
                     TotalDistances = _totalDistances,
                     ReflectCommands = _bounceCommands,
                     PreviousRayHits = _bounceHits,
@@ -73,12 +77,13 @@ namespace Code.Simulation
             {
                 Paths = result,
                 Bounces = _bounces,
-
+                BounceNormals = _bounceNormals,
                 BouncesStride = bouncesStride,
                 TotalDistances = _totalDistances,
                 Sources = sources,
                 Listener = listener,
                 VisibilityHits = _visibilityHits,
+                MinReflectDot = math.cos(math.radians(maxReflectAngleDeg))
             }.ScheduleParallel(result.Length, 32, visibilityCheckHandle);
 
             return createPathsHandle;
@@ -99,6 +104,7 @@ namespace Code.Simulation
         private struct Bounce : IJobFor
         {
             public NativeSlice<float3> Bounces;
+            public NativeSlice<float3> BounceNormals;
             public NativeArray<float> TotalDistances;
             public NativeArray<RaycastCommand> ReflectCommands;
             [ReadOnly] public NativeArray<RaycastHit> PreviousRayHits;
@@ -110,10 +116,12 @@ namespace Code.Simulation
                 {
                     ReflectCommands[index] = new RaycastCommand { queryParameters = new QueryParameters(layerMask: 0) };
                     Bounces[index] = float3.zero;
+                    BounceNormals[index] = float3.zero;
                     return;
                 }
 
                 Bounces[index] = PreviousRayHits[index].point;
+                BounceNormals[index] = PreviousRayHits[index].normal;
                 TotalDistances[index] = TotalDistances[index] + PreviousRayHits[index].distance;
 
                 var reflectDir =
@@ -148,11 +156,13 @@ namespace Code.Simulation
             public NativeArray<AudioPath> Paths;
 
             [ReadOnly] public NativeArray<float3> Bounces;
+            [ReadOnly] public NativeArray<float3> BounceNormals;
             [ReadOnly] public int BouncesStride;
             [ReadOnly] public NativeArray<float> TotalDistances;
             [ReadOnly] public NativeArray<float3>.ReadOnly Sources;
             [ReadOnly] public float3 Listener;
             [ReadOnly] public NativeArray<RaycastHit> VisibilityHits;
+            [ReadOnly] public float MinReflectDot;
 
             public void Execute(int index)
             {
@@ -165,8 +175,13 @@ namespace Code.Simulation
                     Paths[index] = new AudioPath { IsValid = false };
                     return;
                 }
-
+                
                 var sourceIndex = index / Bounces.Length;
+                if (!IsLastBounceWithinDeviationLimit(bounceIndex, sourceIndex))
+                {
+                    Paths[index] = new AudioPath { IsValid = false };
+                    return;
+                }
 
                 var path = new AudioPath
                 {
@@ -184,6 +199,18 @@ namespace Code.Simulation
                 var source = Sources[sourceIndex];
                 path.Positions.Add(source);
                 Paths[index] = path;
+            }
+
+            private bool IsLastBounceWithinDeviationLimit(int bounceIndex, int sourceIndex)
+            {
+                var lastBounce = Bounces[bounceIndex];
+                var prevBounce = Bounces[bounceIndex - BouncesStride];
+                var toLastBounceDir = math.normalize(lastBounce - prevBounce);
+                var lastBounceNormal = BounceNormals[bounceIndex];
+                var perfectReflectionDir = math.reflect(toLastBounceDir, lastBounceNormal);
+                var lastBounceToSourceDir = math.normalize(Sources[sourceIndex] - lastBounce);
+                var reflectDot = math.dot(perfectReflectionDir, lastBounceToSourceDir);
+                return reflectDot > MinReflectDot;
             }
         }
 
