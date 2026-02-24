@@ -125,7 +125,7 @@ namespace Code.Simulation
                 var firstToSecondIntersectionNormal =
                     (secondIntersection - firstIntersection) / firstToSecondReflectionDistance;
                 VisibilityChecks[index * 3 + 1] = new RaycastCommand(
-                    from: firstIntersection + firstToSecondIntersectionNormal * 0.1f,
+                    from: firstIntersection,
                     direction: firstToSecondIntersectionNormal, new QueryParameters(RayMask));
                 VisibilityChecks[index * 3 + 2] = new RaycastCommand(from: Sources[sourceIndex],
                     direction: secondIntersection - Sources[sourceIndex], new QueryParameters(RayMask));
