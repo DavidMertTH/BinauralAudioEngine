@@ -432,6 +432,7 @@ MonoBehaviour:
     raycastMask:
       serializedVersion: 2
       m_Bits: 4294967295
+      m_Bits: 256
     iterativeReflectionDeviationAngleDeg: 30
   simulationDone:
     m_PersistentCalls:
