@@ -63,7 +63,7 @@ namespace Code.Simulation
             {
                 var direction = Sources[index] - Listener;
                 var distance = length(direction);
-                Commands[index] = new RaycastCommand(Listener, direction, new QueryParameters(RayMask), distance);
+                Commands[index] = new RaycastCommand(Listener, direction, new QueryParameters(RayMask, hitBackfaces: true), distance);
             }
         }
 
@@ -85,9 +85,8 @@ namespace Code.Simulation
 
             public void Execute(int index)
             {
-                var didHit = Hits[index].distance != 0f;
                 var path = Paths[index];
-                path.IsValid = !didHit; // nothing blocks the ray
+                path.IsValid = !Helper.DidHit(Hits[index]);
                 if (path.IsValid)
                 {
                     path.SourceIndex = index;

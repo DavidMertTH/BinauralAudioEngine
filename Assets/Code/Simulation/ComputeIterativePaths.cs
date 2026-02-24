@@ -84,6 +84,7 @@ namespace Code.Simulation
             return createPathsHandle;
         }
 
+        // TODO: Burst?
         private struct Copy<T> : IJob where T : struct
         {
             [ReadOnly] public NativeArray<T>.ReadOnly Source;
@@ -136,9 +137,8 @@ namespace Code.Simulation
                 var source = Sources[index / Bounces.Length];
                 var bounce = Bounces[index % Bounces.Length];
                 var direction = bounce - source;
-                var distance = math.distance(source, bounce);
                 VisibilityCommands[index] =
-                    new RaycastCommand(source, direction, new QueryParameters(RayMask), distance);
+                    new RaycastCommand(source, direction, new QueryParameters(RayMask));
             }
         }
 
@@ -160,7 +160,7 @@ namespace Code.Simulation
                 var lastBounce = Bounces[bounceIndex];
                 var numBounces = bounceIndex / BouncesStride + 1;
 
-                if (lastBounce is { x: 0, y: 0, z: 0 } || Helper.DidHit(VisibilityHits[index]) || numBounces < 3)
+                if (lastBounce is { x: 0, y: 0, z: 0 } || !Helper.DidRayHitPoint(VisibilityHits[index], lastBounce) || numBounces < 3)
                 {
                     Paths[index] = new AudioPath { IsValid = false };
                     return;
