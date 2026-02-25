@@ -101,7 +101,9 @@ namespace Code.Simulation
                     return;
                 }
 
-                var listenerToFirstReflectionDistance = math.distance(Listener, firstIntersection);
+                var listenerToFirstReflectionVec = firstIntersection - Listener;
+                var listenerToFirstReflectionDistance = math.length(listenerToFirstReflectionVec);
+                var listenerToFirstReflectionNormal = listenerToFirstReflectionVec / listenerToFirstReflectionDistance;
                 var firstToSecondReflectionDistance = math.distance(firstIntersection, secondIntersection);
                 var secondReflectionToSourceDistance = math.distance(secondIntersection, Sources[sourceIndex]);
                 var totalDistance = listenerToFirstReflectionDistance + firstToSecondReflectionDistance +
@@ -111,7 +113,7 @@ namespace Code.Simulation
                     SourceIndex = sourceIndex,
                     DistanceToImage = totalDistance,
                     Energy = BounceAttenuationSquared,
-                    ImagePosition = firstIntersection,
+                    ImagePosition = Listener + listenerToFirstReflectionNormal * totalDistance,
                     IsValid = true,
                     Reflections = 2,
                 };
