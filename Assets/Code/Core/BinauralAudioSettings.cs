@@ -28,6 +28,6 @@ namespace Code.Core
         public float BounceAttenuation { get => bounceAttenuation; set => bounceAttenuation = Mathf.Clamp01(value);}
 
         public AudioPathArrayLayout GetAudioPathArrayLayout(int numSources) =>
-            new(numSources, raysAroundListenerAndEachSource, RaysAroundListenerAndEachSource, maxIterativeBounces);
+            new(RaysAroundListenerAndEachSource, RaysAroundListenerAndEachSource, numSources, maxIterativeBounces);
     }
 }
