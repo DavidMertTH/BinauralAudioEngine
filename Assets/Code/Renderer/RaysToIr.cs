@@ -62,7 +62,7 @@ namespace Code.Renderer
                 float distanceToSource = ray.DistanceToImage + sofaHrir.radius;
                 float propagationDelaySec = distanceToSource / 343f;
                 float propagationDelaySamples = sampleRate * propagationDelaySec;
-                float distanceAmplitudeTwo = (ray.Energy* Gain) / (distanceToSource) ;
+                float distanceAmplitudeTwo =(ray.Energy * Gain) / (0.5f * distanceToSource);
 
                 for (int i = 0; i < sofaHrir.hrtfData.N; i++)
                 {

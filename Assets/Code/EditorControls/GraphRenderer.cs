@@ -61,7 +61,7 @@ public class GraphRenderer : Graphic
         int lastNonZero = 0;
         for (int i = data.Length - 1; i >= 0; i--)
         {
-            if (Mathf.Abs(data[i]) > 1e-6f)
+            if (Mathf.Abs(data[i]) > 1e-10f)
             {
                 lastNonZero = i;
                 break;
