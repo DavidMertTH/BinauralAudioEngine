@@ -5,7 +5,6 @@ using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
 using Unity.Collections.LowLevel.Unsafe;
-using UnityEngine.UI.Extensions;
 
 namespace Code.Simulation
 {
@@ -60,11 +59,11 @@ namespace Code.Simulation
 
             public NativeArray<float3> ReflectionPoints;
 
-            [Unity.Collections.ReadOnly] public NativeArray<float3>.ReadOnly Sources;
-            [Unity.Collections.ReadOnly] public float3 Listener;
-            [Unity.Collections.ReadOnly] public NativeArray<RaycastHit>.ReadOnly HitsAroundListener;
-            [Unity.Collections.ReadOnly] public NativeArray<bool>.ReadOnly IsHitAroundListenerCoplanar;
-            [Unity.Collections.ReadOnly] public LayerMask RayMask;
+            [ReadOnly] public NativeArray<float3>.ReadOnly Sources;
+            [ReadOnly] public float3 Listener;
+            [ReadOnly] public NativeArray<RaycastHit>.ReadOnly HitsAroundListener;
+            [ReadOnly] public NativeArray<bool>.ReadOnly IsHitAroundListenerCoplanar;
+            [ReadOnly] public LayerMask RayMask;
 
             public void Execute(int index)
             {
@@ -105,12 +104,13 @@ namespace Code.Simulation
             [NativeDisableContainerSafetyRestriction]
             public NativeArray<AudioPath> Paths;
 
-            [Unity.Collections.ReadOnly] public NativeArray<RaycastHit> VisibilityHits;
-            [Unity.Collections.ReadOnly] public NativeArray<RaycastHit>.ReadOnly HitsAroundListener;
-            [Unity.Collections.ReadOnly] public NativeArray<bool>.ReadOnly IsHitAroundListenerCoplanar;
-            [Unity.Collections.ReadOnly] public NativeArray<float3> ReflectionPoints;
-            [Unity.Collections.ReadOnly] public NativeArray<float3>.ReadOnly SourcePositions;
-            [Unity.Collections.ReadOnly] public float3 ListenerPosition;
+            [ReadOnly] public NativeArray<RaycastHit> VisibilityHits;
+            [ReadOnly] public NativeArray<RaycastHit>.ReadOnly HitsAroundListener;
+            [ReadOnly] public NativeArray<bool>.ReadOnly IsHitAroundListenerCoplanar;
+            [ReadOnly] public NativeArray<float3> ReflectionPoints;
+            [ReadOnly] public NativeArray<float3>.ReadOnly SourcePositions;
+            [ReadOnly] public float3 ListenerPosition;
+            
 
             public void Execute(int index)
             {

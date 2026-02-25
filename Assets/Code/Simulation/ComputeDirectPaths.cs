@@ -6,7 +6,6 @@ using Unity.Mathematics;
 using static Unity.Mathematics.math;
 using UnityEngine;
 using Unity.Collections.LowLevel.Unsafe;
-using UnityEngine.UI.Extensions;
 
 namespace Code.Simulation
 {
@@ -55,9 +54,9 @@ namespace Code.Simulation
         {
             public NativeArray<RaycastCommand> Commands;
 
-            [Unity.Collections.ReadOnly] public NativeArray<float3>.ReadOnly Sources;
-            [Unity.Collections.ReadOnly] public float3 Listener;
-            [Unity.Collections.ReadOnly] public LayerMask RayMask;
+            [ReadOnly] public NativeArray<float3>.ReadOnly Sources;
+            [ReadOnly] public float3 Listener;
+            [ReadOnly] public LayerMask RayMask;
 
             public void Execute(int index)
             {
@@ -78,10 +77,10 @@ namespace Code.Simulation
             [NativeDisableContainerSafetyRestriction]
             public NativeArray<AudioPath> Paths;
 
-            [Unity.Collections.ReadOnly] public NativeArray<RaycastHit> Hits;
-            [Unity.Collections.ReadOnly] public NativeArray<RaycastCommand> Commands;
-            [Unity.Collections.ReadOnly] public NativeArray<float3>.ReadOnly Sources;
-            [Unity.Collections.ReadOnly] public float3 Listener;
+            [ReadOnly] public NativeArray<RaycastHit> Hits;
+            [ReadOnly] public NativeArray<RaycastCommand> Commands;
+            [ReadOnly] public NativeArray<float3>.ReadOnly Sources;
+            [ReadOnly] public float3 Listener;
 
             public void Execute(int index)
             {
