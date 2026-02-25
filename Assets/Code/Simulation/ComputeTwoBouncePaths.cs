@@ -108,7 +108,7 @@ namespace Code.Simulation
                 {
                     SourceIndex = sourceIndex,
                     DistanceToImage = totalDistance,
-                    Energy = 1f, // TODO
+                    Energy = 0.81f, // 0.9^2
                     ImagePosition = firstIntersection,
                     IsValid = true,
                     Reflections = 2,

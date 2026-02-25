@@ -126,7 +126,7 @@ namespace Code.Simulation
                         ImagePosition = ReflectionPoints[index],
                         DistanceToImage = VisibilityHits[index * 2 + 1].distance,
                         IsValid = true,
-                        Energy = 1f, // TODO: Calc energy
+                        Energy = 0.9f
                     };
                     path.Positions.Clear();
                     path.Positions.Add(ListenerPosition);

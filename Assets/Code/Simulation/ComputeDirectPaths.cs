@@ -63,7 +63,7 @@ namespace Code.Simulation
             {
                 var direction = Sources[index] - Listener;
                 var distance = length(direction);
-                Commands[index] = new RaycastCommand(Listener, direction, new QueryParameters(RayMask, hitBackfaces: true), distance);
+                Commands[index] = new RaycastCommand(Listener, direction, new QueryParameters(RayMask), distance);
             }
         }
 
