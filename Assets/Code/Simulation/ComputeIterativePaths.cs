@@ -1,4 +1,5 @@
 using System;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using Unity.Jobs;
@@ -97,7 +98,7 @@ namespace Code.Simulation
             return createPathsHandle;
         }
 
-        // TODO: Burst?
+        [BurstCompile]
         private struct Copy<T> : IJob where T : struct
         {
             [ReadOnly] public NativeArray<T>.ReadOnly Source;
@@ -109,6 +110,7 @@ namespace Code.Simulation
             }
         }
 
+        [BurstCompile]
         private struct CopyDistance : IJobFor
         {
             public NativeArray<float> CopyTo;
@@ -120,6 +122,7 @@ namespace Code.Simulation
             }
         }
 
+        [BurstCompile]
         private struct AddDistance : IJobFor
         {
             [NativeDisableParallelForRestriction]
@@ -132,6 +135,7 @@ namespace Code.Simulation
             }
         }
 
+        [BurstCompile]
         private struct Bounce : IJobFor
         {
             public NativeArray<RaycastCommand> ReflectCommands;
@@ -157,6 +161,7 @@ namespace Code.Simulation
             }
         }
 
+        [BurstCompile]
         private struct CheckVisibility : IJobFor
         {
             public NativeArray<RaycastCommand> VisibilityCommands;
@@ -175,6 +180,7 @@ namespace Code.Simulation
             }
         }
 
+        [BurstCompile]
         private struct CreatePaths : IJobFor
         {
             [NativeDisableContainerSafetyRestriction]
