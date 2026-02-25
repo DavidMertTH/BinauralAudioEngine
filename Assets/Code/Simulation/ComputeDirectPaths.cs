@@ -85,9 +85,7 @@ namespace Code.Simulation
             public void Execute(int index)
             {
                 var path = Paths[index];
-                float distance = math.length(Listener - Sources[index]);
-                path.IsValid = (Hits[index].distance > distance) || Hits[index].distance == 0;
-                // path.IsValid = !Helper.DidHit(Hits[index]);
+                path.IsValid = !Helper.DidHit(Hits[index]);
                 if (path.IsValid)
                 {
                     path.SourceIndex = index;
