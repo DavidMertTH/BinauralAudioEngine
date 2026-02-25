@@ -121,19 +121,25 @@ namespace Code.Simulation
                     Helper.DidRayHitPoint(VisibilityHits[index * 2 + 1], ReflectionPoints[index]);
                 if (!IsHitAroundListenerCoplanar[index % HitsAroundListener.Length] && isPathClear)
                 {
-                    var path = new AudioPath()
+                    var sourceIndex = index / HitsAroundListener.Length;
+                    var listenerToReflectionVec = ReflectionPoints[index] - ListenerPosition;
+                    var listenerToReflectionDist = math.length(listenerToReflectionVec);
+                    var reflectionToSourceDist = math.distance(ReflectionPoints[index], SourcePositions[sourceIndex]);
+                    var imgDist = listenerToReflectionDist + reflectionToSourceDist;
+                    var listenerToReflectionNormal = listenerToReflectionVec / listenerToReflectionDist;
+                    var path = new AudioPath
                     {
-                        SourceIndex = index / HitsAroundListener.Length,
+                        SourceIndex = sourceIndex,
                         Reflections = 1,
-                        ImagePosition = ReflectionPoints[index],
-                        DistanceToImage = VisibilityHits[index * 2 + 1].distance,
+                        ImagePosition = ReflectionPoints[index] + listenerToReflectionNormal * imgDist,
+                        DistanceToImage = imgDist,
                         IsValid = true,
                         Energy = BounceAttenuation,
                     };
                     path.Positions.Clear();
                     path.Positions.Add(ListenerPosition);
                     path.Positions.Add(ReflectionPoints[index]);
-                    path.Positions.Add(SourcePositions[index / HitsAroundListener.Length]);
+                    path.Positions.Add(SourcePositions[sourceIndex]);
                     Paths[index] = path;
                 }
                 else
