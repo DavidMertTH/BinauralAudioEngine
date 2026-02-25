@@ -14,7 +14,7 @@ public class RaysVisualizer : MonoBehaviour
     public GameObject rayPrefab;
     public int numRays;
     private List<LineRenderer> _lineRenderer = new List<LineRenderer>();
-    
+
 
     private void Start()
     {
@@ -33,9 +33,11 @@ public class RaysVisualizer : MonoBehaviour
     private void GetNewRays()
     {
         int index = BinauralAudioEngine.Instance.audioFilters.IndexOf(sourceObject.audioFilter);
-        List<AudioPath> paths = BinauralAudioEngine.Instance.AudioPaths.Where(path => path.SourceIndex == index).ToList();
+        List<AudioPath> paths = BinauralAudioEngine.Instance.AudioPaths.Where(path => path.SourceIndex == index)
+            .ToList();
         EnterNewRays(paths);
     }
+
     public void CleanPreviousRays()
     {
         for (int i = 0; i < numRays; i++)
@@ -47,16 +49,19 @@ public class RaysVisualizer : MonoBehaviour
 
     public void EnterNewRays(List<AudioPath> paths)
     {
+        List<AudioPath> validPaths = paths.Where(path => path.IsValid).ToList();
         for (int i = 0; i < numRays; i++)
         {
             _lineRenderer[i].material.color = sourceObject.color;
         }
+
         CleanPreviousRays();
         int count = Mathf.Min(numRays, _lineRenderer.Count);
 
         for (int i = 0; i < count; i++)
         {
-            if (i >= paths.Count || paths[i].Positions == null || paths[i].Positions.Length == 0 ||  !paths[i].IsValid)
+            if (i >= validPaths.Count || validPaths[i].Positions == null || validPaths[i].Positions.Length == 0 ||
+                !validPaths[i].IsValid)
             {
                 _lineRenderer[i].enabled = false;
                 continue;
@@ -66,11 +71,13 @@ public class RaysVisualizer : MonoBehaviour
             lr.enabled = true;
             lr.useWorldSpace = true;
 
-            int numCp = paths[i].Positions.Length;
+            int numCp = validPaths[i].Positions.Length;
             lr.positionCount = numCp;
 
             for (int j = 0; j < numCp; j++)
-                lr.SetPosition(j, paths[i].Positions[j]);
+                lr.SetPosition(j, validPaths[i].Positions[j]);
+            Color color = new Color(sourceObject.color.r, sourceObject.color.g, sourceObject.color.b, validPaths[i].DistanceToImage);
+            _lineRenderer[i].material.color = color;
         }
     }
 }
