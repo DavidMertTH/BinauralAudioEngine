@@ -93,10 +93,12 @@ namespace Code.Simulation
         private readonly int _maxIterativeBounces;
         private readonly float _iterativeReflectionDeviationAngleDeg;
         private readonly LayerMask _rayMask;
+        private readonly float _bounceAttenuation;
 
         public PathSimulation(Transform listener, List<Vector3> sources, BinauralAudioSettings settings)
         {
             _rayMask = settings.RaycastMask;
+            _bounceAttenuation = settings.BounceAttenuation;
             _numRaysAroundListenerAndEachSource = settings.RaysAroundListenerAndEachSource;
             _maxIterativeBounces = settings.MaxIterativeBounces;
             _iterativeReflectionDeviationAngleDeg = settings.IterativeReflectionDeviationAngleDeg;
@@ -129,14 +131,16 @@ namespace Code.Simulation
             var isHitAroundSourcesCoplanar =
                 isHitCoplanar.GetSubArray(hitsStride, isHitCoplanar.Length - hitsStride).AsReadOnly();
             var oneBouncePathsHandle = ComputeOneBouncePaths.Schedule(ListenerPosition,
-                SourcePositions, hitsAroundListener, isHitAroundListenerCoplanar, _rayMask, surroundRaycastHandle,
+                SourcePositions, hitsAroundListener, isHitAroundListenerCoplanar, _rayMask, _bounceAttenuation,
+                surroundRaycastHandle,
                 OneBouncePaths);
             var twoBouncePathsHandle = ComputeTwoBouncePaths.Schedule(ListenerPosition,
                 SourcePositions, hitsAroundListener, isHitAroundListenerCoplanar, hitsAroundSources,
-                isHitAroundSourcesCoplanar, hitsStride, _rayMask, surroundRaycastHandle, TwoBouncePaths);
+                isHitAroundSourcesCoplanar, hitsStride, _rayMask, _bounceAttenuation, surroundRaycastHandle,
+                TwoBouncePaths);
             var iterativePathsHandle = ComputeIterativePaths.Schedule(ListenerPosition,
                 SourcePositions, commandsAroundListener, hitsAroundListener, _maxIterativeBounces, _rayMask,
-                surroundRaycastHandle, HigherOrderPaths, _iterativeReflectionDeviationAngleDeg);
+                _bounceAttenuation, surroundRaycastHandle, HigherOrderPaths, _iterativeReflectionDeviationAngleDeg);
             paths = AllAudioPaths;
             return CombinePathJobHandles(directPathsHandle, oneBouncePathsHandle, twoBouncePathsHandle,
                 iterativePathsHandle);

@@ -15,6 +15,7 @@ namespace Code.Core
         [SerializeField] private string sofaFile = "hrtf0.sofa";
         [SerializeField] private LayerMask raycastMask = -1;
         [SerializeField] [Range(0, 180f)] private float iterativeReflectionDeviationAngleDeg = 30f;
+        [SerializeField] [Range(0f, 1f)] private float bounceAttenuation = 0.9f;
 
         public int RaysAroundListenerAndEachSource => raysAroundListenerAndEachSource;
         public int MaxIterativeBounces => maxIterativeBounces;
@@ -24,6 +25,7 @@ namespace Code.Core
         public string SofaFile => Path.Combine(Application.streamingAssetsPath, "sofafiles", sofaFile);
         public LayerMask RaycastMask => raycastMask;
         public float IterativeReflectionDeviationAngleDeg => iterativeReflectionDeviationAngleDeg;
+        public float BounceAttenuation { get => bounceAttenuation; set => bounceAttenuation = Mathf.Clamp01(value);}
 
         public AudioPathArrayLayout GetAudioPathArrayLayout(int numSources) =>
             new(numSources, raysAroundListenerAndEachSource, RaysAroundListenerAndEachSource, maxIterativeBounces);

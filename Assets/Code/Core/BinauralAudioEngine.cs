@@ -19,6 +19,7 @@ namespace Code.Core
         public AudioPath[] AudioPaths;
         public bool IsReady { get; private set; }
 
+        public BinauralAudioSettings Settings => settings;
         public readonly List<BinauralAudioFilter> audioFilters = new();
         private Transform _listener;
         public UnityEvent simulationDone;  // delegate

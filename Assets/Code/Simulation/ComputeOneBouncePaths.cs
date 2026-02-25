@@ -19,7 +19,7 @@ namespace Code.Simulation
 
         public JobHandle Schedule(float3 listener, NativeArray<float3>.ReadOnly sources,
             NativeArray<RaycastHit>.ReadOnly hitsAroundListener, NativeArray<bool>.ReadOnly isHitAroundListenerCoplanar,
-            LayerMask rayMask, JobHandle hitsReadyHandle, NativeArray<AudioPath> result)
+            LayerMask rayMask, float bounceAttenuation, JobHandle hitsReadyHandle, NativeArray<AudioPath> result)
         {
             var numRaycasts = result.Length * 2; // Need to check visibility from listener and from source
             _commands = Helper.ReallocateIfNeeded(_commands, numRaycasts, Allocator.Persistent);
@@ -47,6 +47,7 @@ namespace Code.Simulation
                 VisibilityHits = _visibilityHits,
                 SourcePositions = sources,
                 ListenerPosition = listener,
+                BounceAttenuation =  bounceAttenuation,
             }.ScheduleParallel(result.Length, 32, doRaycastsHandle);
             return createPathsHandle;
         }
@@ -110,6 +111,7 @@ namespace Code.Simulation
             [ReadOnly] public NativeArray<float3> ReflectionPoints;
             [ReadOnly] public NativeArray<float3>.ReadOnly SourcePositions;
             [ReadOnly] public float3 ListenerPosition;
+            [ReadOnly] public float BounceAttenuation;
             
 
             public void Execute(int index)
@@ -126,7 +128,7 @@ namespace Code.Simulation
                         ImagePosition = ReflectionPoints[index],
                         DistanceToImage = VisibilityHits[index * 2 + 1].distance,
                         IsValid = true,
-                        Energy = 0.9f
+                        Energy = BounceAttenuation,
                     };
                     path.Positions.Clear();
                     path.Positions.Add(ListenerPosition);

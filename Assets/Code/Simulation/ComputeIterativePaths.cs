@@ -20,7 +20,7 @@ namespace Code.Simulation
         public JobHandle Schedule(float3 listener, NativeArray<float3>.ReadOnly sources,
             NativeArray<RaycastCommand>.ReadOnly rayCommandsAroundListener,
             NativeArray<RaycastHit>.ReadOnly hitsAroundListener, int numBounces, LayerMask rayMask,
-            JobHandle hitsReadyHandle, NativeArray<AudioPath> result, float maxReflectAngleDeg)
+            float bounceAttenuation, JobHandle hitsReadyHandle, NativeArray<AudioPath> result, float maxReflectAngleDeg)
         {
             _bounces = Helper.ReallocateIfNeeded(_bounces, numBounces * hitsAroundListener.Length,
                 Allocator.Persistent);
@@ -83,7 +83,8 @@ namespace Code.Simulation
                 Sources = sources,
                 Listener = listener,
                 VisibilityHits = _visibilityHits,
-                MinReflectDot = math.cos(math.radians(maxReflectAngleDeg))
+                MinReflectDot = math.cos(math.radians(maxReflectAngleDeg)),
+                BounceAttenuation = bounceAttenuation,
             }.ScheduleParallel(result.Length, 32, visibilityCheckHandle);
 
             return createPathsHandle;
@@ -163,6 +164,7 @@ namespace Code.Simulation
             [ReadOnly] public float3 Listener;
             [ReadOnly] public NativeArray<RaycastHit> VisibilityHits;
             [ReadOnly] public float MinReflectDot;
+            [ReadOnly] public float BounceAttenuation;
 
             public void Execute(int index)
             {
@@ -170,12 +172,13 @@ namespace Code.Simulation
                 var lastBounce = Bounces[bounceIndex];
                 var numBounces = bounceIndex / BouncesStride + 1;
 
-                if (lastBounce is { x: 0, y: 0, z: 0 } || !Helper.DidRayHitPoint(VisibilityHits[index], lastBounce) || numBounces < 3)
+                if (lastBounce is { x: 0, y: 0, z: 0 } || !Helper.DidRayHitPoint(VisibilityHits[index], lastBounce) ||
+                    numBounces < 3)
                 {
                     Paths[index] = new AudioPath { IsValid = false };
                     return;
                 }
-                
+
                 var sourceIndex = index / Bounces.Length;
                 if (!IsLastBounceWithinDeviationLimit(bounceIndex, sourceIndex))
                 {
@@ -188,7 +191,7 @@ namespace Code.Simulation
                     IsValid = true,
                     ImagePosition = lastBounce,
                     DistanceToImage = TotalDistances[index],
-                    Energy = math.pow(0.9f, numBounces),
+                    Energy = math.pow(BounceAttenuation, numBounces),
                     Reflections = numBounces,
                     SourceIndex = sourceIndex,
                 };

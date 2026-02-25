@@ -19,7 +19,7 @@ namespace Code.Simulation
         public JobHandle Schedule(float3 listener, NativeArray<float3>.ReadOnly sources,
             NativeArray<RaycastHit>.ReadOnly hitsAroundListener, NativeArray<bool>.ReadOnly isHitAroundListenerCoplanar,
             NativeArray<RaycastHit>.ReadOnly hitsAroundSources, NativeArray<bool>.ReadOnly isHitAroundSourceCoplanar,
-            int numHitsPerSource, LayerMask rayMask, JobHandle hitsReadyHandle, NativeArray<AudioPath> result)
+            int numHitsPerSource, LayerMask rayMask, float bounceAttenuation, JobHandle hitsReadyHandle, NativeArray<AudioPath> result)
         {
             _visibilityChecks = Helper.ReallocateIfNeeded(_visibilityChecks, result.Length * 3, Allocator.Persistent);
             var findPathsHandle = new FindPaths()
@@ -33,7 +33,8 @@ namespace Code.Simulation
                 numHitsPerSource = numHitsPerSource,
                 Paths = result,
                 VisibilityChecks = _visibilityChecks,
-                RayMask = rayMask
+                RayMask = rayMask,
+                BounceAttenuationSquared = math.square(bounceAttenuation),
             }.ScheduleParallel(result.Length, 32, hitsReadyHandle);
             _visibilityHits =
                 Helper.ReallocateIfNeeded(_visibilityHits, _visibilityChecks.Length, Allocator.Persistent);
@@ -71,6 +72,7 @@ namespace Code.Simulation
             [ReadOnly] public NativeArray<bool>.ReadOnly IsHitAroundSourceCoplanar;
             [ReadOnly] public int numHitsPerSource;
             [ReadOnly] public LayerMask RayMask;
+            [ReadOnly] public float BounceAttenuationSquared;
 
             public void Execute(int index)
             {
@@ -108,7 +110,7 @@ namespace Code.Simulation
                 {
                     SourceIndex = sourceIndex,
                     DistanceToImage = totalDistance,
-                    Energy = 0.81f, // 0.9^2
+                    Energy = BounceAttenuationSquared,
                     ImagePosition = firstIntersection,
                     IsValid = true,
                     Reflections = 2,
