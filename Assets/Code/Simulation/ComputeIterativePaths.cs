@@ -192,7 +192,7 @@ namespace Code.Simulation
             public void Execute(int index)
             {
                 var bounceIndex = index % BounceHits.Length;
-                var lastBounce = BounceHits[bounceIndex].point;
+                var lastBounce = (float3)BounceHits[bounceIndex].point;
                 var numBounces = bounceIndex / BouncesStride + 1;
 
                 if (lastBounce is { x: 0, y: 0, z: 0 } || !Helper.DidRayHitPoint(VisibilityHits[index], lastBounce) ||
@@ -209,13 +209,14 @@ namespace Code.Simulation
                     return;
                 }
 
-                var distToSource = math.distance(Sources[sourceIndex], lastBounce);
+                var sourceToLastBounce = Sources[sourceIndex] - lastBounce;
+                var distToSource = math.length(sourceToLastBounce);
                 var totalDist = TotalDistances[index] + distToSource;
 
                 var path = new AudioPath
                 {
                     IsValid = true,
-                    ImagePosition = lastBounce,
+                    ImagePosition = Sources[sourceIndex] + sourceToLastBounce / distToSource * totalDist,
                     DistanceToImage = totalDist,
                     Energy = math.pow(BounceAttenuation, numBounces),
                     Reflections = numBounces,
