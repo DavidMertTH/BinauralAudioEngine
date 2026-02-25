@@ -30,7 +30,7 @@ namespace Code.Simulation
                 HitsAroundSources = hitsAroundSources,
                 IsHitAroundListenerCoplanar = isHitAroundListenerCoplanar,
                 IsHitAroundSourceCoplanar = isHitAroundSourceCoplanar,
-                numHitsPerSource = numHitsPerSource,
+                NumHitsPerSource = numHitsPerSource,
                 Paths = result,
                 VisibilityChecks = _visibilityChecks,
                 RayMask = rayMask,
@@ -70,7 +70,7 @@ namespace Code.Simulation
             [ReadOnly] public NativeArray<bool>.ReadOnly IsHitAroundListenerCoplanar;
             [ReadOnly] public NativeArray<RaycastHit>.ReadOnly HitsAroundSources;
             [ReadOnly] public NativeArray<bool>.ReadOnly IsHitAroundSourceCoplanar;
-            [ReadOnly] public int numHitsPerSource;
+            [ReadOnly] public int NumHitsPerSource;
             [ReadOnly] public LayerMask RayMask;
             [ReadOnly] public float BounceAttenuationSquared;
 
@@ -78,7 +78,7 @@ namespace Code.Simulation
             {
                 var listenerHitIndex = index % HitsAroundListener.Length;
                 var sourceHitIndex = index / HitsAroundListener.Length;
-                var sourceIndex = sourceHitIndex / numHitsPerSource;
+                var sourceIndex = sourceHitIndex / NumHitsPerSource;
                 var listenerHit = HitsAroundListener[listenerHitIndex];
                 var sourceHit = HitsAroundSources[sourceHitIndex];
                 if (IsHitAroundListenerCoplanar[listenerHitIndex]
