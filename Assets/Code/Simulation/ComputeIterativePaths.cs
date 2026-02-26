@@ -21,7 +21,7 @@ namespace Code.Simulation
             NativeArray<RaycastHit>.ReadOnly hitsAroundListener, int numBouncesPerPath, LayerMask rayMask,
             float bounceAttenuation, JobHandle hitsReadyHandle, NativeArray<AudioPath> result, float maxReflectAngleDeg)
         {
-            var numBouncesTotal = numBouncesPerPath * hitsAroundListener.Length;
+            var numBouncesTotal = sources.Length * numBouncesPerPath * hitsAroundListener.Length;
             var bouncesStride = hitsAroundListener.Length;
             _totalDistances = Helper.ReallocateIfNeeded(_totalDistances, numBouncesTotal, Allocator.Persistent);
             _bounceHits = Helper.ReallocateIfNeeded(_bounceHits, numBouncesTotal, Allocator.Persistent);
