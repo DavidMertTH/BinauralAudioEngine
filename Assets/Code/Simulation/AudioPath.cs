@@ -17,5 +17,6 @@ namespace Code.Simulation
         public float Energy;
         public float ScatteringDivergence;
         public FixedList512Bytes<float3> Positions;
+        public int NumWallsPenetrated;
     }
 }

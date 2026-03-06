@@ -16,6 +16,7 @@ namespace Code.Core
         [SerializeField] private LayerMask raycastMask = -1;
         [SerializeField] [Range(0, 180f)] private float iterativeReflectionDeviationAngleDeg = 30f;
         [SerializeField] [Range(0f, 1f)] private float bounceAttenuation = 0.9f;
+        [SerializeField] [Range(0f, 1f)] private float wallAttenuation = 0.5f;
 
         public int RaysAroundListenerAndEachSource => raysAroundListenerAndEachSource;
         public int MaxIterativeBounces => maxIterativeBounces;
@@ -26,6 +27,7 @@ namespace Code.Core
         public LayerMask RaycastMask => raycastMask;
         public float IterativeReflectionDeviationAngleDeg => iterativeReflectionDeviationAngleDeg;
         public float BounceAttenuation { get => bounceAttenuation; set => bounceAttenuation = Mathf.Clamp01(value);}
+        public float WallAttenuation { get => wallAttenuation; set => wallAttenuation = Mathf.Clamp01(value);}
 
         public AudioPathArrayLayout GetAudioPathArrayLayout(int numSources) =>
             new(RaysAroundListenerAndEachSource, RaysAroundListenerAndEachSource, numSources, maxIterativeBounces);
