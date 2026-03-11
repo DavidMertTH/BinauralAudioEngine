@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Unity.Burst;
 using Unity.Collections;
@@ -178,6 +179,22 @@ namespace Code
         public static bool DidRayHitPoint(RaycastHit ray, float3 point)
         {
             return DidHit(ray) && IsClose(ray.point, point);
+        }
+        
+        public struct RaycastHitDistanceAscComparer : IComparer<RaycastHit>
+        {
+            public int Compare(RaycastHit x, RaycastHit y)
+            {
+                return x.distance.CompareTo(y.distance);
+            }
+        }
+        
+        public struct RaycastHitDistanceDescComparer : IComparer<RaycastHit>
+        {
+            public int Compare(RaycastHit x, RaycastHit y)
+            {
+                return y.distance.CompareTo(x.distance);
+            }
         }
     }
 }

@@ -94,13 +94,15 @@ namespace Code.Simulation
         private readonly float _iterativeReflectionDeviationAngleDeg;
         private readonly LayerMask _rayMask;
         private readonly float _bounceAttenuation;
-        private readonly float _wallAttenuation;
+        private readonly float _throughWallAttenuation;
+        private readonly int _maxWallPenetrations;
 
         public PathSimulation(Transform listener, List<Vector3> sources, BinauralAudioSettings settings)
         {
             _rayMask = settings.RaycastMask;
             _bounceAttenuation = settings.BounceAttenuation;
-            _wallAttenuation = settings.WallAttenuation;
+            _throughWallAttenuation = settings.ThroughWallAttenuation;
+            _maxWallPenetrations = settings.MaxWallPenetrations;
             _numRaysAroundListenerAndEachSource = settings.RaysAroundListenerAndEachSource;
             _maxIterativeBounces = settings.MaxIterativeBounces;
             _iterativeReflectionDeviationAngleDeg = settings.IterativeReflectionDeviationAngleDeg;
@@ -122,7 +124,7 @@ namespace Code.Simulation
         public JobHandle Schedule(out NativeArray<AudioPath>.ReadOnly paths)
         {
             var directPathsHandle = ComputeDirectPaths.Schedule(ListenerPosition,
-                SourcePositions, _rayMask, DirectPaths, _wallAttenuation);
+                SourcePositions, _rayMask, DirectPaths, _throughWallAttenuation);
             var surroundRaycastHandle = SurroundRaycast.CastRaysAroundOrigins(
                 ListenerAndSourcePositions, _numRaysAroundListenerAndEachSource, _rayMask, out var hits,
                 out var hitsStride, out var isHitCoplanar, out var commands);
@@ -134,8 +136,7 @@ namespace Code.Simulation
                 isHitCoplanar.GetSubArray(hitsStride, isHitCoplanar.Length - hitsStride).AsReadOnly();
             var oneBouncePathsHandle = ComputeOneBouncePaths.Schedule(ListenerPosition,
                 SourcePositions, hitsAroundListener, isHitAroundListenerCoplanar, _rayMask, _bounceAttenuation,
-                surroundRaycastHandle,
-                OneBouncePaths);
+                _throughWallAttenuation, _maxWallPenetrations, surroundRaycastHandle, OneBouncePaths);
             var twoBouncePathsHandle = ComputeTwoBouncePaths.Schedule(ListenerPosition,
                 SourcePositions, hitsAroundListener, isHitAroundListenerCoplanar, hitsAroundSources,
                 isHitAroundSourcesCoplanar, hitsStride, _rayMask, _bounceAttenuation, surroundRaycastHandle,

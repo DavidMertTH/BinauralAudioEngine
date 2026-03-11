@@ -16,7 +16,7 @@ namespace Code.Core
         [SerializeField] private BinauralAudioSettings settings;
 
         // TODO: Remove
-        public AudioPath[] AudioPaths;
+        public AudioPath[] AudioPaths = Array.Empty<AudioPath>();
         public bool IsReady { get; private set; }
 
         public BinauralAudioSettings Settings => settings;

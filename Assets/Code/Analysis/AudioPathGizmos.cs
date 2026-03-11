@@ -18,7 +18,6 @@ namespace Code.Analysis
 
         private void Update()
         {
-            if (!BinauralAudioEngine.Instance.IsReady) return;
             foreach (var path in BinauralAudioEngine.Instance.AudioPaths)
             {
                 if (!path.IsValid || path.Positions.Length < 2)
