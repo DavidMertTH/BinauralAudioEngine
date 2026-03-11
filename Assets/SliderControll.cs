@@ -18,7 +18,7 @@ public class SliderControll : MonoBehaviour
     {
         if (!isDragging)
         {
-            value = ui.activeSource.audioFilter.PlaybackPosition01;
+            value = ui.activeSource.AudioFilter.PlaybackPosition01;
             if (value > 0 && value < 1)
             {
                 slider.SetValueWithoutNotify(value);

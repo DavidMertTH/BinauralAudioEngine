@@ -28,7 +28,7 @@ namespace Code.Renderer
         [HideInInspector] public float[] audioTrack;
         [HideInInspector] public AudioSource audioSource;
         public List<AudioPath> AudioPaths;
-        public BinauralAudioFilter audioFilter;
+        public BinauralAudioFilter AudioFilter { get; private set; }
         public Color color;
         public float[] irLeft;
         public float[] irRight;
@@ -45,6 +45,11 @@ namespace Code.Renderer
         private int _numSamples;
 
 
+        private void Awake()
+        {
+            AudioFilter = GetComponent<BinauralAudioFilter>();
+        }
+
         private void Start()
         {
             audioSource = GetComponent<AudioSource>();
@@ -52,7 +57,6 @@ namespace Code.Renderer
             InitData(irLength);
             audioSource.loop = true;
             audioSource.Play();
-            audioFilter = GetComponent<BinauralAudioFilter>();
             color = SourceManager.NextColor();
             GetComponent<UnityEngine.Renderer>().material.color = color;
             SourceManager.Instance.Register(this);

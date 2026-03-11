@@ -28,14 +28,14 @@ public class SidebarUi : MonoBehaviour
     {
         activeSource = audioSource;
         _colorToDisplay = audioSource.color;
-        volumeSlider.value = activeSource.audioFilter.Volume;
+        volumeSlider.value = activeSource.AudioFilter.Volume;
     }
 
     void Update()
     {
         _suppressCallback -= Time.deltaTime;
         if (activeSource == null) return;
-        activeSource.audioFilter.Volume = volumeSlider.value;
+        activeSource.AudioFilter.Volume = volumeSlider.value;
         // if (activeSource.audioFilter.lastPlayedAudioMono != null)
         //     audioGraph.SetData(activeSource.audioFilter.lastPlayedAudioMono);
         adaptiveColorImages.ForEach(img => img.color = activeSource.color);
@@ -59,12 +59,12 @@ public class SidebarUi : MonoBehaviour
     public void StopAndStart()
     {
         if (activeSource == null) return;
-        activeSource.audioFilter.enabled = !activeSource.audioFilter.enabled;
+        activeSource.AudioFilter.enabled = !activeSource.AudioFilter.enabled;
     }
 
     private void ChangePlayHead(float playHeadPosition)
     {
         if (activeSource == null) return;
-        activeSource.audioFilter.PlaybackPosition01 = playHeadPosition;
+        activeSource.AudioFilter.PlaybackPosition01 = playHeadPosition;
     }
 }

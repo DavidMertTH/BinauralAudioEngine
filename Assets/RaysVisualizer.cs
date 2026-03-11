@@ -32,7 +32,7 @@ public class RaysVisualizer : MonoBehaviour
 
     private void GetNewRays()
     {
-        int index = BinauralAudioEngine.Instance.audioFilters.IndexOf(sourceObject.audioFilter);
+        int index = BinauralAudioEngine.Instance.audioFilters.IndexOf(sourceObject.AudioFilter);
         List<AudioPath> paths = BinauralAudioEngine.Instance.AudioPaths.Where(path => path.SourceIndex == index)
             .ToList();
         EnterNewRays(paths);

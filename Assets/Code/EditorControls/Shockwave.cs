@@ -23,7 +23,7 @@ namespace Code.EditorControls
 
         void Update()
         {
-            if (!sourceObject.audioFilter.enabled) _time = 0;
+            if (!sourceObject.AudioFilter.enabled) _time = 0;
 
             _time += Time.deltaTime;
             float t = Mathf.Clamp01(_time / duration);
