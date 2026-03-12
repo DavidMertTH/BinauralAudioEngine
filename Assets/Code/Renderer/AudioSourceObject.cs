@@ -7,6 +7,7 @@ using Code.Core;
 using Code.Preprocessing;
 using Code.Simulation;
 using MathNet.Numerics.IntegralTransforms;
+using SFB;
 using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
@@ -260,7 +261,17 @@ namespace Code.Renderer
 
         public string LoadAudioTrackFromSource()
         {
-            var chosenPath = EditorUtility.OpenFilePanel("Wähle eine Datei", "", "wav");
+            var extensions = new[]
+            {
+                new ExtensionFilter("Audio", "wav")
+            };
+
+            var paths = StandaloneFileBrowser.OpenFilePanel("Wähle eine Datei", "", extensions, false);
+            string chosenPath = new string("");
+            if (paths.Length > 0 && !string.IsNullOrEmpty(paths[0]))
+            {
+                chosenPath = paths[0];
+            }
             if (!string.IsNullOrEmpty(chosenPath))
             {
                 Debug.Log("Ausgewählte Datei: " + chosenPath);
