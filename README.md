@@ -1,46 +1,12 @@
-# README – Echo Head Audio Engine
+# Binaural Audio Engine
+<img width="1913" height="1079" alt="UI" src="https://github.com/user-attachments/assets/07ed206c-d7bd-473f-b154-6e99c8cfb93d" />
 
-This project implements a high-performance binaural audio engine capable of rendering realistic spatial sound in real time. The engine integrates the following techniques:
-
-- **Image Source Method** for early reflections  
-- **Ray-traced Audio** for precise modeling of complex reflections  
-- **Dynamic HRTFs** for individualized headphone filtering  
-- **Partitioned Overlap-Add (OLA) Convolution** for efficient real-time processing
-
-
-![WhatsApp Bild 2025-07-11 um 22 47 07_3be9a72e](https://github.com/user-attachments/assets/a6cf54aa-28c4-42a4-9c4f-91221c5f5a29)
-
-
-
-## Install 
-
-Clone the repository:
-
-```bash
-git clone https://github.com/DavidMertTH/BinauralAudioEngine.git
-```
-Then open the AudioProjectURP folder in Unity.
-
-- In the root folder of the project, there is an executable (`.exe`) file. This file can be run as a standalone program.
-- 
-## Controls
-
-| Input                   | Function                              |
-|-------------------------|---------------------------------------|
-| **W, A, S, D**          | Navigate through the virtual space    |
-| **Mouse**               | Look around                           |
-| **F1–F4**               | Switch between predefined scenarios   |
-| **Numeric Keypad 1–4**  | Select different HRTF profiles        |
-| **Spacebar**            | Toggle HRTF processing on/off         |
-| **H**            | Toggle Hann Windowing         |
-| **B**            | Bypass Audio Engine         |
-
-## Limitations
-- The current Implementation only works on Windows
-
-- When the impulse response changes—for example, when moving through the environment or rotating the head—strong artifacts may occur. These artifacts are very likely caused, among other factors, by spectral leakage. One way to mitigate these artifacts is to apply a Hann window to each audio input block. The user can toggle this feature by pressing **H**. However, applying the window significantly alters the audio signal and attenuates high frequencies; therefore, it is disabled by default.
-
-
-
-![WhatsApp Bild 2025-07-11 um 22 46 27_70e25fef](https://github.com/user-attachments/assets/fd46984e-f914-4ff1-a350-6eebc4067a8d)
-
+This repository contains a binaural audio engine developed as part of the
+VAO course at TH Köln. The system extends an existing real-time ray-tracing-based
+room acoustics engine by introducing support for multiple concurrent sound sources,
+an offline block-wise convolution pipeline, and an intuitive graphical user interface
+for interactive scene design. The simulation combines the image source method for
+low-order reflections with iterative ray tracing for higher-order reflections to compute
+binaural room impulse responses. The offline architecture enables longer reverberation
+tails while maintaining perceived responsiveness during the convolution process
+through an asynchronous parallel convolution.
